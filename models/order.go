@@ -39,7 +39,7 @@ type Order struct {
 	Task Task `json:"task,omitempty"`
 
 	HomeAddress   HomeAddress   `json:"homeAddress,omitempty"`
-	OfficeAddress OfficeAddress `json:"office,omitempty"`
+	OfficeAddress OfficeAddress `json:"officeAddress,omitempty"`
 	// alamat penagihan
 	PostAddress PostAddress `json:"postAddress,omitempty"`
 	// alamat kendaraan berdasarkan ktp

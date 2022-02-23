@@ -184,48 +184,48 @@ func getUnit(id *int64) (models.Unit, error) {
 	return unit, err
 }
 
-func getAllUnits() ([]models.Unit, error) {
+// func getAllUnits() ([]models.Unit, error) {
 
-	var units []models.Unit
+// 	var units []models.Unit
 
-	var sqlStatement = `SELECT
-		order_id, nopol, year, frame_number, machine_number, bpkb_name,
-		color, dealer, surveyor, type_id, warehouse_id
-	FROM units`
+// 	var sqlStatement = `SELECT
+// 		order_id, nopol, year, frame_number, machine_number, bpkb_name,
+// 		color, dealer, surveyor, type_id, warehouse_id
+// 	FROM units`
 
-	rs, err := Sql().Query(sqlStatement)
+// 	rs, err := Sql().Query(sqlStatement)
 
-	if err != nil {
-		log.Fatalf("Unable to execute units query %v", err)
-	}
+// 	if err != nil {
+// 		log.Fatalf("Unable to execute units query %v", err)
+// 	}
 
-	defer rs.Close()
+// 	defer rs.Close()
 
-	for rs.Next() {
-		var unit models.Unit
+// 	for rs.Next() {
+// 		var unit models.Unit
 
-		err := rs.Scan(&unit.OrderID,
-			&unit.Nopol,
-			&unit.Year,
-			&unit.FrameNumber,
-			&unit.MachineNumber,
-			&unit.BpkbName,
-			&unit.Color,
-			&unit.Dealer,
-			&unit.Surveyor,
-			&unit.TypeID,
-			&unit.WarehouseID,
-		)
+// 		err := rs.Scan(&unit.OrderID,
+// 			&unit.Nopol,
+// 			&unit.Year,
+// 			&unit.FrameNumber,
+// 			&unit.MachineNumber,
+// 			&unit.BpkbName,
+// 			&unit.Color,
+// 			&unit.Dealer,
+// 			&unit.Surveyor,
+// 			&unit.TypeID,
+// 			&unit.WarehouseID,
+// 		)
 
-		if err != nil {
-			log.Fatalf("Unable to scan the row. %v", err)
-		}
+// 		if err != nil {
+// 			log.Fatalf("Unable to scan the row. %v", err)
+// 		}
 
-		units = append(units, unit)
-	}
+// 		units = append(units, unit)
+// 	}
 
-	return units, err
-}
+// 	return units, err
+// }
 
 func deleteUnit(id *int64) int64 {
 	// create the delete sql query

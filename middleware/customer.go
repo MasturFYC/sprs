@@ -157,7 +157,7 @@ func getCustomer(id *int64) (models.Customer, error) {
 	switch err {
 	case sql.ErrNoRows:
 		fmt.Println("No rows were returned!")
-		return cust, nil
+		return cust, err
 	case nil:
 		return cust, nil
 	default:

@@ -31,7 +31,7 @@ func main() {
 		AllowedMethods: []string{"POST", "GET", "OPTIONS", "PUT", "DELETE"},
 		AllowedHeaders: []string{"Accept", "Accept-Language", "Content-Type"},
 		//AllowCredentials: true,
-		// Debug: true,
+		Debug: true,
 	})
 
 	mainRouter := mux.NewRouter()
@@ -41,13 +41,17 @@ func main() {
 	routers.CustomerRouter(mainRouter.PathPrefix("/api/customers/").Subrouter())
 	routers.FinanceRouter(mainRouter.PathPrefix("/api/finances/").Subrouter())
 	routers.HomeAddressRouter(mainRouter.PathPrefix("/api/home-address/").Subrouter())
-	routers.PostAddressRouter(mainRouter.PathPrefix("/api/post-address/").Subrouter())
-	routers.OfficeAddressRouter(mainRouter.PathPrefix("/api/office-address/").Subrouter())
 	routers.KtpAddressRouter(mainRouter.PathPrefix("/api/ktp-address/").Subrouter())
 	routers.MerkRouter(mainRouter.PathPrefix("/api/merks/").Subrouter())
-	routers.WheelRouter(mainRouter.PathPrefix("/api/wheels/").Subrouter())
+	routers.OfficeAddressRouter(mainRouter.PathPrefix("/api/office-address/").Subrouter())
+	routers.OrderRouter(mainRouter.PathPrefix("/api/orders/").Subrouter())
+	routers.PostAddressRouter(mainRouter.PathPrefix("/api/post-address/").Subrouter())
+	routers.ReceivableRouter(mainRouter.PathPrefix("/api/receivables/").Subrouter())
+	routers.TaskRouter(mainRouter.PathPrefix("/api/tasks/").Subrouter())
 	routers.TypeRouter(mainRouter.PathPrefix("/api/types/").Subrouter())
 	routers.UnitRouter(mainRouter.PathPrefix("/api/units/").Subrouter())
+	routers.WarehouseRouter(mainRouter.PathPrefix("/api/warehouses/").Subrouter())
+	routers.WheelRouter(mainRouter.PathPrefix("/api/wheels/").Subrouter())
 	routers.PropertyRouter(mainRouter.PathPrefix("/api/properties/").Subrouter())
 
 	handler := cor.Handler(mainRouter)

@@ -41,7 +41,7 @@ type Receivable struct {
 	DayPeriod int `json:"dayPeriod"`
 
 	// angsuran yg ke
-	Mortgage_to int `json:"mortgageTo"`
+	MortgageTo int `json:"mortgageTo"`
 
 	// jumlah hari angsuran
 	DayCount int64 `json:"dayCount"`
