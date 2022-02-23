@@ -5,44 +5,54 @@ import (
 
 	"log"
 
-	"go-fyc/routers"
 	"net/http"
+
+	"fyc.com/sprs/routers"
 
 	"github.com/gorilla/mux"
 
+	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 )
 
 func main() {
 
+	err := godotenv.Load(".env")
+
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
+
 	cor := cors.New(cors.Options{
 		AllowedOrigins: []string{
 			"http://localhost:8081",
-			"http://localhost:8080",
-			"http://192.168.100.2:8081",
-			"http://192.168.100.2:8080",
-			"http://127.0.0.1:8081",
-			"http://127.0.0.1:8080",
-			"http://yoga.pixel.id:8080",
-			"http://yoga.pixel.id",
-			"http://yoga.pixel.id:8081"},
+			"http://localhost:8181",
+		},
 		AllowedMethods: []string{"POST", "GET", "OPTIONS", "PUT", "DELETE"},
 		AllowedHeaders: []string{"Accept", "Accept-Language", "Content-Type"},
 		//AllowCredentials: true,
-		//Debug: true,
+		Debug: true,
 	})
 
 	mainRouter := mux.NewRouter()
 
-	routers.CategoryRouter(mainRouter.PathPrefix("/api/categories/").Subrouter())
-	routers.ProductRouter(mainRouter.PathPrefix("/api/products/").Subrouter())
-	routers.SalesRouter(mainRouter.PathPrefix("/api/sales/").Subrouter())
-	routers.PropertyRouter(mainRouter.PathPrefix("/api/properties/").Subrouter())
+	routers.ActionRouter(mainRouter.PathPrefix("/api/categories/").Subrouter())
+	routers.BranchRouter(mainRouter.PathPrefix("/api/branchs/").Subrouter())
 	routers.CustomerRouter(mainRouter.PathPrefix("/api/customers/").Subrouter())
+	routers.FinanceRouter(mainRouter.PathPrefix("/api/finances/").Subrouter())
+	routers.HomeAddressRouter(mainRouter.PathPrefix("/api/home-address/").Subrouter())
+	routers.PostAddressRouter(mainRouter.PathPrefix("/api/post-address/").Subrouter())
+	routers.OfficeAddressRouter(mainRouter.PathPrefix("/api/office-address/").Subrouter())
+	routers.KtpAddressRouter(mainRouter.PathPrefix("/api/ktp-address/").Subrouter())
+	routers.MerkRouter(mainRouter.PathPrefix("/api/merks/").Subrouter())
+	routers.WheelRouter(mainRouter.PathPrefix("/api/wheels/").Subrouter())
+	routers.TypeRouter(mainRouter.PathPrefix("/api/types/").Subrouter())
+	routers.UnitRouter(mainRouter.PathPrefix("/api/units/").Subrouter())
+	routers.PropertyRouter(mainRouter.PathPrefix("/api/properties/").Subrouter())
 
 	handler := cor.Handler(mainRouter)
 
-	fmt.Println("web server run at local: http://localhost:8080/")
-	fmt.Println("web server run at: http://pixel.id:8080/")
-	log.Fatal(http.ListenAndServe(":8080", handler))
+	fmt.Println("web server run at local: http://localhost:8181/")
+	fmt.Println("web server run at: http://pixel.id:8181/")
+	log.Fatal(http.ListenAndServe(":8181", handler))
 }
