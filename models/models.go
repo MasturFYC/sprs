@@ -143,7 +143,7 @@ type Type struct {
 	ID      int64  `json:"id"`
 	Name    string `json:"name"`
 	WheelID int    `json:"wheelId"`
-	MerkID  int    `json:"wheelMerk"`
+	MerkID  int    `json:"merkId"`
 	Merk    Merk   `json:"merk,omitempty"`
 	Wheel   Wheel  `json:"wheel,omitempty"`
 }

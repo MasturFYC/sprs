@@ -8,9 +8,9 @@ import (
 
 func OrderRouter(router *mux.Router) {
 
-	router.HandleFunc("/", middleware.GetOrders).Methods("GET")
+	router.HandleFunc("/", middleware.IsAuthorized(middleware.GetOrders)).Methods("GET")
 	router.HandleFunc("/{id}/", middleware.GetOrder).Methods("GET")
-	router.HandleFunc("/{id}/", middleware.DeleteOrder).Methods("DELETE")
+	router.HandleFunc("/{id}/", middleware.IsAuthorized(middleware.DeleteOrder)).Methods("DELETE")
 	router.HandleFunc("/", middleware.CreateOrder).Methods("POST")
 	router.HandleFunc("/{id}/", middleware.UpdateOrder).Methods("PUT")
 

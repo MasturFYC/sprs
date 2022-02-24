@@ -15,26 +15,25 @@ import (
 	"github.com/rs/cors"
 )
 
-func main() {
+var (
+	mainRouter *mux.Router
+)
 
+func createRouter() {
+	mainRouter = mux.NewRouter()
+}
+
+func loadEnvirontment() {
 	err := godotenv.Load(".env")
 
 	if err != nil {
 		log.Fatalf("Error loading .env file")
 	}
+}
 
-	cor := cors.New(cors.Options{
-		AllowedOrigins: []string{
-			"http://localhost:8081",
-			"http://localhost:8181",
-		},
-		AllowedMethods: []string{"POST", "GET", "OPTIONS", "PUT", "DELETE"},
-		AllowedHeaders: []string{"Accept", "Accept-Language", "Content-Type"},
-		//AllowCredentials: true,
-		Debug: true,
-	})
+func loadRouter() {
 
-	mainRouter := mux.NewRouter()
+	routers.InitializeRoute(mainRouter)
 
 	routers.ActionRouter(mainRouter.PathPrefix("/api/categories/").Subrouter())
 	routers.BranchRouter(mainRouter.PathPrefix("/api/branchs/").Subrouter())
@@ -54,9 +53,30 @@ func main() {
 	routers.WheelRouter(mainRouter.PathPrefix("/api/wheels/").Subrouter())
 	routers.PropertyRouter(mainRouter.PathPrefix("/api/properties/").Subrouter())
 
+}
+
+func runServer() {
+	cor := cors.New(cors.Options{
+		AllowedOrigins: []string{
+			"http://localhost:8081",
+			"http://localhost:8181",
+		},
+		AllowedMethods: []string{"POST", "GET", "OPTIONS", "PUT", "DELETE"},
+		AllowedHeaders: []string{"Accept", "Accept-Language", "Content-Type"},
+		//AllowCredentials: true,
+		Debug: true,
+	})
+
 	handler := cor.Handler(mainRouter)
 
 	fmt.Println("web server run at local: http://localhost:8181/")
 	fmt.Println("web server run at: http://pixel.id:8181/")
 	log.Fatal(http.ListenAndServe(":8181", handler))
+}
+
+func main() {
+	loadEnvirontment()
+	createRouter()
+	loadRouter()
+	runServer()
 }
