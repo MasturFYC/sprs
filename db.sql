@@ -362,6 +362,43 @@ CREATE TABLE public.units (
 ALTER TABLE public.units OWNER TO postgres;
 
 --
+-- Name: users; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.users (
+    id integer NOT NULL,
+    name character varying(50) NOT NULL,
+    email character varying(128) NOT NULL,
+    password character varying(50) NOT NULL,
+    role character varying(25) NOT NULL
+);
+
+
+ALTER TABLE public.users OWNER TO postgres;
+
+--
+-- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.users_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.users_id_seq OWNER TO postgres;
+
+--
+-- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
+
+
+--
 -- Name: warehouse_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -425,6 +462,13 @@ ALTER TABLE ONLY public.merks ALTER COLUMN id SET DEFAULT nextval('public.merk_i
 
 
 --
+-- Name: users id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
 -- Data for Name: actions; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -480,8 +524,11 @@ COPY public.ktp_addresses (order_id, street, region, city, phone, zip) FROM stdi
 --
 
 COPY public.merks (id, name) FROM stdin;
-1	Honda
 2	Yamaha
+12	Suzuki
+13	Honda
+1	Mitsubishi
+14	Hyundai
 \.
 
 
@@ -531,6 +578,9 @@ COPY public.tasks (order_id, descriptions, period_from, period_to, recipient_nam
 --
 
 COPY public.types (id, name, wheel_id, merk_id) FROM stdin;
+2	Vario 125	2	13
+3	Brio 1000	3	13
+1	Fino 125	2	2
 \.
 
 
@@ -539,6 +589,14 @@ COPY public.types (id, name, wheel_id, merk_id) FROM stdin;
 --
 
 COPY public.units (order_id, nopol, year, frame_number, machine_number, bpkb_name, color, dealer, surveyor, type_id, warehouse_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.users (id, name, email, password, role) FROM stdin;
 \.
 
 
@@ -556,6 +614,9 @@ COPY public.warehouses (id, name, descriptions) FROM stdin;
 --
 
 COPY public.wheels (id, name, short_name) FROM stdin;
+2	Roda 2	R2
+6	Roda 3	R3
+3	Roda 4	R4
 \.
 
 
@@ -584,7 +645,7 @@ SELECT pg_catalog.setval('public.finance_id_seq', 2, true);
 -- Name: merk_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.merk_id_seq', 2, true);
+SELECT pg_catalog.setval('public.merk_id_seq', 14, true);
 
 
 --
@@ -598,7 +659,14 @@ SELECT pg_catalog.setval('public.order_id_seq', 2, true);
 -- Name: type_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.type_id_seq', 1, false);
+SELECT pg_catalog.setval('public.type_id_seq', 3, true);
+
+
+--
+-- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.users_id_seq', 1, false);
 
 
 --
@@ -612,7 +680,7 @@ SELECT pg_catalog.setval('public.warehouse_id_seq', 1, true);
 -- Name: wheel_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.wheel_id_seq', 1, false);
+SELECT pg_catalog.setval('public.wheel_id_seq', 6, true);
 
 
 --
@@ -757,6 +825,30 @@ ALTER TABLE ONLY public.units
 
 ALTER TABLE ONLY public.units
     ADD CONSTRAINT units_order_id_key UNIQUE (order_id);
+
+
+--
+-- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_email_key UNIQUE (email);
+
+
+--
+-- Name: users users_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_name_key UNIQUE (name);
+
+
+--
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
 
 
 --
