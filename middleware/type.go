@@ -182,6 +182,11 @@ func getAllTypes() ([]models.Type, error) {
 			log.Fatalf("Unable to scan the row. %v", err)
 		}
 
+		wheel, _ := getWheel(&t.WheelID)
+		merk, _ := getMerk(&t.MerkID)
+		t.Wheel = wheel
+		t.Merk = merk
+
 		types = append(types, t)
 	}
 

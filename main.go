@@ -60,6 +60,8 @@ func runServer() {
 		AllowedOrigins: []string{
 			"http://localhost:8081",
 			"http://localhost:8181",
+			"http://192.168.100.2:3000",
+			"http://pixel.id:3000",
 		},
 		AllowedMethods: []string{"POST", "GET", "OPTIONS", "PUT", "DELETE"},
 		AllowedHeaders: []string{"Accept", "Accept-Language", "Content-Type"},

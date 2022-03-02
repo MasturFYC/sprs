@@ -93,7 +93,9 @@ func CreateMerk(w http.ResponseWriter, r *http.Request) {
 	id, err := createMerk(&merk)
 
 	if err != nil {
-		log.Fatalf("Nama merk tidak boleh sama.  %v", err)
+		//log.Fatalf("Nama merk tidak boleh sama.  %v", err)
+		http.Error(w, "Nama merk tidak boleh sama", http.StatusMethodNotAllowed)
+		return
 	}
 
 	merk.ID = id
@@ -122,6 +124,11 @@ func UpdateMerk(w http.ResponseWriter, r *http.Request) {
 	}
 
 	updatedRows := updateMerk(&id, &merk)
+
+	if updatedRows == 0 {
+		http.Error(w, "Nama merk tidak boleh sama", http.StatusMethodNotAllowed)
+		return
+	}
 
 	msg := fmt.Sprintf("Merk updated successfully. Total rows/record affected %v", updatedRows)
 
@@ -163,7 +170,7 @@ func getAllMerks() ([]models.Merk, error) {
 
 	var merks []models.Merk
 
-	var sqlStatement = `SELECT id, name	FROM merks`
+	var sqlStatement = `SELECT id, name FROM merks ORDER BY name`
 
 	rs, err := Sql().Query(sqlStatement)
 
@@ -218,10 +225,8 @@ func createMerk(merk *models.Merk) (int, error) {
 	err := Sql().QueryRow(sqlStatement, merk.Name).Scan(&id)
 
 	if err != nil {
-		log.Fatalf("Unable to create merk. %v", err)
+		log.Printf("Unable to create merk. %v\n", err)
 	}
-
-	merk.ID = id
 
 	return id, err
 }
@@ -233,14 +238,15 @@ func updateMerk(id *int, merk *models.Merk) int64 {
 	res, err := Sql().Exec(sqlStatement, id, merk.Name)
 
 	if err != nil {
-		log.Fatalf("Unable to update merk. %v", err)
+		log.Printf("Unable to update merk. %v", err)
+		return 0
 	}
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
 	if err != nil {
-		log.Fatalf("Error while updating merk. %v", err)
+		log.Printf("Error while updating merk. %v", err)
 	}
 
 	return rowsAffected

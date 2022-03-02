@@ -93,7 +93,9 @@ func CreateWheel(w http.ResponseWriter, r *http.Request) {
 	id, err := createWheel(&wheel)
 
 	if err != nil {
-		log.Fatalf("Nama wheel tidak boleh sama.  %v", err)
+		//log.Fatalf("Nama wheel tidak boleh sama.  %v", err)
+		http.Error(w, "Nama jenis roda tidak boleh sama", http.StatusMethodNotAllowed)
+		return
 	}
 
 	wheel.ID = id
@@ -121,7 +123,12 @@ func UpdateWheel(w http.ResponseWriter, r *http.Request) {
 		log.Fatalf("Unable to decode the request body.  %v", err)
 	}
 
-	updatedRows := updateWheel(&id, &wheel)
+	updatedRows, err := updateWheel(&id, &wheel)
+
+	if err != nil {
+		http.Error(w, "Nama jenis roda tidak boleh sama", http.StatusMethodNotAllowed)
+		return
+	}
 
 	msg := fmt.Sprintf("Wheel updated successfully. Total rows/record affected %v", updatedRows)
 
@@ -163,7 +170,9 @@ func getAllWheels() ([]models.Wheel, error) {
 
 	var wheels []models.Wheel
 
-	var sqlStatement = `SELECT id, name, short_name	FROM wheels`
+	// wheels = append(wheels, models.Wheel{ID: 0, Name: "", ShortName: ""})
+
+	var sqlStatement = `SELECT id, name, short_name	FROM wheels ORDER BY short_name`
 
 	rs, err := Sql().Query(sqlStatement)
 
@@ -211,37 +220,36 @@ func deleteWheel(id *int) int64 {
 
 func createWheel(wheel *models.Wheel) (int, error) {
 
-	sqlStatement := `INSERT INTO wheels (name, short_name) VALUES ($1) RETURNING id`
+	sqlStatement := `INSERT INTO wheels (name, short_name) VALUES ($1, $2) RETURNING id`
 
 	var id int
 
 	err := Sql().QueryRow(sqlStatement, wheel.Name, wheel.ShortName).Scan(&id)
 
 	if err != nil {
-		log.Fatalf("Unable to create wheel. %v", err)
+		log.Printf("Unable to create wheel. %v", err)
 	}
-
-	wheel.ID = id
 
 	return id, err
 }
 
-func updateWheel(id *int, wheel *models.Wheel) int64 {
+func updateWheel(id *int, wheel *models.Wheel) (int64, error) {
 
 	sqlStatement := `UPDATE wheels SET name=$2, short_name=$3 WHERE id=$1`
 
 	res, err := Sql().Exec(sqlStatement, id, wheel.Name, wheel.ShortName)
 
 	if err != nil {
-		log.Fatalf("Unable to update wheel. %v", err)
+		log.Printf("Unable to update wheel. %v", err)
+		return 0, err
 	}
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
 	if err != nil {
-		log.Fatalf("Error while updating wheel. %v", err)
+		log.Printf("Error while updating wheel. %v", err)
 	}
 
-	return rowsAffected
+	return rowsAffected, err
 }
