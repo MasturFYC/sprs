@@ -94,6 +94,8 @@ func CreateFinance(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		log.Fatalf("Nama finance tidak boleh sama.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
 	}
 
 	finance.ID = id
@@ -121,7 +123,12 @@ func UpdateFinance(w http.ResponseWriter, r *http.Request) {
 		log.Fatalf("Unable to decode the request body.  %v", err)
 	}
 
-	updatedRows := updateFinance(&id, &finance)
+	updatedRows, err := updateFinance(&id, &finance)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
 
 	msg := fmt.Sprintf("Finance updated successfully. Total rows/record affected %v", updatedRows)
 
@@ -239,15 +246,13 @@ func createFinance(finance *models.Finance) (int, error) {
 	).Scan(&id)
 
 	if err != nil {
-		log.Fatalf("Unable to create finance. %v", err)
+		log.Printf("Unable to create finance. %v", err)
 	}
-
-	finance.ID = id
 
 	return id, err
 }
 
-func updateFinance(id *int, finance *models.Finance) int64 {
+func updateFinance(id *int, finance *models.Finance) (int64, error) {
 
 	sqlStatement := `UPDATE finances SET
 		name=$2, short_name=$3, street=$4, city=$5, phone=$6, cell=$7, zip=$8, email=$9
@@ -266,15 +271,16 @@ func updateFinance(id *int, finance *models.Finance) int64 {
 	)
 
 	if err != nil {
-		log.Fatalf("Unable to update finance. %v", err)
+		log.Printf("Unable to update finance. %v", err)
+		return 0, err
 	}
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
 	if err != nil {
-		log.Fatalf("Error while updating finance. %v", err)
+		log.Printf("Error while updating finance. %v", err)
 	}
 
-	return rowsAffected
+	return rowsAffected, err
 }

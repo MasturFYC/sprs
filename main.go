@@ -24,7 +24,7 @@ func createRouter() {
 }
 
 func loadEnvirontment() {
-	err := godotenv.Load(".env")
+	err := godotenv.Load("/home/mastur/.env")
 
 	if err != nil {
 		log.Fatalf("Error loading .env file")
@@ -59,8 +59,10 @@ func runServer() {
 	cor := cors.New(cors.Options{
 		AllowedOrigins: []string{
 			"http://localhost:8081",
-			"http://localhost:8181",
+			"http://localhost:3000",
 			"http://192.168.100.2:3000",
+			"http://103.179.56.180",
+			"http://ya2yo.com",
 			"http://localhost:3000",
 		},
 		AllowedMethods: []string{"POST", "GET", "OPTIONS", "PUT", "DELETE"},

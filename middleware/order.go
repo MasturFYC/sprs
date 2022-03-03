@@ -43,7 +43,7 @@ func GetOrder(w http.ResponseWriter, r *http.Request) {
 	rv, err := getOrder(&id)
 
 	if err != nil {
-		log.Fatalf("Unable to get order. %v", err)
+		log.Printf("Unable to get order. %v", err)
 	}
 
 	json.NewEncoder(w).Encode(&rv)
@@ -82,29 +82,27 @@ func CreateOrder(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Access-Control-Allow-Methods", "POST")
 
-	var rv models.Order
+	var order models.Order
 
-	err := json.NewDecoder(r.Body).Decode(&rv)
-
-	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
-	}
-
-	rowAffected, err := createOrder(&rv)
+	err := json.NewDecoder(r.Body).Decode(&order)
 
 	if err != nil {
-		log.Fatalf("Nama order tidak boleh sama.  %v", err)
+		log.Printf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusRequestedRangeNotSatisfiable), http.StatusRequestedRangeNotSatisfiable)
+		return
 	}
 
-	msg := fmt.Sprintf("Order created successfully. Total rows/record affected %v", rowAffected)
+	id, err := createOrder(&order)
 
-	// format the reponse message
-	res := Response{
-		ID:      rowAffected,
-		Message: msg,
+	if err != nil {
+		log.Printf("Nomor order tidak boleh sama.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
 	}
 
-	json.NewEncoder(w).Encode(&res)
+	order.ID = id
+
+	json.NewEncoder(w).Encode(&order)
 
 }
 
@@ -127,7 +125,12 @@ func UpdateOrder(w http.ResponseWriter, r *http.Request) {
 		log.Fatalf("Unable to decode the request body.  %v", err)
 	}
 
-	updatedRows := updateOrder(&id, &rv)
+	updatedRows, err := updateOrder(&id, &rv)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
 
 	msg := fmt.Sprintf("Order updated successfully. Total rows/record affected %v", updatedRows)
 
@@ -147,7 +150,7 @@ func getOrder(id *int64) (models.Order, error) {
 
 	var sqlStatement = `SELECT 
 		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn,
-		user_name, verified_by, validated_by, finance_id, branch_id
+		nominal, subtotal, user_name, verified_by, validated_by, finance_id, branch_id
 	FROM orders
 	WHERE id=$1`
 
@@ -162,6 +165,8 @@ func getOrder(id *int64) (models.Order, error) {
 		&o.BtPercent,
 		&o.BtMatel,
 		&o.Ppn,
+		&o.Nominal,
+		&o.Subtotal,
 		&o.UserName,
 		&o.VerifiedBy,
 		&o.ValidatedBy,
@@ -213,8 +218,9 @@ func getAllOrders() ([]models.Order, error) {
 
 	var sqlStatement = `SELECT
 		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn,
-		user_name, verified_by, validated_by, finance_id, branch_id
-	FROM orders`
+		nominal, subtotal, user_name, verified_by, validated_by, finance_id, branch_id
+	FROM orders
+	ORDER BY id DESC`
 
 	rs, err := Sql().Query(sqlStatement)
 
@@ -236,6 +242,8 @@ func getAllOrders() ([]models.Order, error) {
 			&o.BtPercent,
 			&o.BtMatel,
 			&o.Ppn,
+			&o.Nominal,
+			&o.Subtotal,
 			&o.UserName,
 			&o.VerifiedBy,
 			&o.ValidatedBy,
@@ -311,11 +319,14 @@ func createOrder(o *models.Order) (int64, error) {
 
 	sqlStatement := `INSERT INTO orders (
 		name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn,
-		user_name, verified_by, validated_by, finance_id, branch_id
+		nominal, subtotal, user_name, verified_by, validated_by, finance_id, branch_id
 	)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+	RETURNING id`
 
-	res, err := Sql().Exec(sqlStatement,
+	var id int64
+
+	err := Sql().QueryRow(sqlStatement,
 		o.Name,
 		o.OrderAt,
 		o.PrintedAt,
@@ -323,31 +334,27 @@ func createOrder(o *models.Order) (int64, error) {
 		o.BtPercent,
 		o.BtMatel,
 		o.Ppn,
+		o.Nominal,
+		o.Subtotal,
 		o.UserName,
 		o.VerifiedBy,
 		o.ValidatedBy,
 		o.FinanceID,
 		o.BranchID,
-	)
+	).Scan(&id)
 
 	if err != nil {
 		log.Fatalf("Unable to create order. %v", err)
 	}
 
-	rowsAffected, err := res.RowsAffected()
-
-	if err != nil {
-		log.Fatalf("Unable to create order. %v", err)
-	}
-
-	return rowsAffected, err
+	return id, err
 }
 
-func updateOrder(id *int64, o *models.Order) int64 {
+func updateOrder(id *int64, o *models.Order) (int64, error) {
 
 	sqlStatement := `UPDATE orders SET
 		name=$2, order_at=$3, printed_at=$4, bt_finance=$5, bt_percent=$6, bt_matel=$7, ppn=$8,
-		user_name=$9, verified_by=$10, validated_by=$11, finance_id=$12, branch_id=$13
+		nominal=$9, subtotal=$10, user_name=$11, verified_by=$12, validated_by=$13, finance_id=$14, branch_id=$15
 	WHERE id=$1`
 
 	res, err := Sql().Exec(sqlStatement,
@@ -359,6 +366,8 @@ func updateOrder(id *int64, o *models.Order) int64 {
 		o.BtPercent,
 		o.BtMatel,
 		o.Ppn,
+		o.Nominal,
+		o.Subtotal,
 		o.UserName,
 		o.VerifiedBy,
 		o.ValidatedBy,
@@ -367,15 +376,16 @@ func updateOrder(id *int64, o *models.Order) int64 {
 	)
 
 	if err != nil {
-		log.Fatalf("Unable to update order. %v", err)
+		log.Printf("Unable to update order. %v", err)
+		return 0, err
 	}
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
 	if err != nil {
-		log.Fatalf("Error while updating order. %v", err)
+		log.Printf("Error while updating order. %v", err)
 	}
 
-	return rowsAffected
+	return rowsAffected, err
 }

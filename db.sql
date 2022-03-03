@@ -247,7 +247,9 @@ CREATE TABLE public.orders (
     verified_by character varying(50),
     validated_by character varying(50),
     finance_id smallint DEFAULT 0 NOT NULL,
-    branch_id smallint DEFAULT 0 NOT NULL
+    branch_id smallint DEFAULT 0 NOT NULL,
+    nominal numeric(12,2) DEFAULT 0 NOT NULL,
+    subtotal numeric(12,2) DEFAULT 0 NOT NULL
 );
 
 
@@ -544,8 +546,13 @@ COPY public.office_addresses (order_id, street, region, city, phone, zip) FROM s
 -- Data for Name: orders; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.orders (id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn, user_name, verified_by, validated_by, finance_id, branch_id) FROM stdin;
-2	12365-56564-	2022-02-23	2022-02-23	1000.00	10.00	1100.00	0.00	Mastur	\N	\N	1	1
+COPY public.orders (id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn, user_name, verified_by, validated_by, finance_id, branch_id, nominal, subtotal) FROM stdin;
+3	x/3336/2022/XII/5556	2022-03-03	2022-03-05	1800000.00	20.00	1440000.00	0.00	Opick	\N	\N	1	1	0.00	1440000.00
+2	12365-56564-	2022-03-03	2022-03-05	1200000.00	20.00	960000.00	2.50	Mastur	\N	\N	1	1	24000.00	936000.00
+4	465456	2022-03-07	2022-03-10	56000.00	20.00	44800.00	0.00	Opick	\N	\N	2	1	0.00	44800.00
+5	87878	2022-03-03	2022-03-03	1200000.00	20.00	960000.00	0.00	Opick	\N	\N	2	1	0.00	960000.00
+6	ewqeqwe	2022-03-03	2022-03-03	25000.00	20.00	20000.00	0.00	Opick	\N	\N	1	1	0.00	20000.00
+7	99987-25-5555	2022-03-15	2022-03-25	1500000.00	20.00	1200000.00	0.00	Opick	\N	\N	1	1	0.00	1200000.00
 \.
 
 
@@ -652,7 +659,7 @@ SELECT pg_catalog.setval('public.merk_id_seq', 14, true);
 -- Name: order_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.order_id_seq', 2, true);
+SELECT pg_catalog.setval('public.order_id_seq', 7, true);
 
 
 --

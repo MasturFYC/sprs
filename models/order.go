@@ -1,6 +1,6 @@
 package models
 
-import "time"
+//import "time"
 
 // table order SPK
 type Order struct {
@@ -9,12 +9,14 @@ type Order struct {
 	// nomor SPK
 	Name string `json:"name"`
 	// tanggal penerimaan SPK
-	OrderAt     time.Time  `json:"orderAt"`
-	PrintedAt   time.Time  `json:"printedAt"`
+	OrderAt     string  `json:"orderAt"`
+	PrintedAt   string  `json:"printedAt"`
 	BtFinance   float64    `json:"btFinance"`
 	BtPercent   float32    `json:"btPercent"`
 	BtMatel     float64    `json:"btMatel"`
 	Ppn         float32    `json:"ppn"`
+	Nominal     float64    `json:"nominal"`
+	Subtotal    float64    `json:"subtotal"`
 	UserName    string     `json:"userName"`
 	VerifiedBy  NullString `json:"verifiedBy"`
 	ValidatedBy NullString `json:"validatedBy"`
