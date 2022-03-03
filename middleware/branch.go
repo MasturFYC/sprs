@@ -91,7 +91,8 @@ func CreateBranch(w http.ResponseWriter, r *http.Request) {
 	id, err := createBranch(&branch)
 
 	if err != nil {
-		log.Fatalf("Nama Branch tidak boleh sama.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
 	}
 
 	branch.ID = id
@@ -119,7 +120,12 @@ func UpdateBranch(w http.ResponseWriter, r *http.Request) {
 		log.Fatalf("Unable to decode the request body.  %v", err)
 	}
 
-	updatedRows := updateBranch(&id, &branch)
+	updatedRows, err := updateBranch(&id, &branch)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
 
 	msg := fmt.Sprintf("Branch updated successfully. Total rows/record affected %v", updatedRows)
 
@@ -237,13 +243,13 @@ func createBranch(branch *models.Branch) (int, error) {
 	).Scan(&id)
 
 	if err != nil {
-		log.Fatalf("Unable to create branch. %v", err)
+		log.Printf("Unable to create branch. %v", err)
 	}
 
 	return id, err
 }
 
-func updateBranch(id *int, branch *models.Branch) int64 {
+func updateBranch(id *int, branch *models.Branch) (int64, error) {
 
 	sqlStatement := `UPDATE branchs SET
 		name=$2, head_branch=$3, street=$4, city=$5,
@@ -270,8 +276,8 @@ func updateBranch(id *int, branch *models.Branch) int64 {
 	rowsAffected, err := res.RowsAffected()
 
 	if err != nil {
-		log.Fatalf("Error while updating category. %v", err)
+		log.Printf("Error while updating category. %v", err)
 	}
 
-	return rowsAffected
+	return rowsAffected, err
 }

@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql/driver"
 	"errors"
-	"time"
 )
 
 type NullString string
@@ -32,10 +31,10 @@ func (s NullString) Value() (driver.Value, error) {
 
 type Action struct {
 	ID           int64      `json:"id"`
-	ActionAt     time.Time  `json:"actionAt"`
+	ActionAt     string     `json:"actionAt"`
 	OrderId      int64      `json:"orderId"`
 	Pic          string     `json:"pic"`
-	Descriptions NullString `json:"Descriptions"`
+	Descriptions NullString `json:"descriptions"`
 	// kode tindakan
 	Code string `json:"code"`
 }

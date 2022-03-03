@@ -95,12 +95,9 @@ func CreateAction(w http.ResponseWriter, r *http.Request) {
 
 	id, err := createAction(&act)
 
-	if err != nil {
-		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-		return
+	if err == nil {
+		act.ID = id
 	}
-
-	act.ID = id
 
 	json.NewEncoder(w).Encode(&act)
 }
@@ -120,18 +117,11 @@ func UpdateAction(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&act)
 
-	log.Print(act)
-
 	if err != nil {
 		log.Fatalf("Unable to decode the request body.  %v", err)
 	}
 
-	updatedRows, err := updateAction(&id, &act)
-
-	if err != nil {
-		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-		return
-	}
+	updatedRows := updateCategory(&id, &act)
 
 	msg := fmt.Sprintf("Action updated successfully. Total rows/record affected %v", updatedRows)
 
@@ -158,24 +148,17 @@ func getAllActions(OrderID *int64) ([]models.Action, error) {
 	rows, err := Sql().Query(sqlStatement, OrderID)
 
 	if err != nil {
-		log.Fatalf("Unable to execute actions query %v", err)
+		log.Printf("Unable to execute actions query %v", err)
 	}
 
 	defer rows.Close()
 
 	for rows.Next() {
 		var act models.Action
-		err := rows.Scan(
-			&act.ID,
-			&act.ActionAt,
-			&act.Code,
-			&act.Pic,
-			&act.Descriptions,
-			&act.OrderId,
-		)
+		err := rows.Scan(&act.ID, &act.ActionAt, &act.Pic, &act.Descriptions, &act.OrderId)
 
 		if err != nil {
-			log.Fatalf("ACTION unable to scan the row. %v", err)
+			log.Printf("ACTION unable to scan the row. %v", err)
 		}
 
 		actions = append(actions, act)
@@ -187,16 +170,16 @@ func getAllActions(OrderID *int64) ([]models.Action, error) {
 func getAction(id *int64) (models.Action, error) {
 	var act models.Action
 
-	sqlStatement := `SELECT
+	sqlStatement := `SELECT 
 		id, action_at, code, pic, descriptions, order_id
-	FROM actions
+	FROM actions 
 	WHERE id=$1`
 	//stmt, _ := Sql().Prepare(sqlStatement)
 
 	//defer stmt.Close()
 	row := Sql().QueryRow(sqlStatement, id)
 
-	err := row.Scan(&act.ID, &act.ActionAt, &act.Code, &act.Pic, &act.Descriptions, &act.OrderId)
+	err := row.Scan(&act.ID, &act.ActionAt, &act.Pic, &act.Descriptions, &act.OrderId)
 
 	switch err {
 	case sql.ErrNoRows:
@@ -300,14 +283,13 @@ func createAction(act *models.Action) (int64, error) {
 		act.OrderId).Scan(&id)
 
 	if err != nil {
-		log.Printf("Unable to create action. %v", err)
-		return 0, err
+		log.Fatalf("Unable to create action. %v", err)
 	}
 
 	return id, err
 }
 
-func updateAction(id *int64, act *models.Action) (int64, error) {
+func updateCategory(id *int64, act *models.Action) int64 {
 
 	sqlStatement := `UPDATE actions SET 
 		action_at=$2, code=$3, pic=$4, descriptions=$5, order_id=$6
@@ -317,16 +299,15 @@ func updateAction(id *int64, act *models.Action) (int64, error) {
 		act.Code, act.Pic, act.Descriptions, act.OrderId)
 
 	if err != nil {
-		log.Printf("Unable to update action. %v", err)
-		return 0, err
+		log.Fatalf("Unable to update action. %v", err)
 	}
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
 	if err != nil {
-		log.Printf("Error while updating action. %v", err)
+		log.Fatalf("Error while updating action. %v", err)
 	}
 
-	return rowsAffected, err
+	return rowsAffected
 }

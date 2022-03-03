@@ -35,7 +35,7 @@ func loadRouter() {
 
 	routers.InitializeRoute(mainRouter)
 
-	routers.ActionRouter(mainRouter.PathPrefix("/api/categories/").Subrouter())
+	routers.ActionRouter(mainRouter.PathPrefix("/api/actions/").Subrouter())
 	routers.BranchRouter(mainRouter.PathPrefix("/api/branchs/").Subrouter())
 	routers.CustomerRouter(mainRouter.PathPrefix("/api/customers/").Subrouter())
 	routers.FinanceRouter(mainRouter.PathPrefix("/api/finances/").Subrouter())
@@ -61,7 +61,7 @@ func runServer() {
 			"http://localhost:8081",
 			"http://localhost:8181",
 			"http://192.168.100.2:3000",
-			"http://pixel.id:3000",
+			"http://localhost:3000",
 		},
 		AllowedMethods: []string{"POST", "GET", "OPTIONS", "PUT", "DELETE"},
 		AllowedHeaders: []string{"Accept", "Accept-Language", "Content-Type"},

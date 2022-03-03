@@ -8,7 +8,7 @@ import (
 
 func ActionRouter(router *mux.Router) {
 
-	router.HandleFunc("/{id}", middleware.GetActions).Methods("GET")
+	router.HandleFunc("/{id}/", middleware.GetActions).Methods("GET")
 	//router.HandleFunc("/{id}/", middleware.GetAction).Methods("GET")
 	router.HandleFunc("/{id}/", middleware.DeleteAction).Methods("DELETE")
 	router.HandleFunc("/", middleware.CreateAction).Methods("POST")
