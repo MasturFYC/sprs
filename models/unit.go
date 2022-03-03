@@ -1,7 +1,7 @@
 package models
 
 type Unit struct {
-	OrderID int64 `json:"id"`
+	OrderID int64 `json:"orderId"`
 
 	// nomor polisi / kendaraan
 	Nopol string `json:"nopol"`
@@ -28,6 +28,6 @@ type Unit struct {
 	Type   Type  `json:"type,omitempty"`
 
 	// gudang lokasi unit
-	WarehouseID int64     `json:"warehouseId"`
+	WarehouseID int       `json:"warehouseId"`
 	Warehouse   Warehouse `json:"warehouse,omitempty"`
 }

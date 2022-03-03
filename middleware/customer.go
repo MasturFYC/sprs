@@ -87,24 +87,20 @@ func CreateCustomer(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&cust)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		log.Printf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusCreated), http.StatusCreated)
+		return
 	}
 
-	rowAffected, err := createCustomer(&cust)
+	err = createCustomer(&cust)
 
 	if err != nil {
-		log.Fatalf("Nama customers tidak boleh sama.  %v", err)
+		log.Printf("Nama customers tidak boleh sama.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
 	}
 
-	msg := fmt.Sprintf("Customer created successfully. Total rows/record affected %v", rowAffected)
-
-	// format the reponse message
-	res := Response{
-		ID:      rowAffected,
-		Message: msg,
-	}
-
-	json.NewEncoder(w).Encode(&res)
+	json.NewEncoder(w).Encode(&cust)
 
 }
 
@@ -124,21 +120,20 @@ func UpdateCustomer(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&cust)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		log.Printf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusCreated), http.StatusCreated)
+		return
 	}
 
-	updatedRows := updateCustomer(&id, &cust)
+	err = updateCustomer(&id, &cust)
 
-	msg := fmt.Sprintf("Customer updated successfully. Total rows/record affected %v", updatedRows)
-
-	// format the response message
-	res := Response{
-		ID:      updatedRows,
-		Message: msg,
+	if err != nil {
+		log.Printf("Unable to update customer.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
 	}
 
-	// send the response
-	json.NewEncoder(w).Encode(res)
+	json.NewEncoder(w).Encode(cust)
 }
 
 func getCustomer(id *int64) (models.Customer, error) {
@@ -221,7 +216,7 @@ func deleteCustomer(id *int64) int64 {
 	return rowsAffected
 }
 
-func createCustomer(cust *models.Customer) (int64, error) {
+func createCustomer(cust *models.Customer) error {
 
 	sqlStatement := `INSERT INTO customers 
 	(order_id, name, agreement_number, payment_type) 
@@ -236,19 +231,20 @@ func createCustomer(cust *models.Customer) (int64, error) {
 	)
 
 	if err != nil {
-		log.Fatalf("Unable to create customer. %v", err)
+		log.Printf("Unable to create customer. %v", err)
+		return err
 	}
 
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Fatalf("Unable to create customer. %v", err)
+	if err != nil || rowsAffected == 0 {
+		log.Printf("Unable to create customer. %v", err)
 	}
 
-	return rowsAffected, err
+	return err
 }
 
-func updateCustomer(id *int64, cust *models.Customer) int64 {
+func updateCustomer(id *int64, cust *models.Customer) error {
 
 	sqlStatement := `UPDATE customers SET
 		name=$2, agreement_number=$3, payment_type=$4
@@ -262,15 +258,16 @@ func updateCustomer(id *int64, cust *models.Customer) int64 {
 	)
 
 	if err != nil {
-		log.Fatalf("Unable to update customer. %v", err)
+		log.Printf("Unable to update customer. %v", err)
+		return err
 	}
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Fatalf("Error while updating customer. %v", err)
+	if err != nil || rowsAffected == 0 {
+		log.Printf("Error while updating customer. %v", err)
 	}
 
-	return rowsAffected
+	return err
 }

@@ -150,6 +150,16 @@ func getType(id *int64) (models.Type, error) {
 		fmt.Println("No rows were returned!")
 		return t, nil
 	case nil:
+
+		w, err := getWheel(&t.WheelID)
+		if err == nil {
+			t.Wheel = w
+		}
+		m, err := getMerk(&t.MerkID)
+		if err == nil {
+			t.Merk = m
+		}
+
 		return t, nil
 	default:
 		log.Fatalf("Unable to scan the row. %v", err)

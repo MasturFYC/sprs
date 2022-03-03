@@ -87,13 +87,17 @@ func CreateUnit(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&unit)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		log.Printf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusRequestedRangeNotSatisfiable), http.StatusRequestedRangeNotSatisfiable)
+		return
 	}
 
 	rowAffected, err := createUnit(&unit)
 
 	if err != nil {
-		log.Fatalf("Nama units tidak boleh sama.  %v", err)
+		log.Printf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
 	}
 
 	msg := fmt.Sprintf("Unit created successfully. Total rows/record affected %v", rowAffected)
@@ -123,10 +127,18 @@ func UpdateUnit(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&unit)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		log.Printf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusRequestedRangeNotSatisfiable), http.StatusRequestedRangeNotSatisfiable)
+		return
 	}
 
-	updatedRows := updateUnit(&id, &unit)
+	updatedRows, err := updateUnit(&id, &unit)
+
+	if err != nil {
+		log.Printf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
 
 	msg := fmt.Sprintf("Unit updated successfully. Total rows/record affected %v", updatedRows)
 
@@ -137,7 +149,7 @@ func UpdateUnit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// send the response
-	json.NewEncoder(w).Encode(res)
+	json.NewEncoder(w).Encode(&res)
 }
 
 func getUnit(id *int64) (models.Unit, error) {
@@ -171,13 +183,19 @@ func getUnit(id *int64) (models.Unit, error) {
 		return unit, nil
 	case nil:
 		t, err := getType(&unit.TypeID)
-
 		if err == nil {
 			unit.Type = t
 		}
+
+		w, err := getWarehouse(&unit.WarehouseID)
+
+		if err == nil {
+			unit.Warehouse = w
+		}
+
 		return unit, nil
 	default:
-		log.Fatalf("Unable to scan the row. %v", err)
+		log.Printf("Unable to scan the row. %v", err)
 	}
 
 	// return empty user on error
@@ -287,7 +305,7 @@ func createUnit(t *models.Unit) (int64, error) {
 	return rowsAffected, err
 }
 
-func updateUnit(id *int64, t *models.Unit) int64 {
+func updateUnit(id *int64, t *models.Unit) (int64, error) {
 
 	sqlStatement := `UPDATE units SET
 		nopol=$2, year=$3, frame_number=$4, machine_number=$5, bpkb_name=$6,
@@ -309,7 +327,8 @@ func updateUnit(id *int64, t *models.Unit) int64 {
 	)
 
 	if err != nil {
-		log.Fatalf("Unable to update unit. %v", err)
+		log.Printf("Unable to update unit. %v", err)
+		return 0, err
 	}
 
 	// check how many rows affected
@@ -319,5 +338,5 @@ func updateUnit(id *int64, t *models.Unit) int64 {
 		log.Fatalf("Error while updating unit. %v", err)
 	}
 
-	return rowsAffected
+	return rowsAffected, err
 }

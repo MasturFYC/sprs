@@ -2,13 +2,13 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.10 (Ubuntu 12.10-1.pgdg20.04+1)
--- Dumped by pg_dump version 14.2 (Ubuntu 14.2-1.pgdg20.04+1)
+-- Dumped from database version 13.5 (Debian 13.5-0+deb11u1)
+-- Dumped by pg_dump version 13.5 (Debian 13.5-0+deb11u1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
+SET client_encoding = 'SQL_ASCII';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
@@ -91,7 +91,7 @@ ALTER TABLE public.branchs OWNER TO postgres;
 
 CREATE TABLE public.customers (
     order_id integer NOT NULL,
-    name character varying(25) NOT NULL,
+    name character varying(50) NOT NULL,
     agreement_number character varying(25) NOT NULL,
     payment_type character varying(25) NOT NULL
 );
@@ -492,6 +492,7 @@ COPY public.branchs (id, name, street, city, phone, cell, zip, head_branch, emai
 --
 
 COPY public.customers (order_id, name, agreement_number, payment_type) FROM stdin;
+2	qweqwe	qweqwe	qweqwe
 \.
 
 
@@ -548,11 +549,11 @@ COPY public.office_addresses (order_id, street, region, city, phone, zip) FROM s
 
 COPY public.orders (id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn, user_name, verified_by, validated_by, finance_id, branch_id, nominal, subtotal) FROM stdin;
 3	x/3336/2022/XII/5556	2022-03-03	2022-03-05	1800000.00	20.00	1440000.00	0.00	Opick	\N	\N	1	1	0.00	1440000.00
-2	12365-56564-	2022-03-03	2022-03-05	1200000.00	20.00	960000.00	2.50	Mastur	\N	\N	1	1	24000.00	936000.00
 4	465456	2022-03-07	2022-03-10	56000.00	20.00	44800.00	0.00	Opick	\N	\N	2	1	0.00	44800.00
-5	87878	2022-03-03	2022-03-03	1200000.00	20.00	960000.00	0.00	Opick	\N	\N	2	1	0.00	960000.00
 6	ewqeqwe	2022-03-03	2022-03-03	25000.00	20.00	20000.00	0.00	Opick	\N	\N	1	1	0.00	20000.00
 7	99987-25-5555	2022-03-15	2022-03-25	1500000.00	20.00	1200000.00	0.00	Opick	\N	\N	1	1	0.00	1200000.00
+5	87878	2022-03-03	2022-03-03	1600000.00	20.00	1280000.00	10.00	Opick	\N	\N	2	1	128000.00	1152000.00
+2	12365-56564-	2022-03-03	2022-03-05	1200000.00	30.00	840000.00	2.50	Mastur	\N	\N	2	1	21000.00	819000.00
 \.
 
 
@@ -596,6 +597,9 @@ COPY public.types (id, name, wheel_id, merk_id) FROM stdin;
 --
 
 COPY public.units (order_id, nopol, year, frame_number, machine_number, bpkb_name, color, dealer, surveyor, type_id, warehouse_id) FROM stdin;
+7		2022							2	1
+5	E 36652 PKSJ	2020							3	1
+2	E - 256985 FFG	2022				Hitam			1	1
 \.
 
 
@@ -816,14 +820,6 @@ ALTER TABLE ONLY public.receivables
 
 ALTER TABLE ONLY public.types
     ADD CONSTRAINT types_pkey PRIMARY KEY (id);
-
-
---
--- Name: units units_no_pol_key; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.units
-    ADD CONSTRAINT units_no_pol_key UNIQUE (nopol);
 
 
 --
