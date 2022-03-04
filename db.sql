@@ -493,6 +493,7 @@ COPY public.branchs (id, name, street, city, phone, cell, zip, head_branch, emai
 
 COPY public.customers (order_id, name, agreement_number, payment_type) FROM stdin;
 2	qweqwe	qweqwe	qweqwe
+7	Junaedi	w-8995565	CO1
 \.
 
 
@@ -570,6 +571,7 @@ COPY public.post_addresses (order_id, street, region, city, phone, zip) FROM std
 --
 
 COPY public.receivables (order_id, covenant_at, due_at, mortgage_by_month, mortgage_receivable, running_fine, rest_fine, bill_service, pay_deposit, rest_receivable, rest_base, day_period, mortgage_to, day_count) FROM stdin;
+7	2022-03-04	2022-03-04	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0	0	0
 \.
 
 
