@@ -24,8 +24,8 @@ func createRouter() {
 }
 
 func loadEnvirontment() {
-	// err := godotenv.Load("/home/mastur/.env")
-	err := godotenv.Load(".env")
+	err := godotenv.Load("/home/mastur/.env")
+	//err := godotenv.Load(".env")
 
 	if err != nil {
 		log.Fatalf("Error loading .env file")
@@ -65,7 +65,9 @@ func runServer() {
 			"http://103.179.56.180",
 			"http://ya2yo.com",
 			"http://localhost:3000",
+			"http://192.168.100.3:3000",
 		},
+
 		AllowedMethods: []string{"POST", "GET", "OPTIONS", "PUT", "DELETE"},
 		AllowedHeaders: []string{"Accept", "Accept-Language", "Content-Type"},
 		//AllowCredentials: true,

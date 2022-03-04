@@ -21,7 +21,7 @@ import (
 // 	addresses, err := getAllKTPAddresses()
 
 // 	if err != nil {
-// 		log.Fatalf("Unable to get all home addresses. %v", err)
+// 		log.Fatalf("Unable to get all ktp addresses. %v", err)
 // 	}
 
 // 	json.NewEncoder(w).Encode(&addresses)
@@ -43,7 +43,7 @@ func GetKTPAddress(w http.ResponseWriter, r *http.Request) {
 	ha, err := getKTPAddress(&id)
 
 	if err != nil {
-		log.Fatalf("Unable to get home address. %v", err)
+		log.Fatalf("Unable to get ktp address. %v", err)
 	}
 
 	json.NewEncoder(w).Encode(&ha)
@@ -93,7 +93,7 @@ func CreateKTPAddress(w http.ResponseWriter, r *http.Request) {
 	rowAffected, err := createKTPAddress(&ha)
 
 	if err != nil {
-		log.Fatalf("Nama home address tidak boleh sama.  %v", err)
+		log.Fatalf("Nama ktp address tidak boleh sama.  %v", err)
 	}
 
 	msg := fmt.Sprintf("KTP address created successfully. Total rows/record affected %v", rowAffected)
@@ -147,7 +147,7 @@ func getKTPAddress(id *int64) (models.KtpAddress, error) {
 
 	var sqlStatement = `SELECT 
 		order_id, street, region, city, phone, zip
-	FROM home_addresses
+	FROM ktp_addresses
 	WHERE order_id=$1`
 
 	rs := Sql().QueryRow(sqlStatement, id)
@@ -174,13 +174,13 @@ func getKTPAddress(id *int64) (models.KtpAddress, error) {
 
 // 	var sqlStatement = `SELECT
 // 		order_id, street, region, city, phone, zip
-// 	FROM home_addresses
+// 	FROM ktp_addresses
 // 	ORDER BY name`
 
 // 	rs, err := Sql().Query(sqlStatement)
 
 // 	if err != nil {
-// 		log.Fatalf("Unable to execute home addresses query %v", err)
+// 		log.Fatalf("Unable to execute ktp addresses query %v", err)
 // 	}
 
 // 	defer rs.Close()
@@ -202,13 +202,13 @@ func getKTPAddress(id *int64) (models.KtpAddress, error) {
 
 func deleteKTPAddress(id *int64) int64 {
 	// create the delete sql query
-	sqlStatement := `DELETE FROM home_addresses WHERE order_id=$1`
+	sqlStatement := `DELETE FROM ktp_addresses WHERE order_id=$1`
 
 	// execute the sql statement
 	res, err := Sql().Exec(sqlStatement, id)
 
 	if err != nil {
-		log.Fatalf("Unable to delete home address. %v", err)
+		log.Fatalf("Unable to delete ktp address. %v", err)
 	}
 
 	// check how many rows affected
@@ -223,7 +223,7 @@ func deleteKTPAddress(id *int64) int64 {
 
 func createKTPAddress(ha *models.KtpAddress) (int64, error) {
 
-	sqlStatement := `INSERT INTO home_addresses
+	sqlStatement := `INSERT INTO ktp_addresses
 	(order_id, street, region, city, phone, zip) 
 	VALUES 
 	($1, $2, $3, $4, $5, $6)`
@@ -238,13 +238,13 @@ func createKTPAddress(ha *models.KtpAddress) (int64, error) {
 	)
 
 	if err != nil {
-		log.Fatalf("Unable to create home address. %v", err)
+		log.Fatalf("Unable to create ktp address. %v", err)
 	}
 
 	rowsAffected, err := res.RowsAffected()
 
 	if err != nil {
-		log.Fatalf("Unable to create home address. %v", err)
+		log.Fatalf("Unable to create ktp address. %v", err)
 	}
 
 	return rowsAffected, err
@@ -252,7 +252,7 @@ func createKTPAddress(ha *models.KtpAddress) (int64, error) {
 
 func updateKTPAddress(id *int64, ha *models.KtpAddress) int64 {
 
-	sqlStatement := `UPDATE home_addresses SET
+	sqlStatement := `UPDATE ktp_addresses SET
 		street=$2, region=$3, city=$4, phone=$5, zip=$6
 	WHERE order_id=$1`
 
@@ -266,14 +266,14 @@ func updateKTPAddress(id *int64, ha *models.KtpAddress) int64 {
 	)
 
 	if err != nil {
-		log.Fatalf("Unable to update home address. %v", err)
+		log.Fatalf("Unable to update ktp address. %v", err)
 	}
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
 	if err != nil {
-		log.Fatalf("Error while updating home address. %v", err)
+		log.Fatalf("Error while updating ktp address. %v", err)
 	}
 
 	return rowsAffected

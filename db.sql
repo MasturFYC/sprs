@@ -2,13 +2,13 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 13.5 (Debian 13.5-0+deb11u1)
--- Dumped by pg_dump version 13.5 (Debian 13.5-0+deb11u1)
+-- Dumped from database version 12.10 (Ubuntu 12.10-1.pgdg20.04+1)
+-- Dumped by pg_dump version 14.2 (Ubuntu 14.2-1.pgdg20.04+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'SQL_ASCII';
+SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
@@ -512,6 +512,7 @@ COPY public.finances (id, name, short_name, street, city, phone, cell, zip, emai
 --
 
 COPY public.home_addresses (order_id, street, region, city, phone, zip) FROM stdin;
+2	Jl. Jend. Sudirman No. 11/A-4	\N	Indramayu	+6285321703564	45215
 \.
 
 
@@ -520,6 +521,7 @@ COPY public.home_addresses (order_id, street, region, city, phone, zip) FROM std
 --
 
 COPY public.ktp_addresses (order_id, street, region, city, phone, zip) FROM stdin;
+2	Jl. Jend. Sudirman No. 11/A-4	\N	Indramayu	+6285321703564	45215
 \.
 
 
@@ -541,6 +543,7 @@ COPY public.merks (id, name) FROM stdin;
 --
 
 COPY public.office_addresses (order_id, street, region, city, phone, zip) FROM stdin;
+2	Jl. Jend. Sudirman No. 11/A-4	\N	Indramayu	+6285321703564	45215
 \.
 
 
@@ -563,6 +566,7 @@ COPY public.orders (id, name, order_at, printed_at, bt_finance, bt_percent, bt_m
 --
 
 COPY public.post_addresses (order_id, street, region, city, phone, zip) FROM stdin;
+2	Jl. Jend. Sudirman No. 11/A-4	\N	Indramayu	+6285321703564	45215
 \.
 
 
@@ -572,6 +576,7 @@ COPY public.post_addresses (order_id, street, region, city, phone, zip) FROM std
 
 COPY public.receivables (order_id, covenant_at, due_at, mortgage_by_month, mortgage_receivable, running_fine, rest_fine, bill_service, pay_deposit, rest_receivable, rest_base, day_period, mortgage_to, day_count) FROM stdin;
 7	2022-03-04	2022-03-04	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0	0	0
+2	2022-03-04	2022-03-04	10000.00	5555.00	0.00	0.00	0.00	0.00	0.00	0.00	0	0	0
 \.
 
 
@@ -599,9 +604,9 @@ COPY public.types (id, name, wheel_id, merk_id) FROM stdin;
 --
 
 COPY public.units (order_id, nopol, year, frame_number, machine_number, bpkb_name, color, dealer, surveyor, type_id, warehouse_id) FROM stdin;
-7		2022							2	1
 5	E 36652 PKSJ	2020							3	1
-2	E - 256985 FFG	2022				Hitam			1	1
+7		2022							2	2
+2	E - 256985 FFG	2022				Hitam			1	2
 \.
 
 
@@ -619,6 +624,7 @@ COPY public.users (id, name, email, password, role) FROM stdin;
 
 COPY public.warehouses (id, name, descriptions) FROM stdin;
 1	Gudang Pusat	Indramayu
+2	Gudang Patrol	Patrol
 \.
 
 
@@ -686,7 +692,7 @@ SELECT pg_catalog.setval('public.users_id_seq', 1, false);
 -- Name: warehouse_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.warehouse_id_seq', 1, true);
+SELECT pg_catalog.setval('public.warehouse_id_seq', 2, true);
 
 
 --
