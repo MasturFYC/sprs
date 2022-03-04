@@ -1,17 +1,15 @@
 package models
 
-import "time"
-
 // table tunggakan
 type Receivable struct {
 	// nomor order
 	OrderID int64 `json:"orderId"`
 
 	// tgl perjanjian
-	CovenantAt time.Time `json:"covenantAt"`
+	CovenantAt string `json:"covenantAt"`
 
 	// tgl jatuh tempo
-	DueAt time.Time `json:"dueAt"`
+	DueAt string `json:"dueAt"`
 
 	// angsuran per bulan
 	MortgageByMonth float64 `json:"mortgageByMonth"`

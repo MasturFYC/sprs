@@ -86,14 +86,20 @@ func CreateReceivable(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&rv)
 
+	// log.Printf("----------- %v", rv)
+
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		log.Printf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusRequestedRangeNotSatisfiable), http.StatusRequestedRangeNotSatisfiable)
+		return
 	}
 
 	rowAffected, err := createReceivable(&rv)
 
 	if err != nil {
-		log.Fatalf("Nama receivable tidak boleh sama.  %v", err)
+		log.Printf("Nama receivable tidak boleh sama.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
 	}
 
 	msg := fmt.Sprintf("Receivale created successfully. Total rows/record affected %v", rowAffected)
@@ -123,11 +129,20 @@ func UpdateReceivable(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&rv)
 
+	// log.Printf("----------- %v", rv)
+
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		log.Printf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusRequestedRangeNotSatisfiable), http.StatusRequestedRangeNotSatisfiable)
+		return
 	}
 
-	updatedRows := updateReceivable(&id, &rv)
+	updatedRows, err := updateReceivable(&id, &rv)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
 
 	msg := fmt.Sprintf("Receivale updated successfully. Total rows/record affected %v", updatedRows)
 
@@ -265,19 +280,20 @@ func createReceivable(rv *models.Receivable) (int64, error) {
 	)
 
 	if err != nil {
-		log.Fatalf("Unable to create receivable. %v", err)
+		log.Printf("Unable to create receivable. %v", err)
+		return 0, err
 	}
 
 	rowsAffected, err := res.RowsAffected()
 
 	if err != nil {
-		log.Fatalf("Unable to create receivable. %v", err)
+		log.Printf("Unable to create receivable. %v", err)
 	}
 
 	return rowsAffected, err
 }
 
-func updateReceivable(id *int64, rv *models.Receivable) int64 {
+func updateReceivable(id *int64, rv *models.Receivable) (int64, error) {
 
 	sqlStatement := `UPDATE receivables SET
 		covenant_at=$2,
@@ -313,15 +329,16 @@ func updateReceivable(id *int64, rv *models.Receivable) int64 {
 	)
 
 	if err != nil {
-		log.Fatalf("Unable to update receivable. %v", err)
+		log.Printf("Unable to update receivable. %v", err)
+		return 0, err
 	}
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
 	if err != nil {
-		log.Fatalf("Error while updating receivable. %v", err)
+		log.Printf("Error while updating receivable. %v", err)
 	}
 
-	return rowsAffected
+	return rowsAffected, err
 }
