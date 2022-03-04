@@ -87,13 +87,17 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&task)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		log.Printf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusRequestedRangeNotSatisfiable), http.StatusRequestedRangeNotSatisfiable)
+		return
 	}
 
 	rowAffected, err := createTask(&task)
 
 	if err != nil {
-		log.Fatalf("Nama tasks tidak boleh sama.  %v", err)
+		log.Printf("Nama tasks tidak boleh sama.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
 	}
 
 	msg := fmt.Sprintf("Task created successfully. Total rows/record affected %v", rowAffected)
@@ -123,10 +127,18 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&task)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		log.Printf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusRequestedRangeNotSatisfiable), http.StatusRequestedRangeNotSatisfiable)
+		return
 	}
 
-	updatedRows := updateTask(&id, &task)
+	updatedRows, err := updateTask(&id, &task)
+
+	if err != nil {
+		log.Printf("Unable to update task.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
 
 	msg := fmt.Sprintf("Task updated successfully. Total rows/record affected %v", updatedRows)
 
@@ -145,7 +157,7 @@ func getTask(id *int64) (models.Task, error) {
 	var task models.Task
 
 	var sqlStatement = `SELECT 
-		descriptions, period_from, period_to,
+		order_id, descriptions, period_from, period_to,
 		recipient_name, recipient_position,
 		giver_name, giver_position
 	FROM tasks
@@ -262,23 +274,20 @@ func createTask(t *models.Task) (int64, error) {
 	)
 
 	if err != nil {
-		log.Fatalf("Unable to create task. %v", err)
-	}
-
-	if err != nil {
-		log.Fatalf("Unable to create customer. %v", err)
+		log.Printf("Unable to create task. %v", err)
+		return 0, err
 	}
 
 	rowsAffected, err := res.RowsAffected()
 
 	if err != nil {
-		log.Fatalf("Unable to create customer. %v", err)
+		log.Printf("No task created. %v", err)
 	}
 
 	return rowsAffected, err
 }
 
-func updateTask(id *int64, t *models.Task) int64 {
+func updateTask(id *int64, t *models.Task) (int64, error) {
 
 	sqlStatement := `UPDATE tasks SET
 		descriptions=$2, period_from=$3, period_to=$4,
@@ -298,7 +307,8 @@ func updateTask(id *int64, t *models.Task) int64 {
 	)
 
 	if err != nil {
-		log.Fatalf("Unable to update task. %v", err)
+		log.Printf("Unable to update task. %v", err)
+		return 0, err
 	}
 
 	// check how many rows affected
@@ -308,5 +318,5 @@ func updateTask(id *int64, t *models.Task) int64 {
 		log.Fatalf("Error while updating task. %v", err)
 	}
 
-	return rowsAffected
+	return rowsAffected, err
 }

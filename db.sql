@@ -2,13 +2,13 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.10 (Ubuntu 12.10-1.pgdg20.04+1)
--- Dumped by pg_dump version 14.2 (Ubuntu 14.2-1.pgdg20.04+1)
+-- Dumped from database version 13.5 (Debian 13.5-0+deb11u1)
+-- Dumped by pg_dump version 13.5 (Debian 13.5-0+deb11u1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
+SET client_encoding = 'SQL_ASCII';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
@@ -92,7 +92,7 @@ ALTER TABLE public.branchs OWNER TO postgres;
 CREATE TABLE public.customers (
     order_id integer NOT NULL,
     name character varying(50) NOT NULL,
-    agreement_number character varying(25) NOT NULL,
+    agreement_number character varying(25),
     payment_type character varying(25) NOT NULL
 );
 
@@ -249,7 +249,9 @@ CREATE TABLE public.orders (
     finance_id smallint DEFAULT 0 NOT NULL,
     branch_id smallint DEFAULT 0 NOT NULL,
     nominal numeric(12,2) DEFAULT 0 NOT NULL,
-    subtotal numeric(12,2) DEFAULT 0 NOT NULL
+    subtotal numeric(12,2) DEFAULT 0 NOT NULL,
+    is_stnk boolean DEFAULT true NOT NULL,
+    stnk_price numeric(12,2) DEFAULT 0 NOT NULL
 );
 
 
@@ -492,8 +494,7 @@ COPY public.branchs (id, name, street, city, phone, cell, zip, head_branch, emai
 --
 
 COPY public.customers (order_id, name, agreement_number, payment_type) FROM stdin;
-2	qweqwe	qweqwe	qweqwe
-7	Junaedi	w-8995565	CO1
+3	Wardiman	dd	CO-1
 \.
 
 
@@ -512,7 +513,6 @@ COPY public.finances (id, name, short_name, street, city, phone, cell, zip, emai
 --
 
 COPY public.home_addresses (order_id, street, region, city, phone, zip) FROM stdin;
-2	Jl. Jend. Sudirman No. 11/A-4	\N	Indramayu	+6285321703564	45215
 \.
 
 
@@ -521,7 +521,6 @@ COPY public.home_addresses (order_id, street, region, city, phone, zip) FROM std
 --
 
 COPY public.ktp_addresses (order_id, street, region, city, phone, zip) FROM stdin;
-2	Jl. Jend. Sudirman No. 11/A-4	\N	Indramayu	+6285321703564	45215
 \.
 
 
@@ -543,7 +542,6 @@ COPY public.merks (id, name) FROM stdin;
 --
 
 COPY public.office_addresses (order_id, street, region, city, phone, zip) FROM stdin;
-2	Jl. Jend. Sudirman No. 11/A-4	\N	Indramayu	+6285321703564	45215
 \.
 
 
@@ -551,13 +549,8 @@ COPY public.office_addresses (order_id, street, region, city, phone, zip) FROM s
 -- Data for Name: orders; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.orders (id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn, user_name, verified_by, validated_by, finance_id, branch_id, nominal, subtotal) FROM stdin;
-3	x/3336/2022/XII/5556	2022-03-03	2022-03-05	1800000.00	20.00	1440000.00	0.00	Opick	\N	\N	1	1	0.00	1440000.00
-4	465456	2022-03-07	2022-03-10	56000.00	20.00	44800.00	0.00	Opick	\N	\N	2	1	0.00	44800.00
-6	ewqeqwe	2022-03-03	2022-03-03	25000.00	20.00	20000.00	0.00	Opick	\N	\N	1	1	0.00	20000.00
-7	99987-25-5555	2022-03-15	2022-03-25	1500000.00	20.00	1200000.00	0.00	Opick	\N	\N	1	1	0.00	1200000.00
-5	87878	2022-03-03	2022-03-03	1600000.00	20.00	1280000.00	10.00	Opick	\N	\N	2	1	128000.00	1152000.00
-2	12365-56564-	2022-03-03	2022-03-05	1200000.00	30.00	840000.00	2.50	Mastur	\N	\N	2	1	21000.00	819000.00
+COPY public.orders (id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn, user_name, verified_by, validated_by, finance_id, branch_id, nominal, subtotal, is_stnk, stnk_price) FROM stdin;
+3	x/3336/2022/XII/5556	2022-03-03	2022-03-05	1800000.00	30.00	1260000.00	0.00	Opick	\N	\N	1	1	0.00	540000.00	t	0.00
 \.
 
 
@@ -566,7 +559,6 @@ COPY public.orders (id, name, order_at, printed_at, bt_finance, bt_percent, bt_m
 --
 
 COPY public.post_addresses (order_id, street, region, city, phone, zip) FROM stdin;
-2	Jl. Jend. Sudirman No. 11/A-4	\N	Indramayu	+6285321703564	45215
 \.
 
 
@@ -575,8 +567,6 @@ COPY public.post_addresses (order_id, street, region, city, phone, zip) FROM std
 --
 
 COPY public.receivables (order_id, covenant_at, due_at, mortgage_by_month, mortgage_receivable, running_fine, rest_fine, bill_service, pay_deposit, rest_receivable, rest_base, day_period, mortgage_to, day_count) FROM stdin;
-7	2022-03-04	2022-03-04	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0	0	0
-2	2022-03-04	2022-03-04	10000.00	5555.00	0.00	0.00	0.00	0.00	0.00	0.00	0	0	0
 \.
 
 
@@ -585,6 +575,7 @@ COPY public.receivables (order_id, covenant_at, due_at, mortgage_by_month, mortg
 --
 
 COPY public.tasks (order_id, descriptions, period_from, period_to, recipient_name, recipient_position, giver_position, giver_name) FROM stdin;
+3	qwewqe	2022-03-05	2022-03-07	Kepala Cabang PT SPRS	Field Collector	Branch Head	Abdul Rahman
 \.
 
 
@@ -604,9 +595,7 @@ COPY public.types (id, name, wheel_id, merk_id) FROM stdin;
 --
 
 COPY public.units (order_id, nopol, year, frame_number, machine_number, bpkb_name, color, dealer, surveyor, type_id, warehouse_id) FROM stdin;
-5	E 36652 PKSJ	2020							3	1
-7		2022							2	2
-2	E - 256985 FFG	2022				Hitam			1	2
+3	E 5985 FGD	2022							2	2
 \.
 
 
@@ -839,6 +828,14 @@ ALTER TABLE ONLY public.units
 
 
 --
+-- Name: units uq_unit_nopol; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.units
+    ADD CONSTRAINT uq_unit_nopol UNIQUE (nopol);
+
+
+--
 -- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -926,11 +923,19 @@ CREATE INDEX idx_type_roda ON public.types USING btree (wheel_id);
 
 
 --
+-- Name: actions actions_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.actions
+    ADD CONSTRAINT actions_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
+
+
+--
 -- Name: customers customers_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.customers
-    ADD CONSTRAINT customers_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id);
+    ADD CONSTRAINT customers_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
 
 
 --
@@ -954,7 +959,7 @@ ALTER TABLE ONLY public.types
 --
 
 ALTER TABLE ONLY public.home_addresses
-    ADD CONSTRAINT home_addresses_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id);
+    ADD CONSTRAINT home_addresses_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
 
 
 --
@@ -962,7 +967,7 @@ ALTER TABLE ONLY public.home_addresses
 --
 
 ALTER TABLE ONLY public.ktp_addresses
-    ADD CONSTRAINT ktp_addresses_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id);
+    ADD CONSTRAINT ktp_addresses_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
 
 
 --
@@ -970,7 +975,7 @@ ALTER TABLE ONLY public.ktp_addresses
 --
 
 ALTER TABLE ONLY public.office_addresses
-    ADD CONSTRAINT office_addresses_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id);
+    ADD CONSTRAINT office_addresses_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
 
 
 --
@@ -994,7 +999,15 @@ ALTER TABLE ONLY public.orders
 --
 
 ALTER TABLE ONLY public.post_addresses
-    ADD CONSTRAINT post_addresses_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id);
+    ADD CONSTRAINT post_addresses_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
+
+
+--
+-- Name: receivables receivables_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.receivables
+    ADD CONSTRAINT receivables_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
 
 
 --
@@ -1002,23 +1015,7 @@ ALTER TABLE ONLY public.post_addresses
 --
 
 ALTER TABLE ONLY public.tasks
-    ADD CONSTRAINT tasks_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id);
-
-
---
--- Name: actions tindakans_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.actions
-    ADD CONSTRAINT tindakans_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id);
-
-
---
--- Name: receivables tunggakans_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.receivables
-    ADD CONSTRAINT tunggakans_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id);
+    ADD CONSTRAINT tasks_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
 
 
 --
@@ -1034,7 +1031,7 @@ ALTER TABLE ONLY public.units
 --
 
 ALTER TABLE ONLY public.units
-    ADD CONSTRAINT units_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id);
+    ADD CONSTRAINT units_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
 
 
 --

@@ -247,7 +247,7 @@ func getUnit(id *int64) (models.Unit, error) {
 
 func deleteUnit(id *int64) int64 {
 	// create the delete sql query
-	sqlStatement := `DELETE FROM units WHERE id=$1`
+	sqlStatement := `DELETE FROM units WHERE order_id=$1`
 
 	// execute the sql statement
 	res, err := Sql().Exec(sqlStatement, id)

@@ -9,8 +9,8 @@ type Order struct {
 	// nomor SPK
 	Name string `json:"name"`
 	// tanggal penerimaan SPK
-	OrderAt     string  `json:"orderAt"`
-	PrintedAt   string  `json:"printedAt"`
+	OrderAt     string     `json:"orderAt"`
+	PrintedAt   string     `json:"printedAt"`
 	BtFinance   float64    `json:"btFinance"`
 	BtPercent   float32    `json:"btPercent"`
 	BtMatel     float64    `json:"btMatel"`
@@ -22,6 +22,8 @@ type Order struct {
 	ValidatedBy NullString `json:"validatedBy"`
 	FinanceID   int        `json:"financeId"`
 	BranchID    int        `json:"branchId"`
+	IsStnk      bool       `json:"isStnk"`
+	StnkPrice   float64    `json:"stnkPrice"`
 
 	// * badan keuangan
 	Finance Finance `json:"finance,omitempty"`

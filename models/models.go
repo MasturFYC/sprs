@@ -58,7 +58,7 @@ type Branch struct {
 type Customer struct {
 	OrderID         int64  `json:"orderId"`
 	Name            string `json:"name"`
-	AgreementNumber string `json:"agreementNumber"`
+	AgreementNumber NullString `json:"agreementNumber"`
 	PaymentType     string `json:"paymentType"`
 }
 

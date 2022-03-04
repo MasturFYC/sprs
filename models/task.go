@@ -1,15 +1,15 @@
 package models
 
-import "time"
+//import "time"
 
 // table tugas tugas
 type Task struct {
 	OrderID int64 `json:"orderId"`
 
 	// periode awal tagihan
-	PeriodFrom time.Time `json:"periodFrom"`
+	PeriodFrom string `json:"periodFrom"`
 	// periode akhir tagihan
-	PeriodTo time.Time `json:"periodTo"`
+	PeriodTo string `json:"periodTo"`
 
 	// nama penerima tugas
 	RecipientName string `json:"recipientName"`
@@ -22,5 +22,5 @@ type Task struct {
 	GiverPosition string `json:"giverPosition"`
 
 	// keterangan
-	Descriptions string `json:"descriptions"`
+	Descriptions NullString `json:"descriptions"`
 }
