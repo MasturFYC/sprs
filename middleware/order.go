@@ -355,7 +355,7 @@ func createOrder(o *models.Order) (int64, error) {
 	).Scan(&id)
 
 	if err != nil {
-		log.Fatalf("Unable to create order. %v", err)
+		log.Printf("Unable to create order. %v", err)
 	}
 
 	return id, err

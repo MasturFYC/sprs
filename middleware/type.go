@@ -173,7 +173,10 @@ func getAllTypes() ([]models.Type, error) {
 
 	var types []models.Type
 
-	var sqlStatement = `SELECT id, name, wheel_id, merk_id	FROM types`
+	var sqlStatement = `SELECT
+		id, name, wheel_id, merk_id
+	FROM types
+	ORDER BY name`
 
 	rs, err := Sql().Query(sqlStatement)
 

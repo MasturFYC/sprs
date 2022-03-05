@@ -38,7 +38,7 @@ func GenerateJWT(email, role string) (string, error) {
 	tokenString, err := token.SignedString(mySigningKey)
 
 	if err != nil {
-		fmt.Errorf("Something Went Wrong: %s", err.Error())
+		_ = fmt.Errorf("Something Went Wrong: %s", err.Error())
 		return "", err
 	}
 	return tokenString, nil
@@ -47,7 +47,7 @@ func GenerateJWT(email, role string) (string, error) {
 func SignUp(w http.ResponseWriter, r *http.Request) {
 
 	var user models.User
-	err := json.NewDecoder(r.Body).Decode(user)
+	err := json.NewDecoder(r.Body).Decode(&user)
 
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
