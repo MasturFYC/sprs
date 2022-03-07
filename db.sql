@@ -16,6 +16,38 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: acc_code; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.acc_code (
+    id smallint NOT NULL,
+    name character varying(50) NOT NULL,
+    acc_type_id smallint NOT NULL,
+    descriptions character varying(128),
+    token_name tsvector
+);
+
+
+ALTER TABLE public.acc_code OWNER TO postgres;
+
+--
+-- Name: acc_type; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.acc_type (
+    id smallint NOT NULL,
+    name character varying(50) NOT NULL,
+    descriptions character varying(128)
+);
+
+
+ALTER TABLE public.acc_type OWNER TO postgres;
+
 --
 -- Name: action_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
@@ -31,10 +63,6 @@ CREATE SEQUENCE public.action_id_seq
 
 ALTER TABLE public.action_id_seq OWNER TO postgres;
 
-SET default_tablespace = '';
-
-SET default_table_access_method = heap;
-
 --
 -- Name: actions; Type: TABLE; Schema: public; Owner: postgres
 --
@@ -44,7 +72,7 @@ CREATE TABLE public.actions (
     action_at date NOT NULL,
     code character varying(50) NOT NULL,
     pic character varying(50) NOT NULL,
-    descriptions character varying(128),
+    descriptions text,
     order_id integer NOT NULL
 );
 
@@ -316,6 +344,79 @@ CREATE TABLE public.tasks (
 ALTER TABLE public.tasks OWNER TO postgres;
 
 --
+-- Name: trx_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.trx_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.trx_seq OWNER TO postgres;
+
+--
+-- Name: trx; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.trx (
+    id integer DEFAULT nextval('public.trx_seq'::regclass) NOT NULL,
+    trx_type_id smallint NOT NULL,
+    ref_id integer DEFAULT 0 NOT NULL,
+    division character varying(25) DEFAULT 'umum'::character varying NOT NULL,
+    descriptions character varying(128) NOT NULL,
+    trx_date date DEFAULT now() NOT NULL,
+    memo character varying(256)
+);
+
+
+ALTER TABLE public.trx OWNER TO postgres;
+
+--
+-- Name: trx_detail_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.trx_detail_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.trx_detail_seq OWNER TO postgres;
+
+--
+-- Name: trx_detail; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.trx_detail (
+    id integer DEFAULT nextval('public.trx_detail_seq'::regclass) NOT NULL,
+    acc_code_id smallint NOT NULL,
+    trx_id integer NOT NULL,
+    debt numeric(12,2),
+    cred numeric(12,2)
+);
+
+
+ALTER TABLE public.trx_detail OWNER TO postgres;
+
+--
+-- Name: trx_type; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.trx_type (
+    id smallint NOT NULL,
+    name character varying(50) NOT NULL,
+    descriptions character varying(128)
+);
+
+
+ALTER TABLE public.trx_type OWNER TO postgres;
+
+--
 -- Name: type_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -473,6 +574,37 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 
 
 --
+-- Data for Name: acc_code; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.acc_code (id, name, acc_type_id, descriptions, token_name) FROM stdin;
+5118	Biaya Konsumsi	51	Biaya konsumsi rapat	'biaya':1,3 'konsumsi':2,4 'rapat':5
+5113	Biaya Telephone dan Fax	51	Biaya telephone dan faximile ke telkomsel	'biaya':1,5 'dan':3,7 'fax':4 'faximil':8 'ke':9 'telephon':2,6 'telkomsel':10
+5111	Biaya Transport	51	Biaya transportasi karyawan	'biaya':1,3 'karyawan':5 'transport':2 'transportasi':4
+5115	Biaya Pos dan Materai	51	Biaya pengiriman surat dan pembelian materai.	'biaya':1,5 'dan':3,8 'materai':4,10 'pembelian':9 'pengiriman':6 'pos':2 'surat':7
+5116	Biaya ATK	51	Biaya ATK kantor.	'atk':2,4 'biaya':1,3 'kantor':5
+5112	Biaya Listrik	51	Biaya pemakaian listrik	'biaya':1,3 'listrik':2,5 'pemakaian':4
+1111	Kas Kecil	11	Kas bendahara Kantor	'bendahara':4 'kantor':5 'kas':1,3 'kecil':2
+1112	Bank BCA 0856212654	11	Rekening BCA Opik	'0856212654':3 'bank':1 'bca':2,5 'opik':6 'reken':4
+5117	Biaya Service	51	Biaya service kendaraan, AC, dll.	'ac':6 'biaya':1,3 'dll':7 'kendaraan':5 'servic':2,4
+5114	Biaya Internet	51	Biaya jaringan internet ke Biznet	'biaya':1,3 'biznet':7 'internet':2,5 'jaringan':4 'ke':6
+\.
+
+
+--
+-- Data for Name: acc_type; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.acc_type (id, name, descriptions) FROM stdin;
+14	Peralatan	Kelompok akun yg digunakan untuk mencatat barang atau tempat yang digunakan perusahaan untuk mendukung jalannya pekerjaan.
+13	Persediaan	Kelompok akun yg digunakan untuk mencatat persediaan bahan baku yang menunggu penggunaannya dalam suatu proses produksi.
+11	Kas	Kelompok akun yg berfungsi mencatat perubahan uang seperti penerimaan atau pengeluaran. termasuk akun kas, seperti cek, giro.
+12	Piutang	Kelompok akun yg timbul akibat adanya penjualan barang, jasa, atau pemberian kredit debitur yg digunakan untuk pembayaran.
+51	Biaya Kantor	Kelompok akun yg diakibatkan adanya pembayaran listrik, internet, PDAM, telephone.
+\.
+
+
+--
 -- Data for Name: actions; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -580,6 +712,37 @@ COPY public.tasks (order_id, descriptions, period_from, period_to, recipient_nam
 
 
 --
+-- Data for Name: trx; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.trx (id, trx_type_id, ref_id, division, descriptions, trx_date, memo) FROM stdin;
+2	14	0		Beli rokok + kopi om Mastur	2022-03-06	\N
+3	11	0		Modal dari bos	2022-03-06	\N
+\.
+
+
+--
+-- Data for Name: trx_detail; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.trx_detail (id, acc_code_id, trx_id, debt, cred) FROM stdin;
+\.
+
+
+--
+-- Data for Name: trx_type; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.trx_type (id, name, descriptions) FROM stdin;
+12	Pendapatan	Jumlah yang dibebankan kepada pelanggan untuk barang dan jasa yang dijual.
+11	Modal	Segala sesuatu yang dipergunakan untuk membangun atau memulai sebuah usaha.
+13	Pengeluaran	Item yang dapat dibebankan terhadap pendapatan untuk periode tertentu, seperti gaji karyawan, listrik, dll
+14	Biaya	Jumlah yg harus dibayar untuk memperoleh sesuatu. yaitu biaya aset, tenaga kerja, bahan2, pengiriman, penanganan
+15	Piutang Pelanggan	Dana yg ada di pelanggan belum bisa dicairkan
+\.
+
+
+--
 -- Data for Name: types; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -664,6 +827,20 @@ SELECT pg_catalog.setval('public.order_id_seq', 7, true);
 
 
 --
+-- Name: trx_detail_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.trx_detail_seq', 1, false);
+
+
+--
+-- Name: trx_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.trx_seq', 3, true);
+
+
+--
 -- Name: type_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
@@ -689,6 +866,38 @@ SELECT pg_catalog.setval('public.warehouse_id_seq', 2, true);
 --
 
 SELECT pg_catalog.setval('public.wheel_id_seq', 6, true);
+
+
+--
+-- Name: acc_code acc_code_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.acc_code
+    ADD CONSTRAINT acc_code_name_key UNIQUE (name);
+
+
+--
+-- Name: acc_code acc_code_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.acc_code
+    ADD CONSTRAINT acc_code_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: acc_type acc_type_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.acc_type
+    ADD CONSTRAINT acc_type_name_key UNIQUE (name);
+
+
+--
+-- Name: acc_type acc_type_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.acc_type
+    ADD CONSTRAINT acc_type_pkey PRIMARY KEY (id);
 
 
 --
@@ -804,6 +1013,38 @@ ALTER TABLE ONLY public.actions
 
 
 --
+-- Name: trx_detail trx_detail_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.trx_detail
+    ADD CONSTRAINT trx_detail_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: trx trx_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.trx
+    ADD CONSTRAINT trx_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: trx_type trx_type_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.trx_type
+    ADD CONSTRAINT trx_type_name_key UNIQUE (name);
+
+
+--
+-- Name: trx_type trx_type_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.trx_type
+    ADD CONSTRAINT trx_type_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: receivables tunggakans_order_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -857,6 +1098,20 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: acc_code_token; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX acc_code_token ON public.acc_code USING gin (token_name);
+
+
+--
+-- Name: acc_code_type; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX acc_code_type ON public.acc_code USING btree (acc_type_id);
 
 
 --
@@ -920,6 +1175,35 @@ CREATE INDEX idx_type_merk ON public.types USING btree (merk_id);
 --
 
 CREATE INDEX idx_type_roda ON public.types USING btree (wheel_id);
+
+
+--
+-- Name: ix_trx_detail_acc_code; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_trx_detail_acc_code ON public.trx_detail USING btree (acc_code_id);
+
+
+--
+-- Name: ix_trx_detail_trx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_trx_detail_trx ON public.trx_detail USING btree (trx_id);
+
+
+--
+-- Name: ix_trx_type; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_trx_type ON public.trx USING btree (trx_type_id);
+
+
+--
+-- Name: acc_code acc_code_acc_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.acc_code
+    ADD CONSTRAINT acc_code_acc_type_id_fkey FOREIGN KEY (acc_type_id) REFERENCES public.acc_type(id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 
 --
@@ -1016,6 +1300,30 @@ ALTER TABLE ONLY public.receivables
 
 ALTER TABLE ONLY public.tasks
     ADD CONSTRAINT tasks_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
+
+
+--
+-- Name: trx_detail trx_detail_acc_code_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.trx_detail
+    ADD CONSTRAINT trx_detail_acc_code_id_fkey FOREIGN KEY (acc_code_id) REFERENCES public.acc_code(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+
+--
+-- Name: trx_detail trx_detail_trx_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.trx_detail
+    ADD CONSTRAINT trx_detail_trx_id_fkey FOREIGN KEY (trx_id) REFERENCES public.trx(id) ON DELETE RESTRICT;
+
+
+--
+-- Name: trx trx_trx_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.trx
+    ADD CONSTRAINT trx_trx_type_id_fkey FOREIGN KEY (trx_type_id) REFERENCES public.trx_type(id) ON DELETE RESTRICT;
 
 
 --

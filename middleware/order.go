@@ -231,7 +231,8 @@ func getAllOrders() ([]models.Order, error) {
 	rs, err := Sql().Query(sqlStatement)
 
 	if err != nil {
-		log.Fatalf("Unable to execute orderes query %v", err)
+		log.Printf("Unable to execute orderes query %v", err)
+		return nil, err
 	}
 
 	defer rs.Close()
