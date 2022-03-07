@@ -2,13 +2,13 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 13.5 (Debian 13.5-0+deb11u1)
--- Dumped by pg_dump version 13.5 (Debian 13.5-0+deb11u1)
+-- Dumped from database version 12.10 (Debian 12.10-1.pgdg100+1)
+-- Dumped by pg_dump version 12.10 (Debian 12.10-1.pgdg100+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'SQL_ASCII';
+SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
@@ -120,7 +120,7 @@ ALTER TABLE public.branchs OWNER TO postgres;
 CREATE TABLE public.customers (
     order_id integer NOT NULL,
     name character varying(50) NOT NULL,
-    agreement_number character varying(25),
+    agreement_number character varying(50),
     payment_type character varying(25) NOT NULL
 );
 
@@ -368,11 +368,27 @@ CREATE TABLE public.trx (
     division character varying(25) DEFAULT 'umum'::character varying NOT NULL,
     descriptions character varying(128) NOT NULL,
     trx_date date DEFAULT now() NOT NULL,
-    memo character varying(256)
+    memo character varying(256),
+    trx_token tsvector
 );
 
 
 ALTER TABLE public.trx OWNER TO postgres;
+
+--
+-- Name: trx_detail; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.trx_detail (
+    id integer NOT NULL,
+    acc_code_id smallint NOT NULL,
+    trx_id integer NOT NULL,
+    debt numeric(12,2),
+    cred numeric(12,2)
+);
+
+
+ALTER TABLE public.trx_detail OWNER TO postgres;
 
 --
 -- Name: trx_detail_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -387,21 +403,6 @@ CREATE SEQUENCE public.trx_detail_seq
 
 
 ALTER TABLE public.trx_detail_seq OWNER TO postgres;
-
---
--- Name: trx_detail; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.trx_detail (
-    id integer DEFAULT nextval('public.trx_detail_seq'::regclass) NOT NULL,
-    acc_code_id smallint NOT NULL,
-    trx_id integer NOT NULL,
-    debt numeric(12,2),
-    cred numeric(12,2)
-);
-
-
-ALTER TABLE public.trx_detail OWNER TO postgres;
 
 --
 -- Name: trx_type; Type: TABLE; Schema: public; Owner: postgres
@@ -580,14 +581,18 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 COPY public.acc_code (id, name, acc_type_id, descriptions, token_name) FROM stdin;
 5118	Biaya Konsumsi	51	Biaya konsumsi rapat	'biaya':1,3 'konsumsi':2,4 'rapat':5
 5113	Biaya Telephone dan Fax	51	Biaya telephone dan faximile ke telkomsel	'biaya':1,5 'dan':3,7 'fax':4 'faximil':8 'ke':9 'telephon':2,6 'telkomsel':10
-5111	Biaya Transport	51	Biaya transportasi karyawan	'biaya':1,3 'karyawan':5 'transport':2 'transportasi':4
 5115	Biaya Pos dan Materai	51	Biaya pengiriman surat dan pembelian materai.	'biaya':1,5 'dan':3,8 'materai':4,10 'pembelian':9 'pengiriman':6 'pos':2 'surat':7
-5116	Biaya ATK	51	Biaya ATK kantor.	'atk':2,4 'biaya':1,3 'kantor':5
 5112	Biaya Listrik	51	Biaya pemakaian listrik	'biaya':1,3 'listrik':2,5 'pemakaian':4
 1111	Kas Kecil	11	Kas bendahara Kantor	'bendahara':4 'kantor':5 'kas':1,3 'kecil':2
 1112	Bank BCA 0856212654	11	Rekening BCA Opik	'0856212654':3 'bank':1 'bca':2,5 'opik':6 'reken':4
 5117	Biaya Service	51	Biaya service kendaraan, AC, dll.	'ac':6 'biaya':1,3 'dll':7 'kendaraan':5 'servic':2,4
 5114	Biaya Internet	51	Biaya jaringan internet ke Biznet	'biaya':1,3 'biznet':7 'internet':2,5 'jaringan':4 'ke':6
+5111	Biaya Transport	51	Biaya transportasi karyawan	'biaya':1,3 'karyawan':5 'transport':2 'transportasi':4
+5116	Biaya ATK	51	Biaya ATK kantor	'atk':2,4 'biaya':1,3 'kantor':5
+2011	Modal Pak Kris	20	Modal punya pak Kris	'kris':3,7 'modal':1,4 'pak':2,6 'punya':5
+2012	Prive Pak Kris	20	Pengambilan duit	'duit':5 'kris':3 'pak':2 'pengambilan':4 'prive':1
+6011	Invoice ADIRA	60	\N	'adira':2 'invoic':1
+1511	Utang Elektronik	15	\N	'elektronik':2 'utang':1
 \.
 
 
@@ -601,6 +606,9 @@ COPY public.acc_type (id, name, descriptions) FROM stdin;
 11	Kas	Kelompok akun yg berfungsi mencatat perubahan uang seperti penerimaan atau pengeluaran. termasuk akun kas, seperti cek, giro.
 12	Piutang	Kelompok akun yg timbul akibat adanya penjualan barang, jasa, atau pemberian kredit debitur yg digunakan untuk pembayaran.
 51	Biaya Kantor	Kelompok akun yg diakibatkan adanya pembayaran listrik, internet, PDAM, telephone.
+20	Modal	Akun
+60	Invoice	\N
+15	Hutang Usaha	\N
 \.
 
 
@@ -626,7 +634,6 @@ COPY public.branchs (id, name, street, city, phone, cell, zip, head_branch, emai
 --
 
 COPY public.customers (order_id, name, agreement_number, payment_type) FROM stdin;
-3	Wardiman	dd	CO-1
 \.
 
 
@@ -637,6 +644,7 @@ COPY public.customers (order_id, name, agreement_number, payment_type) FROM stdi
 COPY public.finances (id, name, short_name, street, city, phone, cell, zip, email) FROM stdin;
 1	Bussan Auto Finance	BAF	Jl. Jend. Sudirman	Indramayu	2569874545	65979	2598987	busan.123@gmail.com
 2	Auto Discret Finance	Adira	Jl. Jend. Sudirman	Indramayu	2569874545	65979	2598987	adira.finance@gmail.com
+3	Mandiri Tunas Finance	MTF	\N	Cirebon	\N	\N	\N	\N
 \.
 
 
@@ -682,7 +690,7 @@ COPY public.office_addresses (order_id, street, region, city, phone, zip) FROM s
 --
 
 COPY public.orders (id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn, user_name, verified_by, validated_by, finance_id, branch_id, nominal, subtotal, is_stnk, stnk_price) FROM stdin;
-3	x/3336/2022/XII/5556	2022-03-03	2022-03-05	1800000.00	30.00	1260000.00	0.00	Opick	\N	\N	1	1	0.00	540000.00	t	0.00
+8	88258-	2022-03-01	2022-03-04	1500000.00	30.00	1050000.00	0.00	Opick	\N	\N	1	1	0.00	250000.00	f	200000.00
 \.
 
 
@@ -707,7 +715,6 @@ COPY public.receivables (order_id, covenant_at, due_at, mortgage_by_month, mortg
 --
 
 COPY public.tasks (order_id, descriptions, period_from, period_to, recipient_name, recipient_position, giver_position, giver_name) FROM stdin;
-3	qwewqe	2022-03-05	2022-03-07	Kepala Cabang PT SPRS	Field Collector	Branch Head	Abdul Rahman
 \.
 
 
@@ -715,9 +722,13 @@ COPY public.tasks (order_id, descriptions, period_from, period_to, recipient_nam
 -- Data for Name: trx; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.trx (id, trx_type_id, ref_id, division, descriptions, trx_date, memo) FROM stdin;
-2	14	0		Beli rokok + kopi om Mastur	2022-03-06	\N
-3	11	0		Modal dari bos	2022-03-06	\N
+COPY public.trx (id, trx_type_id, ref_id, division, descriptions, trx_date, memo, trx_token) FROM stdin;
+1	1	0		Modal masuk dari pak kris	2022-03-07	\N	'0':1 'dari':4 'kris':6 'masuk':3 'modal':2 'pak':5
+2	3	0		Akomodasi Jamuan pak Mastur	2022-03-07	\N	'0':1 'akomodasi':2 'jamuan':3 'mastur':5 'pak':4
+4	2	0		bayar utang pak kris	2022-03-07	\N	'0':1 'bayar':2 'kris':5 'pak':4 'utang':3
+5	3	0		Beli Komputer	2022-03-07	\N	'0':1 'beli':2 'komput':3
+6	3	0		Bayar Utang	2022-03-07	\N	'0':1 'bayar':2 'utang':3
+3	2	0		Penerimaan dari ADIRA Invoice #100 	2022-03-07	\N	'#100' '3' 'ADIRA' 'Invoice' 'Penerimaan' 'dari'
 \.
 
 
@@ -726,6 +737,20 @@ COPY public.trx (id, trx_type_id, ref_id, division, descriptions, trx_date, memo
 --
 
 COPY public.trx_detail (id, acc_code_id, trx_id, debt, cred) FROM stdin;
+1	2011	1	0.00	25000000.00
+2	1112	1	25000000.00	0.00
+1	5118	2	30000.00	0.00
+2	1111	2	0.00	30000.00
+1	1111	3	3000000.00	0.00
+2	6011	3	0.00	2500000.00
+3	2011	3	0.00	500000.00
+1	2011	4	0.00	500000.00
+2	1111	4	500000.00	0.00
+1	5116	5	30000000.00	0.00
+2	1111	5	0.00	10000000.00
+3	1511	5	0.00	20000000.00
+1	1111	6	0.00	20000000.00
+2	1511	6	20000000.00	0.00
 \.
 
 
@@ -734,11 +759,9 @@ COPY public.trx_detail (id, acc_code_id, trx_id, debt, cred) FROM stdin;
 --
 
 COPY public.trx_type (id, name, descriptions) FROM stdin;
-12	Pendapatan	Jumlah yang dibebankan kepada pelanggan untuk barang dan jasa yang dijual.
-11	Modal	Segala sesuatu yang dipergunakan untuk membangun atau memulai sebuah usaha.
-13	Pengeluaran	Item yang dapat dibebankan terhadap pendapatan untuk periode tertentu, seperti gaji karyawan, listrik, dll
-14	Biaya	Jumlah yg harus dibayar untuk memperoleh sesuatu. yaitu biaya aset, tenaga kerja, bahan2, pengiriman, penanganan
-15	Piutang Pelanggan	Dana yg ada di pelanggan belum bisa dicairkan
+1	Permodalan	\N
+2	Pendapatan	\N
+3	Pengeluaran	\N
 \.
 
 
@@ -758,7 +781,7 @@ COPY public.types (id, name, wheel_id, merk_id) FROM stdin;
 --
 
 COPY public.units (order_id, nopol, year, frame_number, machine_number, bpkb_name, color, dealer, surveyor, type_id, warehouse_id) FROM stdin;
-3	E 5985 FGD	2022							2	2
+8	E 2581 PBF	2015				Biru			3	2
 \.
 
 
@@ -809,7 +832,7 @@ SELECT pg_catalog.setval('public.branch_id_seq', 2, true);
 -- Name: finance_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.finance_id_seq', 2, true);
+SELECT pg_catalog.setval('public.finance_id_seq', 3, true);
 
 
 --
@@ -823,7 +846,7 @@ SELECT pg_catalog.setval('public.merk_id_seq', 14, true);
 -- Name: order_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.order_id_seq', 7, true);
+SELECT pg_catalog.setval('public.order_id_seq', 8, true);
 
 
 --
@@ -837,7 +860,7 @@ SELECT pg_catalog.setval('public.trx_detail_seq', 1, false);
 -- Name: trx_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.trx_seq', 3, true);
+SELECT pg_catalog.setval('public.trx_seq', 6, true);
 
 
 --
@@ -1017,7 +1040,7 @@ ALTER TABLE ONLY public.actions
 --
 
 ALTER TABLE ONLY public.trx_detail
-    ADD CONSTRAINT trx_detail_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT trx_detail_pkey PRIMARY KEY (trx_id, id);
 
 
 --
@@ -1175,6 +1198,13 @@ CREATE INDEX idx_type_merk ON public.types USING btree (merk_id);
 --
 
 CREATE INDEX idx_type_roda ON public.types USING btree (wheel_id);
+
+
+--
+-- Name: ix_gin_trx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_gin_trx ON public.trx USING gin (trx_token);
 
 
 --

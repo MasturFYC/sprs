@@ -153,7 +153,7 @@ func getOrder(id *int64) (models.Order, error) {
 	var sqlStatement = `SELECT 
 		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn,
 		nominal, subtotal, user_name, verified_by, validated_by, finance_id, branch_id,
-		is_stnk, stnk_price
+		is_stnk, stnk_price, matrix
 	FROM orders
 	WHERE id=$1`
 
@@ -177,6 +177,7 @@ func getOrder(id *int64) (models.Order, error) {
 		&o.BranchID,
 		&o.IsStnk,
 		&o.StnkPrice,
+		&o.Matrix,
 	)
 
 	switch err {
@@ -224,7 +225,7 @@ func getAllOrders() ([]models.Order, error) {
 	var sqlStatement = `SELECT
 		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn,
 		nominal, subtotal, user_name, verified_by, validated_by, finance_id, branch_id,
-		is_stnk, stnk_price
+		is_stnk, stnk_price, matrix
 	FROM orders
 	ORDER BY id DESC`
 
@@ -258,6 +259,7 @@ func getAllOrders() ([]models.Order, error) {
 			&o.BranchID,
 			&o.IsStnk,
 			&o.StnkPrice,
+			&o.Matrix,
 		)
 
 		if err != nil {
@@ -329,9 +331,9 @@ func createOrder(o *models.Order) (int64, error) {
 	sqlStatement := `INSERT INTO orders (
 		name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn,
 		nominal, subtotal, user_name, verified_by, validated_by, finance_id, branch_id,
-		is_stnk, stnk_price
+		is_stnk, stnk_price, matrix
 	)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
 	RETURNING id`
 
 	var id int64
@@ -353,6 +355,7 @@ func createOrder(o *models.Order) (int64, error) {
 		o.BranchID,
 		o.IsStnk,
 		o.StnkPrice,
+		o.Matrix,
 	).Scan(&id)
 
 	if err != nil {
@@ -367,7 +370,7 @@ func updateOrder(id *int64, o *models.Order) (int64, error) {
 	sqlStatement := `UPDATE orders SET
 		name=$2, order_at=$3, printed_at=$4, bt_finance=$5, bt_percent=$6, bt_matel=$7, ppn=$8,
 		nominal=$9, subtotal=$10, user_name=$11, verified_by=$12, validated_by=$13, finance_id=$14, branch_id=$15,
-		is_stnk=$16, stnk_price=$17
+		is_stnk=$16, stnk_price=$17, matrix=$18
 	WHERE id=$1`
 
 	res, err := Sql().Exec(sqlStatement,
@@ -388,6 +391,7 @@ func updateOrder(id *int64, o *models.Order) (int64, error) {
 		o.BranchID,
 		o.IsStnk,
 		o.StnkPrice,
+		o.Matrix,
 	)
 
 	if err != nil {

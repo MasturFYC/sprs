@@ -369,7 +369,7 @@ func createTransaction(p *models.Trx) (int64, error) {
 
 	sqlStatement := `INSERT INTO trx 
 	(trx_type_id, ref_id, division, trx_date, descriptions, memo, trx_token)
-	VALUES ($1, $2, $3, $4, $5, $6, to_tsvector($7))
+	VALUES ($1, $2, $3, $4, $5, $6, to_tsvector('indonesian', $7))
 	RETURNING id`
 
 	var id int64
@@ -402,7 +402,7 @@ func updateTransaction(id *int64, p *models.Trx) (int64, error) {
 		trx_date=$5,
 		descriptions=$6,
 		memo=$7,
-		trx_token=$8
+		trx_token=to_tsvector('indonesian', $8)
 	WHERE id=$1`
 
 	token := fmt.Sprintf("%d %s %s", p.ID, p.Descriptions, p.Memo)
@@ -463,7 +463,7 @@ func searchTransactions(txt *string) ([]models.Trx, error) {
 	t.id, t.trx_type_id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
 	(select sum(d.debt) as debt from trx_detail d where d.trx_id = t.id) saldo
 	FROM trx t
-	WHERE t.trx_token @@ to_tsquery($1)
+	WHERE t.trx_token @@ to_tsquery('indonesian', $1)
 	ORDER BY t.id DESC`
 
 	rs, err := Sql().Query(sqlStatement, txt)

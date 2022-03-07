@@ -20,8 +20,8 @@ func GetAccountTypes(w http.ResponseWriter, r *http.Request) {
 
 	acc_types, err := getAllAccTypes()
 
-	if err != nil {
-		log.Printf("Unable to get all account types. %v", err)
+	if err != nil || len(acc_types) == 0 {
+		//log.Printf("Unable to get all account types. %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}

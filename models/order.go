@@ -24,6 +24,7 @@ type Order struct {
 	BranchID    int        `json:"branchId"`
 	IsStnk      bool       `json:"isStnk"`
 	StnkPrice   float64    `json:"stnkPrice"`
+	Matrix      float64    `json:"matrix"`
 
 	// * badan keuangan
 	Finance Finance `json:"finance,omitempty"`

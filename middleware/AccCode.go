@@ -34,7 +34,7 @@ func GetAccountCodes(w http.ResponseWriter, r *http.Request) {
 
 	acc_codes, err := getAllAccCodes()
 
-	if err != nil {
+	if err != nil || len(acc_codes) == 0 {
 		log.Printf("Unable to get all account codes. %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
@@ -52,8 +52,8 @@ func SearchAccountCodeByName(w http.ResponseWriter, r *http.Request) {
 
 	acc_codes, err := searchAccCodeByName(&txt)
 
-	if err != nil {
-		log.Printf("Unable to get all account codes. %v", err)
+	if err != nil || len(acc_codes) == 0 {
+		//log.Printf("Unable to get all account codes. %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
@@ -69,17 +69,20 @@ func GetAccountCodeByType(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(params["id"])
 
 	if err != nil {
-		log.Printf("Unable to convert the string into int.  %v", err)
+		//log.Printf("Unable to convert the string into int.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
 	acc_codes, err := getAccCodeByType(&id)
 
-	if err != nil {
-		log.Printf("Unable to get all account codes. %v", err)
+	if err != nil || len(acc_codes) == 0 {
+		//log.Printf("Unable to get all account codes. %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
+		//var test []models.AccCode
+		//json.NewEncoder(w).Encode(test)
+		//return
 	}
 
 	json.NewEncoder(w).Encode(&acc_codes)
@@ -284,7 +287,7 @@ func searchAccCodeByName(txt *string) ([]models.AccCode, error) {
 	var sqlStatement = `SELECT 
 		id, name, acc_type_id, descriptions
 	FROM acc_code
-	WHERE token_name @@ to_tsquery($1)
+	WHERE token_name @@ to_tsquery('indonesian', $1)
 	ORDER BY acc_type_id, id`
 
 	rs, err := Sql().Query(sqlStatement, txt)
@@ -348,7 +351,7 @@ func createAccCode(p *models.AccCode) (int64, error) {
 
 	sqlStatement := `INSERT INTO 
 	acc_code (id, name, acc_type_id, descriptions, token_name)
-	VALUES ($1, $2, $3, $4, to_tsvector($5))`
+	VALUES ($1, $2, $3, $4, to_tsvector('indonesian', $5))`
 
 	token := fmt.Sprintf("%s %s", p.Name, p.Descriptions)
 
@@ -378,7 +381,7 @@ func updateAccCode(id *int, p *models.AccCode) (int64, error) {
 
 	sqlStatement := `UPDATE acc_code SET 
 	id=$2, name=$3, acc_type_id=$4, descriptions=$5,
-	token_name=to_tsvector($6)
+	token_name=to_tsvector('indonesian', $6)
 	WHERE id=$1`
 
 	token := fmt.Sprintf("%s %s", p.Name, p.Descriptions)
