@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
 	"fyc.com/sprs/models"
 
@@ -14,6 +15,48 @@ import (
 
 	"github.com/gorilla/mux"
 )
+
+func GetTransactionsByType(w http.ResponseWriter, r *http.Request) {
+	EnableCors(&w)
+
+	params := mux.Vars(r)
+
+	id, err := strconv.ParseInt(params["id"], 10, 64)
+
+	if err != nil {
+		log.Printf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	acc_codes, err := getTransactionsByType(&id)
+
+	if err != nil {
+		log.Printf("Unable to get all transactions. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+
+	json.NewEncoder(w).Encode(&acc_codes)
+}
+
+func SearchTransactions(w http.ResponseWriter, r *http.Request) {
+	EnableCors(&w)
+
+	params := mux.Vars(r)
+
+	var txt = params["txt"]
+
+	trxs, err := searchTransactions(&txt)
+
+	if err != nil {
+		log.Printf("Unable to get all account codes. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+
+	json.NewEncoder(w).Encode(&trxs)
+}
 
 func GetTransactions(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
@@ -35,7 +78,7 @@ func GetTransaction(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
 
-	id, err := strconv.Atoi(params["id"])
+	id, err := strconv.ParseInt(params["id"], 10, 64)
 
 	if err != nil {
 		log.Printf("Unable to convert the string into int.  %v", err)
@@ -75,6 +118,17 @@ func CreateTransaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(trx.Details) > 0 {
+
+		err = bulkInsertDetails(trx.Details, &id)
+
+		if err != nil {
+			log.Printf("Unable to insert transaction details.  %v", err)
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
+		}
+	}
+
 	res := Response{
 		ID:      id,
 		Message: "Transaction was succesfully inserted.",
@@ -93,11 +147,11 @@ func UpdateTransaction(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
 
-	id, _ := strconv.Atoi(params["id"])
+	id, err := strconv.ParseInt(params["id"], 10, 64)
 
 	var trx models.Trx
 
-	err := json.NewDecoder(r.Body).Decode(&trx)
+	err = json.NewDecoder(r.Body).Decode(&trx)
 
 	if err != nil {
 		log.Printf("Unable to decode the request body to transaction.  %v", err)
@@ -113,6 +167,26 @@ func UpdateTransaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(trx.Details) > 0 {
+
+		_, err = deleteDetailsByOrder(&id)
+		if err != nil {
+			log.Printf("Unable to delete all details by transaction.  %v", err)
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
+		}
+
+		var newId int64 = 0
+
+		err = bulkInsertDetails(trx.Details, &newId)
+
+		if err != nil {
+			log.Printf("Unable to insert transaction details.  %v", err)
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
+		}
+	}
+
 	msg := fmt.Sprintf("Transaction type updated successfully. Total rows/record affected %v", updatedRows)
 
 	// format the response message
@@ -123,6 +197,54 @@ func UpdateTransaction(w http.ResponseWriter, r *http.Request) {
 
 	// send the response
 	json.NewEncoder(w).Encode(res)
+}
+
+func deleteDetailsByOrder(id *int64) (int64, error) {
+	sqlStatement := `DELETE FROM trx_detail WHERE trx_id=$1`
+
+	res, err := Sql().Exec(sqlStatement, id)
+
+	if err != nil {
+		log.Printf("Unable to delete transaction. %v", err)
+		return 0, err
+	}
+
+	// check how many rows affected
+	rowsAffected, err := res.RowsAffected()
+
+	if err != nil {
+		log.Fatalf("Error while checking the affected rows. %v", err)
+	}
+
+	return rowsAffected, err
+
+}
+
+func bulkInsertDetails(rows []models.TrxDetail, id *int64) error {
+	valueStrings := make([]string, 0, len(rows))
+	valueArgs := make([]interface{}, 0, len(rows)*5)
+	i := 0
+	for _, post := range rows {
+		valueStrings = append(valueStrings, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d)", i*5+1, i*5+2, i*5+3, i*5+4, i*5+5))
+		valueArgs = append(valueArgs, post.ID)
+		valueArgs = append(valueArgs, post.AccCodeID)
+		valueArgs = append(valueArgs, setTrxID(id, &post.TrxID))
+		valueArgs = append(valueArgs, post.Debt)
+		valueArgs = append(valueArgs, post.Cred)
+		i++
+	}
+	stmt := fmt.Sprintf("INSERT INTO trx_detail (id, acc_code_id, trx_id, debt, cred) VALUES %s",
+		strings.Join(valueStrings, ","))
+	//log.Printf("%s %v", stmt, valueArgs)
+	_, err := Sql().Exec(stmt, valueArgs...)
+	return err
+}
+
+func setTrxID(id *int64, id2 *int64) int64 {
+	if (*id) == 0 {
+		return (*id2)
+	}
+	return (*id)
 }
 
 func DeleteTransaction(w http.ResponseWriter, r *http.Request) {
@@ -160,12 +282,13 @@ func DeleteTransaction(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-func getTransaction(id *int) (models.Trx, error) {
+func getTransaction(id *int64) (models.Trx, error) {
 
 	var trx models.Trx
 
 	var sqlStatement = `SELECT 
-		id, trx_type_id, ref_id, division, trx_date, descriptions, memo
+		id, trx_type_id, ref_id, division, trx_date, descriptions, memo,
+		(select sum(d.debt) as debt from trx_detail d where d.trx_id = t.id) saldo
 	FROM trx
 	WHERE id=$1`
 
@@ -179,6 +302,7 @@ func getTransaction(id *int) (models.Trx, error) {
 		&trx.TrxDate,
 		&trx.Descriptions,
 		&trx.Memo,
+		&trx.Saldo,
 	)
 
 	switch err {
@@ -200,9 +324,10 @@ func getAllTransactions() ([]models.Trx, error) {
 	var results []models.Trx
 
 	var sqlStatement = `SELECT 
-		id, trx_type_id, ref_id, division, trx_date, descriptions, memo
-	FROM trx
-	ORDER BY id DESC`
+		t.id, t.trx_type_id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
+		(select sum(d.debt) as debt from trx_detail d where d.trx_id = t.id) saldo
+	FROM trx t
+	ORDER BY t.id DESC`
 
 	rs, err := Sql().Query(sqlStatement)
 
@@ -224,6 +349,7 @@ func getAllTransactions() ([]models.Trx, error) {
 			&p.TrxDate,
 			&p.Descriptions,
 			&p.Memo,
+			&p.Saldo,
 		)
 
 		if err != nil {
@@ -242,11 +368,12 @@ func getAllTransactions() ([]models.Trx, error) {
 func createTransaction(p *models.Trx) (int64, error) {
 
 	sqlStatement := `INSERT INTO trx 
-	(trx_type_id, ref_id, division, trx_date, descriptions, memo)
-	VALUES ($1, $2, $3, $4, $5, $6)
+	(trx_type_id, ref_id, division, trx_date, descriptions, memo, trx_token)
+	VALUES ($1, $2, $3, $4, $5, $6, to_tsvector($7))
 	RETURNING id`
 
 	var id int64
+	token := fmt.Sprintf("%d %s %s", p.ID, p.Descriptions, p.Memo)
 
 	err := Sql().QueryRow(sqlStatement,
 		p.TrxTypeID,
@@ -255,6 +382,7 @@ func createTransaction(p *models.Trx) (int64, error) {
 		p.TrxDate,
 		p.Descriptions,
 		p.Memo,
+		token,
 	).Scan(&id)
 
 	if err != nil {
@@ -265,7 +393,7 @@ func createTransaction(p *models.Trx) (int64, error) {
 	return id, err
 }
 
-func updateTransaction(id *int, p *models.Trx) (int64, error) {
+func updateTransaction(id *int64, p *models.Trx) (int64, error) {
 
 	sqlStatement := `UPDATE trx SET 
 		trx_type_id=$2,
@@ -273,8 +401,11 @@ func updateTransaction(id *int, p *models.Trx) (int64, error) {
 		division=$4,
 		trx_date=$5,
 		descriptions=$6,
-		memo=$7
+		memo=$7,
+		trx_token=$8
 	WHERE id=$1`
+
+	token := fmt.Sprintf("%d %s %s", p.ID, p.Descriptions, p.Memo)
 
 	res, err := Sql().Exec(sqlStatement,
 		id,
@@ -284,6 +415,7 @@ func updateTransaction(id *int, p *models.Trx) (int64, error) {
 		p.TrxDate,
 		p.Descriptions,
 		p.Memo,
+		token,
 	)
 
 	if err != nil {
@@ -321,4 +453,92 @@ func deleteTransaction(id *int) (int64, error) {
 	}
 
 	return rowsAffected, err
+}
+
+func searchTransactions(txt *string) ([]models.Trx, error) {
+
+	var results []models.Trx
+
+	var sqlStatement = `SELECT 
+	t.id, t.trx_type_id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
+	(select sum(d.debt) as debt from trx_detail d where d.trx_id = t.id) saldo
+	FROM trx t
+	WHERE t.trx_token @@ to_tsquery($1)
+	ORDER BY t.id DESC`
+
+	rs, err := Sql().Query(sqlStatement, txt)
+
+	if err != nil {
+		log.Printf("Unable to execute transactions code query %v", err)
+		return nil, err
+	}
+
+	defer rs.Close()
+
+	for rs.Next() {
+		var p models.Trx
+
+		err := rs.Scan(
+			&p.ID,
+			&p.TrxTypeID,
+			&p.RefID,
+			&p.Division,
+			&p.TrxDate,
+			&p.Descriptions,
+			&p.Memo,
+			&p.Saldo,
+		)
+
+		if err != nil {
+			log.Fatalf("Unable to scan the row. %v", err)
+		}
+
+		results = append(results, p)
+	}
+
+	return results, err
+}
+
+func getTransactionsByType(id *int64) ([]models.Trx, error) {
+
+	var results []models.Trx
+
+	var sqlStatement = `SELECT 
+	t.id, t.trx_type_id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
+	(select sum(d.debt) as debt from trx_detail d where d.trx_id = t.id) saldo
+	FROM trx t
+	WHERE t.trx_type_id=$1
+	ORDER BY t.id DESC`
+
+	rs, err := Sql().Query(sqlStatement, id)
+
+	if err != nil {
+		log.Printf("Unable to execute transactions query %v", err)
+		return nil, err
+	}
+
+	defer rs.Close()
+
+	for rs.Next() {
+		var p models.Trx
+
+		err := rs.Scan(
+			&p.ID,
+			&p.TrxTypeID,
+			&p.RefID,
+			&p.Division,
+			&p.TrxDate,
+			&p.Descriptions,
+			&p.Memo,
+			&p.Saldo,
+		)
+
+		if err != nil {
+			log.Fatalf("Unable to scan the row. %v", err)
+		}
+
+		results = append(results, p)
+	}
+
+	return results, err
 }

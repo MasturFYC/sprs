@@ -10,7 +10,7 @@ func AccountCodeRouter(router *mux.Router) {
 
 	router.HandleFunc("/", middleware.GetAccountCodes).Methods("GET")
 	router.HandleFunc("/search-name/{txt}/", middleware.SearchAccountCodeByName).Methods("GET")
-	router.HandleFunc("/search-name/{txt}/", middleware.SearchAccountCodeByName).Methods("GET")
+	//router.HandleFunc("/search-name/{txt}/", middleware.SearchAccountCodeByName).Methods("GET")
 	router.HandleFunc("/group-type/{id}/", middleware.GetAccountCodeByType).Methods("GET")
 	//router.HandleFunc("/props/", middleware.GetAccountCodeProps).Methods("GET")
 	router.HandleFunc("/props/", middleware.GetAccountCodeProps).Methods("GET")

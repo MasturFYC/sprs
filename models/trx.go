@@ -27,6 +27,7 @@ type Trx struct {
 	Descriptions string      `json:"descriptions"`
 	TrxDate      string      `json:"trxDate"`
 	Memo         NullString  `json:"memo"`
+	Saldo        float64     `json:"saldo"`
 	Details      []TrxDetail `json:"details,omitempty"`
 }
 
@@ -34,7 +35,7 @@ type TrxDetail struct {
 	ID        int64   `json:"id"`
 	AccCodeID int32   `json:"accCodeId"`
 	TrxID     int64   `json:"trxId"`
-	Debt      float64 `json:"deb"`
+	Debt      float64 `json:"debt"`
 	Cred      float64 `json:"cred"`
 }
 
