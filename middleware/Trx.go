@@ -16,6 +16,18 @@ import (
 	"github.com/gorilla/mux"
 )
 
+type local_detail struct {
+	ID   int64   `json:"id"`
+	Name string  `json:"name"`
+	Debt float64 `json:"debt"`
+	Cred float64 `json:"cred"`
+}
+
+type local_trx struct {
+	models.Trx
+	Details []local_detail `json:"details,omitempty"`
+}
+
 func GetTransactionsByType(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 
@@ -282,9 +294,9 @@ func DeleteTransaction(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-func getTransaction(id *int64) (models.Trx, error) {
+func getTransaction(id *int64) (local_trx, error) {
 
-	var trx models.Trx
+	var p local_trx
 
 	var sqlStatement = `SELECT 
 		id, trx_type_id, ref_id, division, trx_date, descriptions, memo,
@@ -295,33 +307,36 @@ func getTransaction(id *int64) (models.Trx, error) {
 	rs := Sql().QueryRow(sqlStatement, id)
 
 	err := rs.Scan(
-		&trx.ID,
-		&trx.TrxTypeID,
-		&trx.RefID,
-		&trx.Division,
-		&trx.TrxDate,
-		&trx.Descriptions,
-		&trx.Memo,
-		&trx.Saldo,
+		&p.ID,
+		&p.TrxTypeID,
+		&p.RefID,
+		&p.Division,
+		&p.TrxDate,
+		&p.Descriptions,
+		&p.Memo,
+		&p.Saldo,
 	)
 
 	switch err {
 	case sql.ErrNoRows:
 		fmt.Println("No rows were returned!")
-		return trx, nil
+		return p, nil
 	case nil:
-		return trx, nil
+		return p, nil
 	default:
 		log.Fatalf("Unable to scan the row. %v", err)
 	}
 
+	d, _ := get_details(&p.ID)
+	p.Details = d
+
 	// return empty user on error
-	return trx, err
+	return p, err
 }
 
-func getAllTransactions() ([]models.Trx, error) {
+func getAllTransactions() ([]local_trx, error) {
 
-	var results []models.Trx
+	var results []local_trx
 
 	var sqlStatement = `SELECT 
 		t.id, t.trx_type_id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
@@ -339,7 +354,7 @@ func getAllTransactions() ([]models.Trx, error) {
 	defer rs.Close()
 
 	for rs.Next() {
-		var p models.Trx
+		var p local_trx
 
 		err := rs.Scan(
 			&p.ID,
@@ -356,8 +371,8 @@ func getAllTransactions() ([]models.Trx, error) {
 			log.Fatalf("Unable to scan the row. %v", err)
 		}
 
-		// d, _ := getTransactionDetails(&p.ID)
-		// p.Details = d
+		d, _ := get_details(&p.ID)
+		p.Details = d
 
 		results = append(results, p)
 	}
@@ -455,9 +470,9 @@ func deleteTransaction(id *int) (int64, error) {
 	return rowsAffected, err
 }
 
-func searchTransactions(txt *string) ([]models.Trx, error) {
+func searchTransactions(txt *string) ([]local_trx, error) {
 
-	var results []models.Trx
+	var results []local_trx
 
 	var sqlStatement = `SELECT 
 	t.id, t.trx_type_id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
@@ -476,7 +491,7 @@ func searchTransactions(txt *string) ([]models.Trx, error) {
 	defer rs.Close()
 
 	for rs.Next() {
-		var p models.Trx
+		var p local_trx
 
 		err := rs.Scan(
 			&p.ID,
@@ -493,15 +508,18 @@ func searchTransactions(txt *string) ([]models.Trx, error) {
 			log.Fatalf("Unable to scan the row. %v", err)
 		}
 
+		d, _ := get_details(&p.ID)
+		p.Details = d
+
 		results = append(results, p)
 	}
 
 	return results, err
 }
 
-func getTransactionsByType(id *int64) ([]models.Trx, error) {
+func getTransactionsByType(id *int64) ([]local_trx, error) {
 
-	var results []models.Trx
+	var results []local_trx
 
 	var sqlStatement = `SELECT 
 	t.id, t.trx_type_id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
@@ -520,7 +538,7 @@ func getTransactionsByType(id *int64) ([]models.Trx, error) {
 	defer rs.Close()
 
 	for rs.Next() {
-		var p models.Trx
+		var p local_trx
 
 		err := rs.Scan(
 			&p.ID,
@@ -536,9 +554,49 @@ func getTransactionsByType(id *int64) ([]models.Trx, error) {
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
 		}
+		d, _ := get_details(&p.ID)
+		p.Details = d
 
 		results = append(results, p)
 	}
 
 	return results, err
+}
+
+func get_details(trxID *int64) ([]local_detail, error) {
+
+	var details []local_detail
+
+	var sqlStatement = `SELECT
+	a.id, a.name, d.debt, d.cred
+	FROM trx_detail d
+	INNER JOIN acc_code a ON a.id = d.acc_code_id
+	WHERE d.trx_id=$1`
+
+	rs, err := Sql().Query(sqlStatement, trxID)
+
+	if err != nil {
+		log.Printf("Unable to execute transaction details query %v", err)
+		return nil, err
+	}
+
+	defer rs.Close()
+
+	for rs.Next() {
+		var p local_detail
+
+		err := rs.Scan(
+			&p.ID,
+			&p.Name,
+			&p.Debt,
+			&p.Cred,
+		)
+
+		if err != nil {
+			log.Fatalf("Unable to scan the row. %v", err)
+		}
+		details = append(details, p)
+	}
+
+	return details, err
 }

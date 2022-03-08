@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.10 (Debian 12.10-1.pgdg100+1)
--- Dumped by pg_dump version 12.10 (Debian 12.10-1.pgdg100+1)
+-- Dumped from database version 12.10 (Ubuntu 12.10-1.pgdg20.04+1)
+-- Dumped by pg_dump version 14.2 (Ubuntu 14.2-1.pgdg20.04+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -279,7 +279,8 @@ CREATE TABLE public.orders (
     nominal numeric(12,2) DEFAULT 0 NOT NULL,
     subtotal numeric(12,2) DEFAULT 0 NOT NULL,
     is_stnk boolean DEFAULT true NOT NULL,
-    stnk_price numeric(12,2) DEFAULT 0 NOT NULL
+    stnk_price numeric(12,2) DEFAULT 0 NOT NULL,
+    matrix numeric(12,2) DEFAULT 0 NOT NULL
 );
 
 
@@ -585,14 +586,18 @@ COPY public.acc_code (id, name, acc_type_id, descriptions, token_name) FROM stdi
 5112	Biaya Listrik	51	Biaya pemakaian listrik	'biaya':1,3 'listrik':2,5 'pemakaian':4
 1111	Kas Kecil	11	Kas bendahara Kantor	'bendahara':4 'kantor':5 'kas':1,3 'kecil':2
 1112	Bank BCA 0856212654	11	Rekening BCA Opik	'0856212654':3 'bank':1 'bca':2,5 'opik':6 'reken':4
-5117	Biaya Service	51	Biaya service kendaraan, AC, dll.	'ac':6 'biaya':1,3 'dll':7 'kendaraan':5 'servic':2,4
 5114	Biaya Internet	51	Biaya jaringan internet ke Biznet	'biaya':1,3 'biznet':7 'internet':2,5 'jaringan':4 'ke':6
 5111	Biaya Transport	51	Biaya transportasi karyawan	'biaya':1,3 'karyawan':5 'transport':2 'transportasi':4
-5116	Biaya ATK	51	Biaya ATK kantor	'atk':2,4 'biaya':1,3 'kantor':5
-2011	Modal Pak Kris	20	Modal punya pak Kris	'kris':3,7 'modal':1,4 'pak':2,6 'punya':5
-2012	Prive Pak Kris	20	Pengambilan duit	'duit':5 'kris':3 'pak':2 'pengambilan':4 'prive':1
-6011	Invoice ADIRA	60	\N	'adira':2 'invoic':1
-1511	Utang Elektronik	15	\N	'elektronik':2 'utang':1
+5311	Biaya Gaji karyawan Tetap	53	\N	'biaya':1 'gaji':2 'karyawan':3 'tetap':4
+5411	Upah Tenaga Kerja	54	\N	'kerja':3 'tenaga':2 'upah':1
+5116	Biaya ATK	51	Biaya alat tulis kantor termasuk termasuk peralatan seperti komputer, meja, kursi, lemari	'alat':4 'atk':2 'biaya':1,3 'kantor':6 'komput':11 'kursi':13 'lemari':14 'meja':12 'peralatan':9 'seperti':10 'termasuk':7,8 'tuli':5
+5312	Biaya Gaji Karyawan Honorer	51	\N	'biaya':1 'gaji':2 'honor':4 'karyawan':3
+5119	Biaya Lain-lain	51	\N	'biaya':1 'lain':3,4 'lain-lain':2
+1211	Order (SPK)	12	Pendanaan yg dikeluarkan untuk operasi penarikan berdasarkan SPK dari Finance sejumlah BT Matel	'berdasarkan':9 'bt':14 'dari':11 'dikeluarkan':5 'financ':12 'matel':15 'operasi':7 'order':1 'penarikan':8 'pendanaan':3 'sejumlah':13 'spk':2,10 'untuk':6 'yg':4
+5117	Biaya Servis	51	Biaya service kendaraan, AC, komputer, dll.	'ac':6 'biaya':1,3 'dll':8 'komputer':7 'ndara':5 'service':4 'servis':2
+3111	Modal Pak Kris	31	Modal yg diterima dari pak Kris	'dari':7 'kris':3,9 'modal':1,4 'pak':2,8 'terima':6 'yg':5
+3211	Prive Pak Kris	32	Pengambilan modal, pinjam kas oleh pak Kris	'ambil':4 'kas':7 'kris':3,10 'modal':5 'oleh':8 'pak':2,9 'pinjam':6 'prive':1
+4111	Tagihan Invoice	41	Penarikan dana dari pihak Finance karena adanya ...	'ada':9 'arik':3 'dana':4 'dari':5 'finance':7 'invoice':2 'karena':8 'pihak':6 'tagih':1
 \.
 
 
@@ -604,11 +609,19 @@ COPY public.acc_type (id, name, descriptions) FROM stdin;
 14	Peralatan	Kelompok akun yg digunakan untuk mencatat barang atau tempat yang digunakan perusahaan untuk mendukung jalannya pekerjaan.
 13	Persediaan	Kelompok akun yg digunakan untuk mencatat persediaan bahan baku yang menunggu penggunaannya dalam suatu proses produksi.
 11	Kas	Kelompok akun yg berfungsi mencatat perubahan uang seperti penerimaan atau pengeluaran. termasuk akun kas, seperti cek, giro.
-12	Piutang	Kelompok akun yg timbul akibat adanya penjualan barang, jasa, atau pemberian kredit debitur yg digunakan untuk pembayaran.
 51	Biaya Kantor	Kelompok akun yg diakibatkan adanya pembayaran listrik, internet, PDAM, telephone.
-20	Modal	Akun
-60	Invoice	\N
-15	Hutang Usaha	\N
+15	Perlengkapan	\N
+21	Hutang Usaha	\N
+22	Hutang Bank	\N
+23	Hutang Lainnya	\N
+31	Modal Usaha	\N
+32	Prive	\N
+41	Pendapatan Jasa	\N
+42	Pendapatan Lainnya	\N
+52	Biaya Operasional	\N
+53	Biaya Gaji	\N
+54	Biaya Tenaga Kerja	\N
+12	Piutang	Kelompok akun yg timbul akibat adanya penjualan jasa.
 \.
 
 
@@ -689,8 +702,8 @@ COPY public.office_addresses (order_id, street, region, city, phone, zip) FROM s
 -- Data for Name: orders; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.orders (id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn, user_name, verified_by, validated_by, finance_id, branch_id, nominal, subtotal, is_stnk, stnk_price) FROM stdin;
-8	88258-	2022-03-01	2022-03-04	1500000.00	30.00	1050000.00	0.00	Opick	\N	\N	1	1	0.00	250000.00	f	200000.00
+COPY public.orders (id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn, user_name, verified_by, validated_by, finance_id, branch_id, nominal, subtotal, is_stnk, stnk_price, matrix) FROM stdin;
+8	88258-E	2022-03-01	2022-03-04	1300000.00	20.00	1040000.00	2.00	Opick	\N	\N	1	1	26000.00	234000.00	f	200000.00	1500000.00
 \.
 
 
@@ -723,12 +736,10 @@ COPY public.tasks (order_id, descriptions, period_from, period_to, recipient_nam
 --
 
 COPY public.trx (id, trx_type_id, ref_id, division, descriptions, trx_date, memo, trx_token) FROM stdin;
-1	1	0		Modal masuk dari pak kris	2022-03-07	\N	'0':1 'dari':4 'kris':6 'masuk':3 'modal':2 'pak':5
-2	3	0		Akomodasi Jamuan pak Mastur	2022-03-07	\N	'0':1 'akomodasi':2 'jamuan':3 'mastur':5 'pak':4
-4	2	0		bayar utang pak kris	2022-03-07	\N	'0':1 'bayar':2 'kris':5 'pak':4 'utang':3
-5	3	0		Beli Komputer	2022-03-07	\N	'0':1 'beli':2 'komput':3
-6	3	0		Bayar Utang	2022-03-07	\N	'0':1 'bayar':2 'utang':3
-3	2	0		Penerimaan dari ADIRA Invoice #100 	2022-03-07	\N	'#100' '3' 'ADIRA' 'Invoice' 'Penerimaan' 'dari'
+8	3	0		Modal masuk dari pak Kris	2022-03-07	\N	'8':1 'dari':4 'kris':6 'masuk':3 'modal':2 'pak':5
+9	2	0		Beli rokok + kopi pak Mastur	2022-03-08	\N	'9':1 'beli':2 'kopi':4 'mastur':6 'pak':5 'rokok':3
+11	2	0		Beli 1 perangkat komputer di toko Armada	2022-03-07	\N	'0':1 '1':3 'angkat':4 'armada':8 'beli':2 'di':6 'komputer':5 'toko':7
+7	1	0		Penagihan invoice ke Adira Finance	2022-03-08	Tagihan masuk ke rekening punya kantor.	'7':1 'adira':5 'agih':2 'finance':6 'invoice':3 'kantor':12 'ke':4,9 'masuk':8 'punya':11 'rekening':10 'tagih':7
 \.
 
 
@@ -737,20 +748,14 @@ COPY public.trx (id, trx_type_id, ref_id, division, descriptions, trx_date, memo
 --
 
 COPY public.trx_detail (id, acc_code_id, trx_id, debt, cred) FROM stdin;
-1	2011	1	0.00	25000000.00
-2	1112	1	25000000.00	0.00
-1	5118	2	30000.00	0.00
-2	1111	2	0.00	30000.00
-1	1111	3	3000000.00	0.00
-2	6011	3	0.00	2500000.00
-3	2011	3	0.00	500000.00
-1	2011	4	0.00	500000.00
-2	1111	4	500000.00	0.00
-1	5116	5	30000000.00	0.00
-2	1111	5	0.00	10000000.00
-3	1511	5	0.00	20000000.00
-1	1111	6	0.00	20000000.00
-2	1511	6	20000000.00	0.00
+1	3111	8	0.00	25000000.00
+2	1112	8	25000000.00	0.00
+1	5118	9	300000.00	0.00
+2	1111	9	0.00	300000.00
+1	5116	11	0.00	15000000.00
+2	1111	11	15000000.00	0.00
+1	4111	7	0.00	6300000.00
+2	1112	7	6300000.00	0.00
 \.
 
 
@@ -759,9 +764,9 @@ COPY public.trx_detail (id, acc_code_id, trx_id, debt, cred) FROM stdin;
 --
 
 COPY public.trx_type (id, name, descriptions) FROM stdin;
-1	Permodalan	\N
-2	Pendapatan	\N
-3	Pengeluaran	\N
+3	Financing	Arus kas aktivitas pendanaan, segala aktivitas kas yg mempengaruhi posisi modal dan pinjaman
+1	Pendapatan	Arus kas dari aktivitas operasi seperti tagihan / invoice 
+2	Pengeluaran	Arus kas karena adanya operasional, gaji karyawan, biaya tetap
 \.
 
 
@@ -860,7 +865,7 @@ SELECT pg_catalog.setval('public.trx_detail_seq', 1, false);
 -- Name: trx_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.trx_seq', 6, true);
+SELECT pg_catalog.setval('public.trx_seq', 11, true);
 
 
 --
@@ -1345,7 +1350,7 @@ ALTER TABLE ONLY public.trx_detail
 --
 
 ALTER TABLE ONLY public.trx_detail
-    ADD CONSTRAINT trx_detail_trx_id_fkey FOREIGN KEY (trx_id) REFERENCES public.trx(id) ON DELETE RESTRICT;
+    ADD CONSTRAINT trx_detail_trx_id_fkey FOREIGN KEY (trx_id) REFERENCES public.trx(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
