@@ -11,6 +11,7 @@ type AccCode struct {
 	Name         string     `json:"name"`
 	AccTypeID    int32      `json:"accTypeId"`
 	Descriptions NullString `json:"descriptions"`
+	IsActive     bool       `json:"isActive"`
 }
 
 type TrxType struct {
@@ -45,4 +46,5 @@ type AccCodeType struct {
 	TypeID       int32      `json:"typeId"`
 	TypeName     string     `json:"typeName"`
 	Descriptions NullString `json:"descriptions"`
+	IsActive     bool       `json:"isActive"`
 }

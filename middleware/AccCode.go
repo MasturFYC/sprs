@@ -224,13 +224,19 @@ func getAccCode(id *int) (models.AccCode, error) {
 	var acc models.AccCode
 
 	var sqlStatement = `SELECT 
-		id, name, acc_type_id, descriptions
+		id, name, acc_type_id, descriptions, is_active
 	FROM acc_code
 	WHERE id=$1`
 
 	rs := Sql().QueryRow(sqlStatement, id)
 
-	err := rs.Scan(&acc.ID, &acc.Name, &acc.AccTypeID, &acc.Descriptions)
+	err := rs.Scan(
+		&acc.ID,
+		&acc.Name,
+		&acc.AccTypeID,
+		&acc.Descriptions,
+		&acc.IsActive,
+	)
 
 	switch err {
 	case sql.ErrNoRows:
@@ -251,7 +257,7 @@ func getAccCodeByType(id *int) ([]models.AccCode, error) {
 	var results []models.AccCode
 
 	var sqlStatement = `SELECT 
-		id, name, acc_type_id, descriptions
+		id, name, acc_type_id, descriptions, is_active
 	FROM acc_code
 	WHERE acc_type_id=$1
 	ORDER BY acc_type_id, id`
@@ -268,7 +274,13 @@ func getAccCodeByType(id *int) ([]models.AccCode, error) {
 	for rs.Next() {
 		var p models.AccCode
 
-		err := rs.Scan(&p.ID, &p.Name, &p.AccTypeID, &p.Descriptions)
+		err := rs.Scan(
+			&p.ID,
+			&p.Name,
+			&p.AccTypeID,
+			&p.Descriptions,
+			&p.IsActive,
+		)
 
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
@@ -285,7 +297,7 @@ func searchAccCodeByName(txt *string) ([]models.AccCode, error) {
 	var results []models.AccCode
 
 	var sqlStatement = `SELECT 
-		id, name, acc_type_id, descriptions
+		id, name, acc_type_id, descriptions, is_active
 	FROM acc_code
 	WHERE token_name @@ to_tsquery('indonesian', $1)
 	ORDER BY acc_type_id, id`
@@ -302,7 +314,13 @@ func searchAccCodeByName(txt *string) ([]models.AccCode, error) {
 	for rs.Next() {
 		var p models.AccCode
 
-		err := rs.Scan(&p.ID, &p.Name, &p.AccTypeID, &p.Descriptions)
+		err := rs.Scan(
+			&p.ID,
+			&p.Name,
+			&p.AccTypeID,
+			&p.Descriptions,
+			&p.IsActive,
+		)
 
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
@@ -319,7 +337,7 @@ func getAllAccCodes() ([]models.AccCode, error) {
 	var results []models.AccCode
 
 	var sqlStatement = `SELECT 
-		id, name, acc_type_id, descriptions
+		id, name, acc_type_id, descriptions, is_active
 	FROM acc_code
 	ORDER BY acc_type_id, id`
 
@@ -335,7 +353,13 @@ func getAllAccCodes() ([]models.AccCode, error) {
 	for rs.Next() {
 		var p models.AccCode
 
-		err := rs.Scan(&p.ID, &p.Name, &p.AccTypeID, &p.Descriptions)
+		err := rs.Scan(
+			&p.ID,
+			&p.Name,
+			&p.AccTypeID,
+			&p.Descriptions,
+			&p.IsActive,
+		)
 
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
@@ -350,8 +374,8 @@ func getAllAccCodes() ([]models.AccCode, error) {
 func createAccCode(p *models.AccCode) (int64, error) {
 
 	sqlStatement := `INSERT INTO 
-	acc_code (id, name, acc_type_id, descriptions, token_name)
-	VALUES ($1, $2, $3, $4, to_tsvector('indonesian', $5))`
+	acc_code (id, name, acc_type_id, descriptions, is_active, token_name)
+	VALUES ($1, $2, $3, $4, $5, to_tsvector('indonesian', $6))`
 
 	token := fmt.Sprintf("%s %s", p.Name, p.Descriptions)
 
@@ -360,6 +384,7 @@ func createAccCode(p *models.AccCode) (int64, error) {
 		p.Name,
 		p.AccTypeID,
 		p.Descriptions,
+		p.IsActive,
 		token,
 	)
 
@@ -380,8 +405,8 @@ func createAccCode(p *models.AccCode) (int64, error) {
 func updateAccCode(id *int, p *models.AccCode) (int64, error) {
 
 	sqlStatement := `UPDATE acc_code SET 
-	id=$2, name=$3, acc_type_id=$4, descriptions=$5,
-	token_name=to_tsvector('indonesian', $6)
+	id=$2, name=$3, acc_type_id=$4, descriptions=$5, is_active=$6,
+	token_name=to_tsvector('indonesian', $7)	
 	WHERE id=$1`
 
 	token := fmt.Sprintf("%s %s", p.Name, p.Descriptions)
@@ -392,6 +417,7 @@ func updateAccCode(id *int, p *models.AccCode) (int64, error) {
 		p.Name,
 		p.AccTypeID,
 		p.Descriptions,
+		p.IsActive,
 		token,
 	)
 
@@ -437,7 +463,7 @@ func getAllAccCodeProps() ([]models.AccCodeType, error) {
 	var results []models.AccCodeType
 
 	var sqlStatement = `SELECT 
-		c.id, c.name, t.id as type_id, t.name AS type_name, c.descriptions
+		c.id, c.name, t.id as type_id, t.name AS type_name, c.descriptions, is_active
 	FROM acc_code c
 	INNER JOIN acc_type t ON t.id = c.acc_type_id
 	ORDER BY t.id, c.id`
@@ -460,6 +486,7 @@ func getAllAccCodeProps() ([]models.AccCodeType, error) {
 			&p.TypeID,
 			&p.TypeName,
 			&p.Descriptions,
+			&p.IsActive,
 		)
 
 		if err != nil {
