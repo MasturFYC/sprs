@@ -24,7 +24,7 @@ type Trx struct {
 	ID           int64       `json:"id"`
 	TrxTypeID    int32       `json:"trxTypeId"`
 	RefID        int64       `json:"refId"`
-	Division     string      `json:"divison"`
+	Division     string      `json:"division"`
 	Descriptions string      `json:"descriptions"`
 	TrxDate      string      `json:"trxDate"`
 	Memo         NullString  `json:"memo"`

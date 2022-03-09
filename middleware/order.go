@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
 	"fyc.com/sprs/models"
 
@@ -14,6 +15,105 @@ import (
 
 	"github.com/gorilla/mux"
 )
+
+func SearchOrders(w http.ResponseWriter, r *http.Request) {
+	EnableCors(&w)
+
+	params := mux.Vars(r)
+
+	var txt = params["txt"]
+
+	acc_codes, err := searchOrders(&txt)
+
+	if err != nil || len(acc_codes) == 0 {
+		//log.Printf("Unable to get all account codes. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+
+	json.NewEncoder(w).Encode(&acc_codes)
+}
+
+func GetOrdersByFinance(w http.ResponseWriter, r *http.Request) {
+	EnableCors(&w)
+
+	params := mux.Vars(r)
+
+	id, err := strconv.Atoi(params["id"])
+
+	if err != nil {
+		//log.Printf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	acc_codes, err := get_order_by_finance(&id)
+
+	if err != nil || len(acc_codes) == 0 {
+		//log.Printf("Unable to get all account codes. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+		//var test []models.AccCode
+		//json.NewEncoder(w).Encode(test)
+		//return
+	}
+
+	json.NewEncoder(w).Encode(&acc_codes)
+}
+
+func GetOrdersByBranch(w http.ResponseWriter, r *http.Request) {
+	EnableCors(&w)
+
+	params := mux.Vars(r)
+
+	id, err := strconv.Atoi(params["id"])
+
+	if err != nil {
+		//log.Printf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	acc_codes, err := get_order_by_branch(&id)
+
+	if err != nil || len(acc_codes) == 0 {
+		//log.Printf("Unable to get all account codes. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+		//var test []models.AccCode
+		//json.NewEncoder(w).Encode(test)
+		//return
+	}
+
+	json.NewEncoder(w).Encode(&acc_codes)
+}
+
+func GetOrdersByMonth(w http.ResponseWriter, r *http.Request) {
+	EnableCors(&w)
+
+	params := mux.Vars(r)
+
+	id, err := strconv.Atoi(params["id"])
+
+	if err != nil {
+		//log.Printf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	acc_codes, err := get_order_by_month(&id)
+
+	if err != nil || len(acc_codes) == 0 {
+		//log.Printf("Unable to get all account codes. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+		//var test []models.AccCode
+		//json.NewEncoder(w).Encode(test)
+		//return
+	}
+
+	json.NewEncoder(w).Encode(&acc_codes)
+}
 
 func GetOrders(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
@@ -186,28 +286,7 @@ func getOrder(id *int64) (models.Order, error) {
 		return o, nil
 	case nil:
 
-		finance, _ := getFinance(&o.FinanceID)
-		o.Finance = finance
-		branch, _ := getBranch(&o.BranchID)
-		o.Branch = branch
-		cust, _ := getCustomer(&o.ID)
-		o.Customer = cust
-		receivable, _ := getReceivable(&o.ID)
-		o.Receivable = receivable
-		unit, _ := getUnit(&o.ID)
-		o.Unit = unit
-		actions, _ := getAllActions(&o.ID)
-		o.Actions = actions
-		task, _ := getTask(&o.ID)
-		o.Task = task
-		home, _ := getHomeAddress(&o.ID)
-		o.HomeAddress = home
-		office, _ := getOfficeAddress(&o.ID)
-		o.OfficeAddress = office
-		post, _ := getPostAddress(&o.ID)
-		o.PostAddress = post
-		ktp, _ := getKTPAddress(&o.ID)
-		o.KtpAddress = ktp
+		set_child(&o)
 
 		return o, nil
 	default:
@@ -266,38 +345,7 @@ func getAllOrders() ([]models.Order, error) {
 			log.Fatalf("Unable to scan the row. %v", err)
 		}
 
-		finance, _ := getFinance(&o.FinanceID)
-		o.Finance = finance
-
-		branch, _ := getBranch(&o.BranchID)
-		o.Branch = branch
-
-		cust, err := getCustomer(&o.ID)
-		o.Customer = cust
-
-		receivable, _ := getReceivable(&o.ID)
-		o.Receivable = receivable
-
-		unit, _ := getUnit(&o.ID)
-		o.Unit = unit
-
-		actions, _ := getAllActions(&o.ID)
-		o.Actions = actions
-
-		task, _ := getTask(&o.ID)
-		o.Task = task
-
-		home, _ := getHomeAddress(&o.ID)
-		o.HomeAddress = home
-
-		office, _ := getOfficeAddress(&o.ID)
-		o.OfficeAddress = office
-
-		post, _ := getPostAddress(&o.ID)
-		o.PostAddress = post
-
-		ktp, _ := getKTPAddress(&o.ID)
-		o.KtpAddress = ktp
+		set_child(&o)
 
 		orders = append(orders, o)
 	}
@@ -326,36 +374,40 @@ func deleteOrder(id *int64) int64 {
 	return rowsAffected
 }
 
-func createOrder(o *models.Order) (int64, error) {
+func createOrder(p *models.Order) (int64, error) {
 
 	sqlStatement := `INSERT INTO orders (
 		name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn,
 		nominal, subtotal, user_name, verified_by, validated_by, finance_id, branch_id,
-		is_stnk, stnk_price, matrix
+		is_stnk, stnk_price, matrix, token
 	)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 
+		to_tsvector('indonesian', $18))
 	RETURNING id`
 
 	var id int64
 
+	token := strings.Join(create_token(p), " ")
+
 	err := Sql().QueryRow(sqlStatement,
-		o.Name,
-		o.OrderAt,
-		o.PrintedAt,
-		o.BtFinance,
-		o.BtPercent,
-		o.BtMatel,
-		o.Ppn,
-		o.Nominal,
-		o.Subtotal,
-		o.UserName,
-		o.VerifiedBy,
-		o.ValidatedBy,
-		o.FinanceID,
-		o.BranchID,
-		o.IsStnk,
-		o.StnkPrice,
-		o.Matrix,
+		p.Name,
+		p.OrderAt,
+		p.PrintedAt,
+		p.BtFinance,
+		p.BtPercent,
+		p.BtMatel,
+		p.Ppn,
+		p.Nominal,
+		p.Subtotal,
+		p.UserName,
+		p.VerifiedBy,
+		p.ValidatedBy,
+		p.FinanceID,
+		p.BranchID,
+		p.IsStnk,
+		p.StnkPrice,
+		p.Matrix,
+		token,
 	).Scan(&id)
 
 	if err != nil {
@@ -364,34 +416,100 @@ func createOrder(o *models.Order) (int64, error) {
 
 	return id, err
 }
+func create_token(p *models.Order) []string {
+	var s []string
 
-func updateOrder(id *int64, o *models.Order) (int64, error) {
+	s = append(s, p.Name,
+		p.OrderAt,
+		p.Finance.Name,
+		p.Finance.ShortName,
+		p.Branch.Name,
+		p.Branch.HeadBranch,
+	)
+	if p.IsStnk {
+		s = append(s, "stnk-ada")
+	} else {
+		s = append(s, "stnk-tidak-ada")
+	}
+
+	if p.Unit.TypeID > 0 {
+
+		s = append(s, p.Unit.Nopol, p.Unit.Type.Name)
+
+		if p.Unit.WarehouseID > 0 {
+			s = append(s, p.Unit.Warehouse.Name)
+		}
+
+		if p.Unit.FrameNumber != "" {
+			s = append(s, p.Unit.FrameNumber)
+		}
+
+		if p.Unit.MachineNumber != "" {
+			s = append(s, p.Unit.MachineNumber)
+		}
+		if p.Unit.Color != "" {
+			s = append(s, p.Unit.Color)
+		}
+
+		if p.Unit.Year != 0 {
+			s = append(s, strconv.FormatInt(p.Unit.Year, 10))
+		}
+
+		if p.Unit.Dealer != "" {
+			s = append(s, p.Unit.Dealer)
+		}
+
+		if p.Unit.Surveyor != "" {
+			s = append(s, p.Unit.Surveyor)
+		}
+
+		if p.Unit.BpkbName != "" {
+			s = append(s, p.Unit.BpkbName)
+		}
+
+		if p.Unit.Type.MerkID > 0 {
+			s = append(s, p.Unit.Type.Merk.Name)
+		}
+		if p.Unit.Type.WheelID > 0 {
+			s = append(s, p.Unit.Type.Wheel.Name)
+			s = append(s, p.Unit.Type.Wheel.ShortName)
+		}
+	}
+
+	return s
+
+}
+
+func updateOrder(id *int64, p *models.Order) (int64, error) {
 
 	sqlStatement := `UPDATE orders SET
 		name=$2, order_at=$3, printed_at=$4, bt_finance=$5, bt_percent=$6, bt_matel=$7, ppn=$8,
 		nominal=$9, subtotal=$10, user_name=$11, verified_by=$12, validated_by=$13, finance_id=$14, branch_id=$15,
-		is_stnk=$16, stnk_price=$17, matrix=$18
+		is_stnk=$16, stnk_price=$17, matrix=$18, token=to_tsvector('indonesian', $19)
 	WHERE id=$1`
+
+	token := strings.Join(create_token(p), " ")
 
 	res, err := Sql().Exec(sqlStatement,
 		id,
-		o.Name,
-		o.OrderAt,
-		o.PrintedAt,
-		o.BtFinance,
-		o.BtPercent,
-		o.BtMatel,
-		o.Ppn,
-		o.Nominal,
-		o.Subtotal,
-		o.UserName,
-		o.VerifiedBy,
-		o.ValidatedBy,
-		o.FinanceID,
-		o.BranchID,
-		o.IsStnk,
-		o.StnkPrice,
-		o.Matrix,
+		p.Name,
+		p.OrderAt,
+		p.PrintedAt,
+		p.BtFinance,
+		p.BtPercent,
+		p.BtMatel,
+		p.Ppn,
+		p.Nominal,
+		p.Subtotal,
+		p.UserName,
+		p.VerifiedBy,
+		p.ValidatedBy,
+		p.FinanceID,
+		p.BranchID,
+		p.IsStnk,
+		p.StnkPrice,
+		p.Matrix,
+		token,
 	)
 
 	if err != nil {
@@ -407,4 +525,267 @@ func updateOrder(id *int64, o *models.Order) (int64, error) {
 	}
 
 	return rowsAffected, err
+}
+
+func searchOrders(txt *string) ([]models.Order, error) {
+
+	var orders []models.Order
+
+	var sqlStatement = `SELECT
+		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn,
+		nominal, subtotal, user_name, verified_by, validated_by, finance_id, branch_id,
+		is_stnk, stnk_price, matrix
+	FROM orders
+	WHERE token @@ to_tsquery('indonesian', $1)
+	ORDER BY id DESC`
+
+	rs, err := Sql().Query(sqlStatement, txt)
+
+	if err != nil {
+		log.Printf("Unable to execute orderes query %v", err)
+		return nil, err
+	}
+
+	defer rs.Close()
+
+	for rs.Next() {
+		var o models.Order
+
+		err := rs.Scan(
+			&o.ID,
+			&o.Name,
+			&o.OrderAt,
+			&o.PrintedAt,
+			&o.BtFinance,
+			&o.BtPercent,
+			&o.BtMatel,
+			&o.Ppn,
+			&o.Nominal,
+			&o.Subtotal,
+			&o.UserName,
+			&o.VerifiedBy,
+			&o.ValidatedBy,
+			&o.FinanceID,
+			&o.BranchID,
+			&o.IsStnk,
+			&o.StnkPrice,
+			&o.Matrix,
+		)
+
+		if err != nil {
+			log.Fatalf("Unable to scan the row. %v", err)
+		}
+
+		set_child(&o)
+
+		orders = append(orders, o)
+	}
+
+	return orders, err
+}
+
+func get_order_by_finance(id *int) ([]models.Order, error) {
+
+	var orders []models.Order
+
+	var sqlStatement = `SELECT
+		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn,
+		nominal, subtotal, user_name, verified_by, validated_by, finance_id, branch_id,
+		is_stnk, stnk_price, matrix
+	FROM orders
+	WHERE finance_id=$1
+	ORDER BY finance_id, id DESC`
+
+	rs, err := Sql().Query(sqlStatement, id)
+
+	if err != nil {
+		log.Printf("Unable to execute orderes query %v", err)
+		return nil, err
+	}
+
+	defer rs.Close()
+
+	for rs.Next() {
+		var o models.Order
+
+		err := rs.Scan(
+			&o.ID,
+			&o.Name,
+			&o.OrderAt,
+			&o.PrintedAt,
+			&o.BtFinance,
+			&o.BtPercent,
+			&o.BtMatel,
+			&o.Ppn,
+			&o.Nominal,
+			&o.Subtotal,
+			&o.UserName,
+			&o.VerifiedBy,
+			&o.ValidatedBy,
+			&o.FinanceID,
+			&o.BranchID,
+			&o.IsStnk,
+			&o.StnkPrice,
+			&o.Matrix,
+		)
+
+		if err != nil {
+			log.Fatalf("Unable to scan the row. %v", err)
+		}
+
+		set_child(&o)
+
+		orders = append(orders, o)
+	}
+
+	return orders, err
+}
+
+func get_order_by_branch(id *int) ([]models.Order, error) {
+
+	var orders []models.Order
+
+	var sqlStatement = `SELECT
+		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn,
+		nominal, subtotal, user_name, verified_by, validated_by, finance_id, branch_id,
+		is_stnk, stnk_price, matrix
+	FROM orders
+	WHERE branch_id=$1
+	ORDER BY branch_id, id DESC`
+
+	rs, err := Sql().Query(sqlStatement, id)
+
+	if err != nil {
+		log.Printf("Unable to execute orderes query %v", err)
+		return nil, err
+	}
+
+	defer rs.Close()
+
+	for rs.Next() {
+		var o models.Order
+
+		err := rs.Scan(
+			&o.ID,
+			&o.Name,
+			&o.OrderAt,
+			&o.PrintedAt,
+			&o.BtFinance,
+			&o.BtPercent,
+			&o.BtMatel,
+			&o.Ppn,
+			&o.Nominal,
+			&o.Subtotal,
+			&o.UserName,
+			&o.VerifiedBy,
+			&o.ValidatedBy,
+			&o.FinanceID,
+			&o.BranchID,
+			&o.IsStnk,
+			&o.StnkPrice,
+			&o.Matrix,
+		)
+
+		if err != nil {
+			log.Fatalf("Unable to scan the row. %v", err)
+		}
+
+		set_child(&o)
+
+		orders = append(orders, o)
+	}
+
+	return orders, err
+}
+
+func set_child(o *models.Order) {
+	finance, _ := getFinance(&o.FinanceID)
+	o.Finance = finance
+
+	branch, _ := getBranch(&o.BranchID)
+	o.Branch = branch
+
+	cust, _ := getCustomer(&o.ID)
+	o.Customer = cust
+
+	receivable, _ := getReceivable(&o.ID)
+	o.Receivable = receivable
+
+	unit, _ := getUnit(&o.ID)
+	o.Unit = unit
+
+	actions, _ := getAllActions(&o.ID)
+	o.Actions = actions
+
+	task, _ := getTask(&o.ID)
+	o.Task = task
+
+	home, _ := getHomeAddress(&o.ID)
+	o.HomeAddress = home
+
+	office, _ := getOfficeAddress(&o.ID)
+	o.OfficeAddress = office
+
+	post, _ := getPostAddress(&o.ID)
+	o.PostAddress = post
+
+	ktp, _ := getKTPAddress(&o.ID)
+	o.KtpAddress = ktp
+}
+
+func get_order_by_month(id *int) ([]models.Order, error) {
+
+	var orders []models.Order
+
+	var sqlStatement = `SELECT
+		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn,
+		nominal, subtotal, user_name, verified_by, validated_by, finance_id, branch_id,
+		is_stnk, stnk_price, matrix
+	FROM orders
+	WHERE EXTRACT(MONTH from order_at)=$1
+	ORDER BY branch_id, id DESC`
+
+	rs, err := Sql().Query(sqlStatement, id)
+
+	if err != nil {
+		log.Printf("Unable to execute orderes query %v", err)
+		return nil, err
+	}
+
+	defer rs.Close()
+
+	for rs.Next() {
+		var o models.Order
+
+		err := rs.Scan(
+			&o.ID,
+			&o.Name,
+			&o.OrderAt,
+			&o.PrintedAt,
+			&o.BtFinance,
+			&o.BtPercent,
+			&o.BtMatel,
+			&o.Ppn,
+			&o.Nominal,
+			&o.Subtotal,
+			&o.UserName,
+			&o.VerifiedBy,
+			&o.ValidatedBy,
+			&o.FinanceID,
+			&o.BranchID,
+			&o.IsStnk,
+			&o.StnkPrice,
+			&o.Matrix,
+		)
+
+		if err != nil {
+			log.Fatalf("Unable to scan the row. %v", err)
+		}
+
+		set_child(&o)
+
+		orders = append(orders, o)
+	}
+
+	return orders, err
 }

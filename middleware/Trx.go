@@ -28,6 +28,30 @@ type local_trx struct {
 	Details []local_detail `json:"details,omitempty"`
 }
 
+func GetTransactionsByMonth(w http.ResponseWriter, r *http.Request) {
+	EnableCors(&w)
+
+	params := mux.Vars(r)
+
+	id, err := strconv.Atoi(params["id"])
+
+	if err != nil {
+		log.Printf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	acc_codes, err := get_trx_by_month(&id)
+
+	if err != nil {
+		log.Printf("Unable to get all transactions. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+
+	json.NewEncoder(w).Encode(&acc_codes)
+}
+
 func GetTransactionsByType(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 
@@ -388,7 +412,7 @@ func createTransaction(p *models.Trx) (int64, error) {
 	RETURNING id`
 
 	var id int64
-	token := fmt.Sprintf("%d %s %s", p.ID, p.Descriptions, p.Memo)
+	token := fmt.Sprintf("%d %s %s %s", p.ID, p.Descriptions, p.Memo, p.Division)
 
 	err := Sql().QueryRow(sqlStatement,
 		p.TrxTypeID,
@@ -420,7 +444,7 @@ func updateTransaction(id *int64, p *models.Trx) (int64, error) {
 		trx_token=to_tsvector('indonesian', $8)
 	WHERE id=$1`
 
-	token := fmt.Sprintf("%d %s %s", p.ID, p.Descriptions, p.Memo)
+	token := fmt.Sprintf("%d %s %s %s", p.ID, p.Descriptions, p.Memo, p.Division)
 
 	res, err := Sql().Exec(sqlStatement,
 		id,
@@ -599,4 +623,50 @@ func get_details(trxID *int64) ([]local_detail, error) {
 	}
 
 	return details, err
+}
+
+func get_trx_by_month(id *int) ([]local_trx, error) {
+
+	var results []local_trx
+
+	var sqlStatement = `SELECT 
+	t.id, t.trx_type_id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
+	(select sum(d.debt) as debt from trx_detail d where d.trx_id = t.id) saldo
+	FROM trx t
+	WHERE EXTRACT(MONTH from trx_date)=$1
+	ORDER BY t.id DESC`
+
+	rs, err := Sql().Query(sqlStatement, id)
+
+	if err != nil {
+		log.Printf("Unable to execute transactions query %v", err)
+		return nil, err
+	}
+
+	defer rs.Close()
+
+	for rs.Next() {
+		var p local_trx
+
+		err := rs.Scan(
+			&p.ID,
+			&p.TrxTypeID,
+			&p.RefID,
+			&p.Division,
+			&p.TrxDate,
+			&p.Descriptions,
+			&p.Memo,
+			&p.Saldo,
+		)
+
+		if err != nil {
+			log.Fatalf("Unable to scan the row. %v", err)
+		}
+		d, _ := get_details(&p.ID)
+		p.Details = d
+
+		results = append(results, p)
+	}
+
+	return results, err
 }
