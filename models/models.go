@@ -56,10 +56,10 @@ type Branch struct {
 }
 
 type Customer struct {
-	OrderID         int64  `json:"orderId"`
-	Name            string `json:"name"`
+	OrderID         int64      `json:"orderId"`
+	Name            string     `json:"name"`
 	AgreementNumber NullString `json:"agreementNumber"`
-	PaymentType     string `json:"paymentType"`
+	PaymentType     string     `json:"paymentType"`
 }
 
 type Finance struct {
@@ -152,4 +152,8 @@ type Type struct {
 type Property struct {
 	ID   int64  `json:"id"`
 	Name string `json:"string"`
+}
+
+type SearchType struct {
+	Txt string `json:"txt"`
 }

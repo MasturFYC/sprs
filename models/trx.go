@@ -32,6 +32,12 @@ type Trx struct {
 	Details      []TrxDetail `json:"details,omitempty"`
 }
 
+type TrxDetailsToken struct {
+	Trx     Trx         `json:"trx"`
+	Details []TrxDetail `json:"details"`
+	Token   string      `json:"token"`
+}
+
 type TrxDetail struct {
 	ID        int64   `json:"id"`
 	AccCodeID int32   `json:"accCodeId"`

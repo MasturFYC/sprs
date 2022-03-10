@@ -17,10 +17,11 @@ import (
 )
 
 type local_detail struct {
-	ID   int64   `json:"id"`
-	Name string  `json:"name"`
-	Debt float64 `json:"debt"`
-	Cred float64 `json:"cred"`
+	ID        int64   `json:"id"`
+	Name      string  `json:"name"`
+	AccCodeID int32   `json:"accCodeId"`
+	Debt      float64 `json:"debt"`
+	Cred      float64 `json:"cred"`
 }
 
 type local_trx struct {
@@ -79,11 +80,16 @@ func GetTransactionsByType(w http.ResponseWriter, r *http.Request) {
 func SearchTransactions(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 
-	params := mux.Vars(r)
+	var t models.SearchType
 
-	var txt = params["txt"]
+	err := json.NewDecoder(r.Body).Decode(&t)
 
-	trxs, err := searchTransactions(&txt)
+	if err != nil {
+		log.Printf("Unable to decode the request body to transaction.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+	}
+
+	trxs, err := searchTransactions(&t.Txt)
 
 	if err != nil {
 		log.Printf("Unable to get all account codes. %v", err)
@@ -97,7 +103,7 @@ func SearchTransactions(w http.ResponseWriter, r *http.Request) {
 func GetTransactions(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 
-	trxs, err := getAllTransactions()
+	trxs, err := get_all_transactions()
 
 	if err != nil {
 		log.Printf("Unable to get all transaction. %v", err)
@@ -137,16 +143,16 @@ func CreateTransaction(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Access-Control-Allow-Methods", "POST")
 
-	var trx models.Trx
+	var param models.TrxDetailsToken
 
-	err := json.NewDecoder(r.Body).Decode(&trx)
+	err := json.NewDecoder(r.Body).Decode(&param)
 
 	if err != nil {
 		log.Printf("Unable to decode the request body to transaction.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 	}
 
-	id, err := createTransaction(&trx)
+	id, err := createTransaction(&param.Trx, param.Token)
 
 	if err != nil {
 		log.Printf("(API) Unable to create transaction.  %v", err)
@@ -154,9 +160,9 @@ func CreateTransaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(trx.Details) > 0 {
+	if len(param.Details) > 0 {
 
-		err = bulkInsertDetails(trx.Details, &id)
+		err = bulkInsertDetails(param.Details, &id)
 
 		if err != nil {
 			log.Printf("Unable to insert transaction details.  %v", err)
@@ -185,7 +191,7 @@ func UpdateTransaction(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.ParseInt(params["id"], 10, 64)
 
-	var trx models.Trx
+	var trx models.TrxDetailsToken
 
 	err = json.NewDecoder(r.Body).Decode(&trx)
 
@@ -195,7 +201,7 @@ func UpdateTransaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatedRows, err := updateTransaction(&id, &trx)
+	updatedRows, err := updateTransaction(&id, &trx.Trx, trx.Token)
 
 	if err != nil {
 		log.Printf("Unable to update transaction.  %v", err)
@@ -358,7 +364,7 @@ func getTransaction(id *int64) (local_trx, error) {
 	return p, err
 }
 
-func getAllTransactions() ([]local_trx, error) {
+func get_all_transactions() ([]local_trx, error) {
 
 	var results []local_trx
 
@@ -404,7 +410,7 @@ func getAllTransactions() ([]local_trx, error) {
 	return results, err
 }
 
-func createTransaction(p *models.Trx) (int64, error) {
+func createTransaction(p *models.Trx, token string) (int64, error) {
 
 	sqlStatement := `INSERT INTO trx 
 	(trx_type_id, ref_id, division, trx_date, descriptions, memo, trx_token)
@@ -412,7 +418,6 @@ func createTransaction(p *models.Trx) (int64, error) {
 	RETURNING id`
 
 	var id int64
-	token := fmt.Sprintf("%d %s %s %s", p.ID, p.Descriptions, p.Memo, p.Division)
 
 	err := Sql().QueryRow(sqlStatement,
 		p.TrxTypeID,
@@ -432,7 +437,7 @@ func createTransaction(p *models.Trx) (int64, error) {
 	return id, err
 }
 
-func updateTransaction(id *int64, p *models.Trx) (int64, error) {
+func updateTransaction(id *int64, p *models.Trx, token string) (int64, error) {
 
 	sqlStatement := `UPDATE trx SET 
 		trx_type_id=$2,
@@ -443,8 +448,6 @@ func updateTransaction(id *int64, p *models.Trx) (int64, error) {
 		memo=$7,
 		trx_token=to_tsvector('indonesian', $8)
 	WHERE id=$1`
-
-	token := fmt.Sprintf("%d %s %s %s", p.ID, p.Descriptions, p.Memo, p.Division)
 
 	res, err := Sql().Exec(sqlStatement,
 		id,
@@ -592,10 +595,11 @@ func get_details(trxID *int64) ([]local_detail, error) {
 	var details []local_detail
 
 	var sqlStatement = `SELECT
-	a.id, a.name, d.debt, d.cred
+	a.id, a.name, d.acc_code_id, d.debt, d.cred
 	FROM trx_detail d
 	INNER JOIN acc_code a ON a.id = d.acc_code_id
-	WHERE d.trx_id=$1`
+	WHERE d.trx_id=$1
+	ORDER BY d.id`
 
 	rs, err := Sql().Query(sqlStatement, trxID)
 
@@ -612,6 +616,7 @@ func get_details(trxID *int64) ([]local_detail, error) {
 		err := rs.Scan(
 			&p.ID,
 			&p.Name,
+			&p.AccCodeID,
 			&p.Debt,
 			&p.Cred,
 		)

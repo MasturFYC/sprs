@@ -149,7 +149,8 @@ func getTransactionDetails(trxID *int64) ([]models.TrxDetail, error) {
 	var sqlStatement = `SELECT 
 		id, acc_code_id, trx_id, debt, cred
 	FROM trx_detail
-	WHERE trx_id=$1`
+	WHERE trx_id=$1
+	ORDER BY id`
 
 	rs, err := Sql().Query(sqlStatement, trxID)
 

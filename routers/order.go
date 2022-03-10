@@ -9,7 +9,7 @@ import (
 func OrderRouter(router *mux.Router) {
 
 	router.HandleFunc("/", middleware.GetOrders).Methods("GET")
-	router.HandleFunc("/search/{txt}/", middleware.SearchOrders).Methods("GET")
+	router.HandleFunc("/search/", middleware.SearchOrders).Methods("POST")
 	router.HandleFunc("/finance/{id}/", middleware.GetOrdersByFinance).Methods("GET")
 	router.HandleFunc("/branch/{id}/", middleware.GetOrdersByBranch).Methods("GET")
 	router.HandleFunc("/month/{id}/", middleware.GetOrdersByMonth).Methods("GET")

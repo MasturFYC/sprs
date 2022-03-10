@@ -19,11 +19,16 @@ import (
 func SearchOrders(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 
-	params := mux.Vars(r)
+	var t models.SearchType
 
-	var txt = params["txt"]
+	err := json.NewDecoder(r.Body).Decode(&t)
 
-	acc_codes, err := searchOrders(&txt)
+	if err != nil {
+		log.Printf("Unable to decode the request body to transaction.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+	}
+
+	acc_codes, err := searchOrders(&t.Txt)
 
 	if err != nil || len(acc_codes) == 0 {
 		//log.Printf("Unable to get all account codes. %v", err)
