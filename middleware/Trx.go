@@ -502,8 +502,14 @@ func searchTransactions(txt *string) ([]local_trx, error) {
 	var results []local_trx
 
 	var sqlStatement = `SELECT 
-	t.id, t.trx_type_id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
-	(select sum(d.debt) as debt from trx_detail d where d.trx_id = t.id) saldo
+	t.id,
+	t.trx_type_id,
+	t.ref_id,
+	t.division,
+	t.trx_date,
+	t.descriptions,
+	t.memo,
+	coalesce((select sum(d.debt) as debt from trx_detail d where d.trx_id = t.id), 0) saldo
 	FROM trx t
 	WHERE t.trx_token @@ to_tsquery('indonesian', $1)
 	ORDER BY t.id DESC`
