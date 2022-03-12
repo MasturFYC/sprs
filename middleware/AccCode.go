@@ -224,7 +224,7 @@ func getAccCode(id *int) (models.AccCode, error) {
 	var p models.AccCode
 
 	var sqlStatement = `SELECT 
-		type_id, id, name, descriptions, is_active
+		type_id, id, name, descriptions, is_active, is_auto_debet
 	FROM acc_code
 	WHERE id=$1`
 
@@ -236,6 +236,7 @@ func getAccCode(id *int) (models.AccCode, error) {
 		&p.Name,
 		&p.Descriptions,
 		&p.IsActive,
+		&p.IsAutoDebet,
 	)
 
 	switch err {
@@ -257,7 +258,7 @@ func getAccCodeByType(id *int) ([]models.AccCode, error) {
 	var results []models.AccCode
 
 	var sqlStatement = `SELECT 
-		type_id, id, name, descriptions, is_active
+		type_id, id, name, descriptions, is_active, is_auto_debet
 	FROM acc_code
 	WHERE type_id=$1
 	ORDER BY id`
@@ -280,6 +281,7 @@ func getAccCodeByType(id *int) ([]models.AccCode, error) {
 			&p.Name,
 			&p.Descriptions,
 			&p.IsActive,
+			&p.IsAutoDebet,
 		)
 
 		if err != nil {
@@ -297,7 +299,7 @@ func searchAccCodeByName(txt *string) ([]models.AccCode, error) {
 	var results []models.AccCode
 
 	var sqlStatement = `SELECT 
-		type_id, id, name, descriptions, is_active
+		type_id, id, name, descriptions, is_active, is_auto_debet
 	FROM acc_code
 	WHERE token_name @@ to_tsquery('indonesian', $1)
 	ORDER BY id`
@@ -320,6 +322,7 @@ func searchAccCodeByName(txt *string) ([]models.AccCode, error) {
 			&p.Name,
 			&p.Descriptions,
 			&p.IsActive,
+			&p.IsAutoDebet,
 		)
 
 		if err != nil {
@@ -337,7 +340,7 @@ func getAllAccCodes() ([]models.AccCode, error) {
 	var results []models.AccCode
 
 	var sqlStatement = `SELECT 
-		type_id, id, name, descriptions, is_active
+		type_id, id, name, descriptions, is_active, is_auto_debet
 	FROM acc_code
 	ORDER BY id`
 
@@ -359,6 +362,7 @@ func getAllAccCodes() ([]models.AccCode, error) {
 			&p.Name,
 			&p.Descriptions,
 			&p.IsActive,
+			&p.IsAutoDebet,
 		)
 
 		if err != nil {
@@ -374,8 +378,8 @@ func getAllAccCodes() ([]models.AccCode, error) {
 func createAccCode(p *models.AccCode) (int64, error) {
 
 	sqlStatement := `INSERT INTO 
-	acc_code (type_id, id, name, descriptions, is_active, token_name)
-	VALUES ($1, $2, $3, $4, $5, to_tsvector('indonesian', $6))`
+	acc_code (type_id, id, name, descriptions, is_active, is_auto_debet, token_name)
+	VALUES ($1, $2, $3, $4, $5, $6, to_tsvector('indonesian', $7))`
 
 	token := fmt.Sprintf("%s %s", p.Name, p.Descriptions)
 
@@ -385,6 +389,7 @@ func createAccCode(p *models.AccCode) (int64, error) {
 		p.Name,
 		p.Descriptions,
 		p.IsActive,
+		p.IsAutoDebet,
 		token,
 	)
 
@@ -405,8 +410,8 @@ func createAccCode(p *models.AccCode) (int64, error) {
 func updateAccCode(id *int, p *models.AccCode) (int64, error) {
 
 	sqlStatement := `UPDATE acc_code SET 
-	type_id=$2, id=$3, name=$4, descriptions=$5, is_active=$6,
-	token_name=to_tsvector('indonesian', $7)	
+	type_id=$2, id=$3, name=$4, descriptions=$5, is_active=$6, is_auto_debet=$7,
+	token_name=to_tsvector('indonesian', $8)	
 	WHERE id=$1`
 
 	token := fmt.Sprintf("%s %s", p.Name, p.Descriptions)
@@ -418,6 +423,7 @@ func updateAccCode(id *int, p *models.AccCode) (int64, error) {
 		p.Name,
 		p.Descriptions,
 		p.IsActive,
+		p.IsAutoDebet,
 		token,
 	)
 

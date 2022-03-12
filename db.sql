@@ -2,13 +2,13 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 13.5 (Debian 13.5-0+deb11u1)
--- Dumped by pg_dump version 13.5 (Debian 13.5-0+deb11u1)
+-- Dumped from database version 12.10 (Ubuntu 12.10-1.pgdg20.04+1)
+-- Dumped by pg_dump version 14.2 (Ubuntu 14.2-1.pgdg20.04+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'SQL_ASCII';
+SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
@@ -30,7 +30,8 @@ CREATE TABLE public.acc_code (
     type_id smallint NOT NULL,
     descriptions character varying(256),
     token_name tsvector,
-    is_active boolean DEFAULT true NOT NULL
+    is_active boolean DEFAULT true NOT NULL,
+    is_auto_debet boolean DEFAULT true
 );
 
 
@@ -594,28 +595,28 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 -- Data for Name: acc_code; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.acc_code (id, name, type_id, descriptions, token_name, is_active) FROM stdin;
-5113	Biaya Telephone dan Fax	51	Biaya telephone dan faximile ke telkomsel	'biaya':1,5 'dan':3,7 'fax':4 'faximil':8 'ke':9 'telephon':2,6 'telkomsel':10	t
-5115	Biaya Pos dan Materai	51	Biaya pengiriman surat dan pembelian materai.	'biaya':1,5 'dan':3,8 'materai':4,10 'pembelian':9 'pengiriman':6 'pos':2 'surat':7	t
-5112	Biaya Listrik	51	Biaya pemakaian listrik	'biaya':1,3 'listrik':2,5 'pemakaian':4	t
-5114	Biaya Internet	51	Biaya jaringan internet ke Biznet	'biaya':1,3 'biznet':7 'internet':2,5 'jaringan':4 'ke':6	t
-5111	Biaya Transport	51	Biaya transportasi karyawan	'biaya':1,3 'karyawan':5 'transport':2 'transportasi':4	t
-5116	Biaya ATK	51	Biaya alat tulis kantor termasuk termasuk peralatan seperti komputer, meja, kursi, lemari	'alat':4 'atk':2 'biaya':1,3 'kantor':6 'komput':11 'kursi':13 'lemari':14 'meja':12 'peralatan':9 'seperti':10 'termasuk':7,8 'tuli':5	t
-1211	Order (SPK)	12	Pendanaan yg dikeluarkan untuk operasi penarikan berdasarkan SPK dari Finance sejumlah BT Matel	'berdasarkan':9 'bt':14 'dari':11 'dikeluarkan':5 'financ':12 'matel':15 'operasi':7 'order':1 'penarikan':8 'pendanaan':3 'sejumlah':13 'spk':2,10 'untuk':6 'yg':4	t
-5117	Biaya Servis	51	Biaya service kendaraan, AC, komputer, dll.	'ac':6 'biaya':1,3 'dll':8 'komputer':7 'ndara':5 'service':4 'servis':2	t
-3111	Modal Pak Kris	31	Modal yg diterima dari pak Kris	'dari':7 'kris':3,9 'modal':1,4 'pak':2,8 'terima':6 'yg':5	t
-3211	Prive Pak Kris	32	Pengambilan modal, pinjam kas oleh pak Kris	'ambil':4 'kas':7 'kris':3,10 'modal':5 'oleh':8 'pak':2,9 'pinjam':6 'prive':1	t
-4111	Pendapatan Invoice	41	Penarikan dana dari pihak Finance karena adanya ...	'ada':9 'arik':3 'dana':4 'dapat':1 'dari':5 'finance':7 'invoice':2 'karena':8 'pihak':6	t
-5119	Biaya Lain-lain	51	Biaya yg terdiri dari bermacam transaksi serta tidak tercantum pada salah satu perkiraan yang terdapat dalam transaksi perushaan	'biaya':1,5 'cantum':13 'dalam':20 'dapat':19 'dari':8 'diri':7 'kira':17 'lain':3,4 'lain-lain':2 'macam':9 'pada':14 'salah':15 'satu':16 'serta':11 'tidak':12 'transaksi':10,21 'usha':22 'yang':18 'yg':6	t
-5312	Biaya Gaji Karyawan Honorer	51	Pencatan data kompensasi karyawan seperti uang potongan dari setiap gaji\ndan pajak serta tunjangan bukan karyawan tetap 	'biaya':1 'bukan':19 'catan':5 'dan':15 'dari':12 'data':6 'gaji':2,14 'honorer':4 'karyaw':3,8,20 'kompensasi':7 'pajak':16 'potong':11 'sepert':9 'serta':17 'setiap':13 'tetap':21 'tunjang':18 'uang':10	t
-5311	Biaya Gaji karyawan Tetap	53	Pencatan data kompensasi karyawan seperti uang potongan dari setiap gaji dan pajak serta tunjangan karyawan tetap	'biaya':1 'catan':5 'dan':15 'dari':12 'data':6 'gaji':2,14 'karyaw':3,8,19 'kompensasi':7 'pajak':16 'potong':11 'sepert':9 'serta':17 'setiap':13 'tetap':4,20 'tunjang':18 'uang':10	t
-5411	Upah Tenaga Kerja	54	Biaya overhead perusahaan yg dikeluarkan untuk memayar upah karena mengerjakan sesuatu	'biaya':4 'erja':13 'karena':12 'keluar':8 'kerja':3 'overhead':5 'payar':10 'sesuatu':14 'tenaga':2 'untuk':9 'upah':1,11 'usaha':6 'yg':7	t
-5118	Biaya Konsumsi	51	Biaya yg dikeluarkan karena suatu kegiatan yg dpt mengurangi atau menghabiskan barang dan jasa	'atau':12 'barang':14 'biaya':1,3 'dan':15 'dpt':10 'giat':8 'habis':13 'jasa':16 'karena':6 'keluar':5 'konsumsi':2 'suatu':7 'urang':11 'yg':4,9	t
-5211	Biaya STNK	52	Biaya yg dikeluarkan untuk penarikan kendaraan yg tidak ada STNK	'ada':11 'arik':7 'biaya':1,3 'keluar':5 'ndara':8 'stnk':2,12 'tidak':10 'untuk':6 'yg':4,9	t
-6011	Pembayaran Pajak	60	Pajak Pertambahan Nilai	'bayar':1 'nila':5 'pajak':2,3 'tambah':4	t
-2311	Hutang Pajak	23	Pajak yg belum dibayar karena menunggu pembayaran dari tarikan	'bayar':6,9 'belum':5 'dari':10 'hutang':1 'karena':7 'pajak':2,3 'tari':11 'unggu':8 'yg':4	t
-1111	Kas Kecil	11	Kas bendahara Kantor	'bendahara':4 'kantor':5 'kas':1,3 'kecil':2	t
-1112	Bank BCA 0856212654	11	Rekening BCA Opik	'0856212654':3 'bank':1 'bca':2,5 'opik':6 'rekening':4	t
+COPY public.acc_code (id, name, type_id, descriptions, token_name, is_active, is_auto_debet) FROM stdin;
+5113	Biaya Telephone dan Fax	51	Biaya telephone dan faximile ke telkomsel	'biaya':1,5 'dan':3,7 'fax':4 'faximil':8 'ke':9 'telephon':2,6 'telkomsel':10	t	t
+5115	Biaya Pos dan Materai	51	Biaya pengiriman surat dan pembelian materai.	'biaya':1,5 'dan':3,8 'materai':4,10 'pembelian':9 'pengiriman':6 'pos':2 'surat':7	t	t
+5112	Biaya Listrik	51	Biaya pemakaian listrik	'biaya':1,3 'listrik':2,5 'pemakaian':4	t	t
+5114	Biaya Internet	51	Biaya jaringan internet ke Biznet	'biaya':1,3 'biznet':7 'internet':2,5 'jaringan':4 'ke':6	t	t
+5111	Biaya Transport	51	Biaya transportasi karyawan	'biaya':1,3 'karyawan':5 'transport':2 'transportasi':4	t	t
+5116	Biaya ATK	51	Biaya alat tulis kantor termasuk termasuk peralatan seperti komputer, meja, kursi, lemari	'alat':4 'atk':2 'biaya':1,3 'kantor':6 'komput':11 'kursi':13 'lemari':14 'meja':12 'peralatan':9 'seperti':10 'termasuk':7,8 'tuli':5	t	t
+5117	Biaya Servis	51	Biaya service kendaraan, AC, komputer, dll.	'ac':6 'biaya':1,3 'dll':8 'komputer':7 'ndara':5 'service':4 'servis':2	t	t
+3111	Modal Pak Kris	31	Modal yg diterima dari pak Kris	'dari':7 'kris':3,9 'modal':1,4 'pak':2,8 'terima':6 'yg':5	t	t
+3211	Prive Pak Kris	32	Pengambilan modal, pinjam kas oleh pak Kris	'ambil':4 'kas':7 'kris':3,10 'modal':5 'oleh':8 'pak':2,9 'pinjam':6 'prive':1	t	t
+4111	Pendapatan Invoice	41	Penarikan dana dari pihak Finance karena adanya ...	'ada':9 'arik':3 'dana':4 'dapat':1 'dari':5 'finance':7 'invoice':2 'karena':8 'pihak':6	t	t
+5119	Biaya Lain-lain	51	Biaya yg terdiri dari bermacam transaksi serta tidak tercantum pada salah satu perkiraan yang terdapat dalam transaksi perushaan	'biaya':1,5 'cantum':13 'dalam':20 'dapat':19 'dari':8 'diri':7 'kira':17 'lain':3,4 'lain-lain':2 'macam':9 'pada':14 'salah':15 'satu':16 'serta':11 'tidak':12 'transaksi':10,21 'usha':22 'yang':18 'yg':6	t	t
+5312	Biaya Gaji Karyawan Honorer	51	Pencatan data kompensasi karyawan seperti uang potongan dari setiap gaji\ndan pajak serta tunjangan bukan karyawan tetap 	'biaya':1 'bukan':19 'catan':5 'dan':15 'dari':12 'data':6 'gaji':2,14 'honorer':4 'karyaw':3,8,20 'kompensasi':7 'pajak':16 'potong':11 'sepert':9 'serta':17 'setiap':13 'tetap':21 'tunjang':18 'uang':10	t	t
+5311	Biaya Gaji karyawan Tetap	53	Pencatan data kompensasi karyawan seperti uang potongan dari setiap gaji dan pajak serta tunjangan karyawan tetap	'biaya':1 'catan':5 'dan':15 'dari':12 'data':6 'gaji':2,14 'karyaw':3,8,19 'kompensasi':7 'pajak':16 'potong':11 'sepert':9 'serta':17 'setiap':13 'tetap':4,20 'tunjang':18 'uang':10	t	t
+5411	Upah Tenaga Kerja	54	Biaya overhead perusahaan yg dikeluarkan untuk memayar upah karena mengerjakan sesuatu	'biaya':4 'erja':13 'karena':12 'keluar':8 'kerja':3 'overhead':5 'payar':10 'sesuatu':14 'tenaga':2 'untuk':9 'upah':1,11 'usaha':6 'yg':7	t	t
+5118	Biaya Konsumsi	51	Biaya yg dikeluarkan karena suatu kegiatan yg dpt mengurangi atau menghabiskan barang dan jasa	'atau':12 'barang':14 'biaya':1,3 'dan':15 'dpt':10 'giat':8 'habis':13 'jasa':16 'karena':6 'keluar':5 'konsumsi':2 'suatu':7 'urang':11 'yg':4,9	t	t
+5211	Biaya STNK	52	Biaya yg dikeluarkan untuk penarikan kendaraan yg tidak ada STNK	'ada':11 'arik':7 'biaya':1,3 'keluar':5 'ndara':8 'stnk':2,12 'tidak':10 'untuk':6 'yg':4,9	t	t
+6011	Pembayaran Pajak	60	Pajak Pertambahan Nilai	'bayar':1 'nila':5 'pajak':2,3 'tambah':4	t	t
+2311	Hutang Pajak	23	Pajak yg belum dibayar karena menunggu pembayaran dari tarikan	'bayar':6,9 'belum':5 'dari':10 'hutang':1 'karena':7 'pajak':2,3 'tari':11 'unggu':8 'yg':4	t	t
+1111	Kas Kecil	11	Kas bendahara Kantor	'bendahara':4 'kantor':5 'kas':1,3 'kecil':2	t	t
+1112	Bank BCA 0856212654	11	Rekening BCA Opik	'0856212654':3 'bank':1 'bca':2,5 'opik':6 'rekening':4	t	t
+1211	Order (SPK)	12	Pendanaan yg dikeluarkan untuk operasi penarikan berdasarkan SPK dari Finance sejumlah BT Matel	'berdasarkan':9 'bt':14 'dari':11 'dikeluarkan':5 'financ':12 'matel':15 'operasi':7 'order':1 'penarikan':8 'pendanaan':3 'sejumlah':13 'spk':2,10 'untuk':6 'yg':4	t	f
 \.
 
 
@@ -770,7 +771,9 @@ COPY public.tasks (order_id, descriptions, period_from, period_to, recipient_nam
 
 COPY public.trx (id, ref_id, division, descriptions, trx_date, memo, trx_token) FROM stdin;
 31	9	TRX-Order	Piutang jasa Mandiri Tunas Finance (MTF) #Order SPK: X-256/BAF/VII/2002	2022-03-12	Kendaraan R2 Yamaha Fino 125 , Nopol E5968GHJ	'/ref-9':13 '/x-256/baf/vii/2002':1 '125':5 'e5968ghj':6 'finance':9 'fino':4 'jatibarang':11 'mandir':7 'mastur':12 'mtf':10 'order':16 'r2':2 'trx':15 'trx-order':14 'tunas':8 'yamaha':3
-32	0	TRX-Umum	Modal pak Kris	2022-02-01	\N	'/id-32':7 'kris':3 'modal':1 'pak':2 'trx':5 'trx-umum':4 'umum':6
+32	0	TRX-Umum	Modal pak Kris	2022-02-01	\N	'/id-32':14 'dapat':7,9 'invoice':8 'jasa':10 'kas':11,13 'kecil':12 'kris':3 'modal':1 'pak':2 'trx':5 'trx-umum':4 'umum':6
+33	0	TRX-Umum	eqeq ewqe	2022-03-12	\N	'/id-0':3 'eqeq':1 'ewqe':2 'trx':5 'trx-umum':4 'umum':6
+34	0	TRX-Umum	qeqwe wewe	2022-03-12	we qwewe	'/id-0':5 'qeqwe':1 'qwewe':4 'trx':7 'trx-umum':6 'umum':8 'we':3 'wewe':2
 \.
 
 
@@ -782,8 +785,12 @@ COPY public.trx_detail (id, code_id, trx_id, debt, cred) FROM stdin;
 1	1112	31	0.00	1200000.00
 2	1211	31	1000000.00	0.00
 3	5211	31	200000.00	0.00
-1	3111	32	0.00	5000000.00
+1	4111	32	0.00	5000000.00
 2	1111	32	5000000.00	0.00
+1	1111	33	0.00	15000000.00
+2	3111	33	15000000.00	0.00
+1	1111	34	0.00	50000.00
+2	3111	34	50000.00	0.00
 \.
 
 
@@ -894,7 +901,7 @@ SELECT pg_catalog.setval('public.trx_detail_seq', 1, false);
 -- Name: trx_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.trx_seq', 32, true);
+SELECT pg_catalog.setval('public.trx_seq', 34, true);
 
 
 --

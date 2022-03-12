@@ -18,6 +18,7 @@ type AccCode struct {
 	Name         string     `json:"name"`
 	Descriptions NullString `json:"descriptions"`
 	IsActive     bool       `json:"isActive"`
+	IsAutoDebet  bool       `json:"isAutoDebet"`
 }
 
 type Trx struct {

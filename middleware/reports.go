@@ -124,12 +124,12 @@ func get_report_trx_by_month(m *int, y *int) ([]reportMonth, error) {
 
 	var sqlStatement = `with recursive rs as (
 		select 0 as group, 0 as id, 'Saldo awal' as name, 0 as debt, coalesce(sum(d.debt - d.cred), 0) as cred
-                from trx_detail d
-                inner join trx x on x.id = d.trx_id
-                inner join acc_code c on c.id = d.code_id
-                inner join acc_type t on t.id = c.type_id
-                WHERE t.group_id = 1 and extract(MONTH FROM x.trx_date) < $1 AND
-                extract(YEAR  FROM x.trx_date) = $2		
+		from trx_detail d
+		inner join trx x on x.id = d.trx_id
+		inner join acc_code c on c.id = d.code_id
+		inner join acc_type t on t.id = c.type_id
+		WHERE t.group_id = 1 and extract(MONTH FROM x.trx_date) < $1 AND
+		extract(YEAR  FROM x.trx_date) = $2		
 
 		UNION ALL
 		

@@ -47,30 +47,14 @@ func get_remain_saldo() ([]remain_saldo, error) {
 	   		group by g.id
 	*/
 	var sqlStatement = `with recursive rs as (
-		select g.id, 'Pendatpaan' as name,
-		0 as cred,
-		coalesce(sum(d.debt),0) as dbet,
-		0 as saldo
+		select c.id, c.name,
+		coalesce(sum(d.debt), 0) debt,
+		coalesce(sum(d.cred), 0) cred
 		from trx_detail d
-		inner join acc_code c on c.id = d.code_id
+		RIGHT join acc_code c on c.id = d.code_id
 		inner join acc_type t on t.id = c.type_id
-		inner join acc_group g on g.id = t.group_id
-		WHERE g.id = 1
-		group by g.id
-
-	union all
-
-		select g.id, 'Pengeluaran' as name, 
-		coalesce(sum(d.cred),0) as debt,
-		0 as cred,
-		0 as saldo
-		from trx_detail d
-		inner join acc_code c on c.id = d.code_id
-		inner join acc_type t on t.id = c.type_id
-		inner join acc_group g on g.id = t.group_id
-		WHERE g.id = 1
-		group by g.id
-
+		WHERE t.group_id = 1
+		group by t.group_id, c.id
 
 	)
 		select
@@ -78,13 +62,8 @@ func get_remain_saldo() ([]remain_saldo, error) {
 			t.name,
 			t.debt,
 			t.cred,
-			sum(t.cred - t.debt) as saldo
-		from rs t
-		
-		group BY t.id,
-		t.name,
-			t.debt,
-			t.cred;
+			t.debt - t.cred as saldo
+		from rs t;
 										`
 
 	rs, err := Sql().Query(sqlStatement)

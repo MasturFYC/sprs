@@ -15,6 +15,35 @@ import (
 	"github.com/gorilla/mux"
 )
 
+type all_accounts struct {
+	Groups   []models.AccGroup `json:"groups,ommitempty"`
+	Types    []models.AccType  `json:"types,ommitempty"`
+	Accounts []models.AccCode  `json:"accounts,ommitempty"`
+}
+
+func Group_GetAllAccount(w http.ResponseWriter, r *http.Request) {
+	EnableCors(&w)
+
+	var accounts all_accounts
+
+	g, _ := getAllAccGroups()
+	accounts.Groups = g
+
+	t, _ := getAllAccTypes()
+	accounts.Types = t
+
+	a, _ := getAllAccCodes()
+	accounts.Accounts = a
+
+	// if err != nil {
+	// 	log.Printf("Unable to get all account groups. %v", err)
+	// 	http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+	// 	return
+	// }
+
+	json.NewEncoder(w).Encode(&accounts)
+}
+
 func GetAccGroups(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 
