@@ -154,6 +154,6 @@ type Property struct {
 	Name string `json:"string"`
 }
 
-type SearchType struct {
+type SearchGroup struct {
 	Txt string `json:"txt"`
 }

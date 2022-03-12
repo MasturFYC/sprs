@@ -221,35 +221,35 @@ func DeleteAccountCode(w http.ResponseWriter, r *http.Request) {
 
 func getAccCode(id *int) (models.AccCode, error) {
 
-	var acc models.AccCode
+	var p models.AccCode
 
 	var sqlStatement = `SELECT 
-		acc_type_id, id, name, descriptions, is_active
+		type_id, id, name, descriptions, is_active
 	FROM acc_code
 	WHERE id=$1`
 
 	rs := Sql().QueryRow(sqlStatement, id)
 
 	err := rs.Scan(
-		&acc.AccTypeID,
-		&acc.ID,
-		&acc.Name,
-		&acc.Descriptions,
-		&acc.IsActive,
+		&p.TypeID,
+		&p.ID,
+		&p.Name,
+		&p.Descriptions,
+		&p.IsActive,
 	)
 
 	switch err {
 	case sql.ErrNoRows:
 		fmt.Println("No rows were returned!")
-		return acc, nil
+		return p, nil
 	case nil:
-		return acc, nil
+		return p, nil
 	default:
 		log.Fatalf("Unable to scan the row. %v", err)
 	}
 
 	// return empty user on error
-	return acc, err
+	return p, err
 }
 
 func getAccCodeByType(id *int) ([]models.AccCode, error) {
@@ -257,9 +257,9 @@ func getAccCodeByType(id *int) ([]models.AccCode, error) {
 	var results []models.AccCode
 
 	var sqlStatement = `SELECT 
-		acc_type_id, id, name, descriptions, is_active
+		type_id, id, name, descriptions, is_active
 	FROM acc_code
-	WHERE acc_type_id=$1
+	WHERE type_id=$1
 	ORDER BY id`
 
 	rs, err := Sql().Query(sqlStatement, id)
@@ -275,7 +275,7 @@ func getAccCodeByType(id *int) ([]models.AccCode, error) {
 		var p models.AccCode
 
 		err := rs.Scan(
-			&p.AccTypeID,
+			&p.TypeID,
 			&p.ID,
 			&p.Name,
 			&p.Descriptions,
@@ -297,7 +297,7 @@ func searchAccCodeByName(txt *string) ([]models.AccCode, error) {
 	var results []models.AccCode
 
 	var sqlStatement = `SELECT 
-		acc_type_id, id, name, descriptions, is_active
+		type_id, id, name, descriptions, is_active
 	FROM acc_code
 	WHERE token_name @@ to_tsquery('indonesian', $1)
 	ORDER BY id`
@@ -315,7 +315,7 @@ func searchAccCodeByName(txt *string) ([]models.AccCode, error) {
 		var p models.AccCode
 
 		err := rs.Scan(
-			&p.AccTypeID,
+			&p.TypeID,
 			&p.ID,
 			&p.Name,
 			&p.Descriptions,
@@ -337,7 +337,7 @@ func getAllAccCodes() ([]models.AccCode, error) {
 	var results []models.AccCode
 
 	var sqlStatement = `SELECT 
-		acc_type_id, id, name, descriptions, is_active
+		type_id, id, name, descriptions, is_active
 	FROM acc_code
 	ORDER BY id`
 
@@ -354,7 +354,7 @@ func getAllAccCodes() ([]models.AccCode, error) {
 		var p models.AccCode
 
 		err := rs.Scan(
-			&p.AccTypeID,
+			&p.TypeID,
 			&p.ID,
 			&p.Name,
 			&p.Descriptions,
@@ -374,13 +374,13 @@ func getAllAccCodes() ([]models.AccCode, error) {
 func createAccCode(p *models.AccCode) (int64, error) {
 
 	sqlStatement := `INSERT INTO 
-	acc_code (acc_type_id, id, name, descriptions, is_active, token_name)
+	acc_code (type_id, id, name, descriptions, is_active, token_name)
 	VALUES ($1, $2, $3, $4, $5, to_tsvector('indonesian', $6))`
 
 	token := fmt.Sprintf("%s %s", p.Name, p.Descriptions)
 
 	res, err := Sql().Exec(sqlStatement,
-		p.AccTypeID,
+		p.TypeID,
 		p.ID,
 		p.Name,
 		p.Descriptions,
@@ -404,9 +404,8 @@ func createAccCode(p *models.AccCode) (int64, error) {
 
 func updateAccCode(id *int, p *models.AccCode) (int64, error) {
 
-	log.Printf("------------%v", p)
 	sqlStatement := `UPDATE acc_code SET 
-	acc_type_id=$2, id=$3, name=$4, descriptions=$5, is_active=$6,
+	type_id=$2, id=$3, name=$4, descriptions=$5, is_active=$6,
 	token_name=to_tsvector('indonesian', $7)	
 	WHERE id=$1`
 
@@ -414,7 +413,7 @@ func updateAccCode(id *int, p *models.AccCode) (int64, error) {
 
 	res, err := Sql().Exec(sqlStatement,
 		id,
-		p.AccTypeID,
+		p.TypeID,
 		p.ID,
 		p.Name,
 		p.Descriptions,
@@ -464,9 +463,9 @@ func getAllAccCodeProps() ([]models.AccCodeType, error) {
 	var results []models.AccCodeType
 
 	var sqlStatement = `SELECT 
-		c.acc_type_id, c.id, c.name, t.name AS type_name, c.descriptions, is_active
+		c.type_id, c.id, c.name, t.name AS type_name, c.descriptions, c.is_active
 	FROM acc_code c
-	INNER JOIN acc_type t ON t.id = c.acc_type_id
+	INNER JOIN acc_type t ON t.id = c.type_id
 	ORDER BY c.id`
 
 	rs, err := Sql().Query(sqlStatement)

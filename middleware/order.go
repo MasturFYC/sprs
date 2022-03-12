@@ -19,7 +19,7 @@ import (
 func SearchOrders(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 
-	var t models.SearchType
+	var t models.SearchGroup
 
 	err := json.NewDecoder(r.Body).Decode(&t)
 

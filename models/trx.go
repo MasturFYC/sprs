@@ -1,28 +1,27 @@
 package models
 
+type AccGroup struct {
+	ID           int32      `json:"id"`
+	Name         string     `json:"name"`
+	Descriptions NullString `json:"descriptions"`
+}
 type AccType struct {
+	GroupID      int32      `json:"groupId"`
 	ID           int32      `json:"id"`
 	Name         string     `json:"name"`
 	Descriptions NullString `json:"descriptions"`
 }
 
 type AccCode struct {
+	TypeID       int32      `json:"typeId"`
 	ID           int32      `json:"id"`
 	Name         string     `json:"name"`
-	AccTypeID    int32      `json:"accTypeId"`
 	Descriptions NullString `json:"descriptions"`
 	IsActive     bool       `json:"isActive"`
 }
 
-type TrxType struct {
-	ID           int32      `json:"id"`
-	Name         string     `json:"name"`
-	Descriptions NullString `json:"descriptions"`
-}
-
 type Trx struct {
 	ID           int64       `json:"id"`
-	TrxTypeID    int32       `json:"trxTypeId"`
 	RefID        int64       `json:"refId"`
 	Division     string      `json:"division"`
 	Descriptions string      `json:"descriptions"`
@@ -39,11 +38,11 @@ type TrxDetailsToken struct {
 }
 
 type TrxDetail struct {
-	ID        int64   `json:"id"`
-	AccCodeID int32   `json:"accCodeId"`
-	TrxID     int64   `json:"trxId"`
-	Debt      float64 `json:"debt"`
-	Cred      float64 `json:"cred"`
+	ID     int64   `json:"id"`
+	CodeID int32   `json:"codeId"`
+	TrxID  int64   `json:"trxId"`
+	Debt   float64 `json:"debt"`
+	Cred   float64 `json:"cred"`
 }
 
 type AccCodeType struct {

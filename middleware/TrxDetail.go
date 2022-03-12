@@ -147,7 +147,7 @@ func getTransactionDetails(trxID *int64) ([]models.TrxDetail, error) {
 	var details []models.TrxDetail
 
 	var sqlStatement = `SELECT 
-		id, acc_code_id, trx_id, debt, cred
+		id, code_id, trx_id, debt, cred
 	FROM trx_detail
 	WHERE trx_id=$1
 	ORDER BY id`
@@ -166,7 +166,7 @@ func getTransactionDetails(trxID *int64) ([]models.TrxDetail, error) {
 
 		err := rs.Scan(
 			&p.ID,
-			&p.AccCodeID,
+			&p.CodeID,
 			&p.TrxID,
 			&p.Debt,
 			&p.Cred,
@@ -184,14 +184,14 @@ func getTransactionDetails(trxID *int64) ([]models.TrxDetail, error) {
 func createTransactionDetail(p *models.TrxDetail) (int64, error) {
 
 	sqlStatement := `INSERT INTO trx_detail
-	(acc_code_id, trx_id, debt, cred)
+	(code_id, trx_id, debt, cred)
 	VALUES ($1, $2, $3, $4)
 	RETURNING id`
 
 	var id int64
 
 	err := Sql().QueryRow(sqlStatement,
-		&p.AccCodeID,
+		&p.CodeID,
 		&p.TrxID,
 		&p.Debt,
 		&p.Cred).Scan(&id)
@@ -207,7 +207,7 @@ func createTransactionDetail(p *models.TrxDetail) (int64, error) {
 func updateTransactionDetail(id *int64, p *models.TrxDetail) (int64, error) {
 
 	sqlStatement := `UPDATE trx_detail SET 
-		acc_code_id=$2,
+		code_id=$2,
 		trx_id=$3,
 		debt=$4,
 		cred=$5
@@ -215,7 +215,7 @@ func updateTransactionDetail(id *int64, p *models.TrxDetail) (int64, error) {
 
 	res, err := Sql().Exec(sqlStatement,
 		id,
-		p.AccCodeID,
+		p.CodeID,
 		p.TrxID,
 		p.Debt,
 		p.Cred,

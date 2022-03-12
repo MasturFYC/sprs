@@ -53,7 +53,7 @@ func GetTransactionsByMonth(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(&acc_codes)
 }
 
-func GetTransactionsByType(w http.ResponseWriter, r *http.Request) {
+func GetTransactionsByGroup(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 
 	params := mux.Vars(r)
@@ -66,7 +66,7 @@ func GetTransactionsByType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	acc_codes, err := getTransactionsByType(&id)
+	acc_codes, err := getTransactionsByGroup(&id)
 
 	if err != nil {
 		log.Printf("Unable to get all transactions. %v", err)
@@ -80,7 +80,7 @@ func GetTransactionsByType(w http.ResponseWriter, r *http.Request) {
 func SearchTransactions(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 
-	var t models.SearchType
+	var t models.SearchGroup
 
 	err := json.NewDecoder(r.Body).Decode(&t)
 
@@ -229,7 +229,7 @@ func UpdateTransaction(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	msg := fmt.Sprintf("Transaction type updated successfully. Total rows/record affected %v", updatedRows)
+	msg := fmt.Sprintf("Transaction updated successfully. Total rows/record affected %v", updatedRows)
 
 	// format the response message
 	res := Response{
@@ -269,13 +269,13 @@ func bulkInsertDetails(rows []models.TrxDetail, id *int64) error {
 	for _, post := range rows {
 		valueStrings = append(valueStrings, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d)", i*5+1, i*5+2, i*5+3, i*5+4, i*5+5))
 		valueArgs = append(valueArgs, post.ID)
-		valueArgs = append(valueArgs, post.AccCodeID)
+		valueArgs = append(valueArgs, post.CodeID)
 		valueArgs = append(valueArgs, setTrxID(id, &post.TrxID))
 		valueArgs = append(valueArgs, post.Debt)
 		valueArgs = append(valueArgs, post.Cred)
 		i++
 	}
-	stmt := fmt.Sprintf("INSERT INTO trx_detail (id, acc_code_id, trx_id, debt, cred) VALUES %s",
+	stmt := fmt.Sprintf("INSERT INTO trx_detail (id, code_id, trx_id, debt, cred) VALUES %s",
 		strings.Join(valueStrings, ","))
 	//log.Printf("%s %v", stmt, valueArgs)
 	_, err := Sql().Exec(stmt, valueArgs...)
@@ -312,7 +312,7 @@ func DeleteTransaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	msg := fmt.Sprintf("Transaction type deleted successfully. Total rows/record affected %v", deletedRows)
+	msg := fmt.Sprintf("Transaction deleted successfully. Total rows/record affected %v", deletedRows)
 
 	// format the reponse message
 	res := Response{
@@ -329,7 +329,7 @@ func getTransaction(id *int64) (local_trx, error) {
 	var p local_trx
 
 	var sqlStatement = `SELECT 
-		id, trx_type_id, ref_id, division, trx_date, descriptions, memo,
+		id, ref_id, division, trx_date, descriptions, memo,
 		(select sum(d.debt) as debt from trx_detail d where d.trx_id = t.id) saldo
 	FROM trx
 	WHERE id=$1`
@@ -338,7 +338,6 @@ func getTransaction(id *int64) (local_trx, error) {
 
 	err := rs.Scan(
 		&p.ID,
-		&p.TrxTypeID,
 		&p.RefID,
 		&p.Division,
 		&p.TrxDate,
@@ -369,7 +368,7 @@ func get_all_transactions() ([]local_trx, error) {
 	var results []local_trx
 
 	var sqlStatement = `SELECT 
-		t.id, t.trx_type_id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
+		t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
 		(select sum(d.debt) as debt from trx_detail d where d.trx_id = t.id) saldo
 	FROM trx t
 	ORDER BY t.id DESC`
@@ -388,7 +387,6 @@ func get_all_transactions() ([]local_trx, error) {
 
 		err := rs.Scan(
 			&p.ID,
-			&p.TrxTypeID,
 			&p.RefID,
 			&p.Division,
 			&p.TrxDate,
@@ -413,14 +411,13 @@ func get_all_transactions() ([]local_trx, error) {
 func createTransaction(p *models.Trx, token string) (int64, error) {
 
 	sqlStatement := `INSERT INTO trx 
-	(trx_type_id, ref_id, division, trx_date, descriptions, memo, trx_token)
-	VALUES ($1, $2, $3, $4, $5, $6, to_tsvector('indonesian', $7))
+	(ref_id, division, trx_date, descriptions, memo, trx_token)
+	VALUES ($1, $2, $3, $4, $5, to_tsvector('indonesian', $6))
 	RETURNING id`
 
 	var id int64
 
 	err := Sql().QueryRow(sqlStatement,
-		p.TrxTypeID,
 		p.RefID,
 		p.Division,
 		p.TrxDate,
@@ -440,18 +437,16 @@ func createTransaction(p *models.Trx, token string) (int64, error) {
 func updateTransaction(id *int64, p *models.Trx, token string) (int64, error) {
 
 	sqlStatement := `UPDATE trx SET 
-		trx_type_id=$2,
-		ref_id=$3,
-		division=$4,
-		trx_date=$5,
-		descriptions=$6,
-		memo=$7,
-		trx_token=to_tsvector('indonesian', $8)
+		ref_id=$2,
+		division=$3,
+		trx_date=$4,
+		descriptions=$5,
+		memo=$6,
+		trx_token=to_tsvector('indonesian', $7)
 	WHERE id=$1`
 
 	res, err := Sql().Exec(sqlStatement,
 		id,
-		p.TrxTypeID,
 		p.RefID,
 		p.Division,
 		p.TrxDate,
@@ -503,7 +498,6 @@ func searchTransactions(txt *string) ([]local_trx, error) {
 
 	var sqlStatement = `SELECT 
 	t.id,
-	t.trx_type_id,
 	t.ref_id,
 	t.division,
 	t.trx_date,
@@ -528,7 +522,6 @@ func searchTransactions(txt *string) ([]local_trx, error) {
 
 		err := rs.Scan(
 			&p.ID,
-			&p.TrxTypeID,
 			&p.RefID,
 			&p.Division,
 			&p.TrxDate,
@@ -550,15 +543,18 @@ func searchTransactions(txt *string) ([]local_trx, error) {
 	return results, err
 }
 
-func getTransactionsByType(id *int64) ([]local_trx, error) {
+func getTransactionsByGroup(id *int64) ([]local_trx, error) {
 
 	var results []local_trx
 
 	var sqlStatement = `SELECT 
-	t.id, t.trx_type_id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
+	t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
 	(select sum(d.debt) as debt from trx_detail d where d.trx_id = t.id) saldo
 	FROM trx t
-	WHERE t.trx_type_id=$1
+	INNER JOIN trx_detail d ON d.trx_id = d.id
+	INNER JOIN acc_type e ON e.id = d.code_id
+	INNER JOIN acc_code c ON c.id = e.group_id
+	WHERE c.group_id=$1
 	ORDER BY t.id DESC`
 
 	rs, err := Sql().Query(sqlStatement, id)
@@ -575,7 +571,6 @@ func getTransactionsByType(id *int64) ([]local_trx, error) {
 
 		err := rs.Scan(
 			&p.ID,
-			&p.TrxTypeID,
 			&p.RefID,
 			&p.Division,
 			&p.TrxDate,
@@ -601,9 +596,9 @@ func get_details(trxID *int64) ([]local_detail, error) {
 	var details []local_detail
 
 	var sqlStatement = `SELECT
-	a.id, a.name, d.acc_code_id, d.debt, d.cred
+	a.id, a.name, d.code_id, d.debt, d.cred
 	FROM trx_detail d
-	INNER JOIN acc_code a ON a.id = d.acc_code_id
+	INNER JOIN acc_code a ON a.id = d.code_id
 	WHERE d.trx_id=$1
 	ORDER BY d.id`
 
@@ -641,7 +636,7 @@ func get_trx_by_month(id *int) ([]local_trx, error) {
 	var results []local_trx
 
 	var sqlStatement = `SELECT 
-	t.id, t.trx_type_id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
+	t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
 	(select sum(d.debt) as debt from trx_detail d where d.trx_id = t.id) saldo
 	FROM trx t
 	WHERE EXTRACT(MONTH from trx_date)=$1
@@ -661,7 +656,6 @@ func get_trx_by_month(id *int) ([]local_trx, error) {
 
 		err := rs.Scan(
 			&p.ID,
-			&p.TrxTypeID,
 			&p.RefID,
 			&p.Division,
 			&p.TrxDate,

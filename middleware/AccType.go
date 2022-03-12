@@ -165,13 +165,13 @@ func getAccType(id *int) (models.AccType, error) {
 	var acc models.AccType
 
 	var sqlStatement = `SELECT 
-		id, name, descriptions
+		group_id, id, name, descriptions
 	FROM acc_type
 	WHERE id=$1`
 
 	rs := Sql().QueryRow(sqlStatement, id)
 
-	err := rs.Scan(&acc.ID, &acc.Name, acc.Descriptions)
+	err := rs.Scan(&acc.GroupID, &acc.ID, &acc.Name, acc.Descriptions)
 
 	switch err {
 	case sql.ErrNoRows:
@@ -191,7 +191,7 @@ func getAllAccTypes() ([]models.AccType, error) {
 
 	var results []models.AccType
 
-	var sqlStatement = `SELECT id, name, descriptions FROM acc_type ORDER BY id`
+	var sqlStatement = `SELECT group_id, id, name, descriptions FROM acc_type ORDER BY id`
 
 	rs, err := Sql().Query(sqlStatement)
 
@@ -205,7 +205,7 @@ func getAllAccTypes() ([]models.AccType, error) {
 	for rs.Next() {
 		var p models.AccType
 
-		err := rs.Scan(&p.ID, &p.Name, &p.Descriptions)
+		err := rs.Scan(&p.GroupID, &p.ID, &p.Name, &p.Descriptions)
 
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
@@ -219,9 +219,9 @@ func getAllAccTypes() ([]models.AccType, error) {
 
 func createAccType(p *models.AccType) (int64, error) {
 
-	sqlStatement := `INSERT INTO acc_type (id, name, descriptions) VALUES ($1, $2, $3)`
+	sqlStatement := `INSERT INTO acc_type (group_id, id, name, descriptions) VALUES ($1, $2, $3, $4)`
 
-	res, err := Sql().Exec(sqlStatement, p.ID, p.Name, p.Descriptions)
+	res, err := Sql().Exec(sqlStatement, p.GroupID, p.ID, p.Name, p.Descriptions)
 
 	if err != nil {
 		log.Printf("Unable to create account type. %v", err)
@@ -240,11 +240,12 @@ func createAccType(p *models.AccType) (int64, error) {
 func updateAccType(id *int, p *models.AccType) (int64, error) {
 
 	sqlStatement := `UPDATE acc_type SET
-		id=$2, name=$3, descriptions=$4
+		group_id=$2, id=$3, name=$4, descriptions=$5
 		WHERE id=$1`
 
 	res, err := Sql().Exec(sqlStatement,
 		id,
+		p.GroupID,
 		p.ID,
 		p.Name,
 		p.Descriptions,

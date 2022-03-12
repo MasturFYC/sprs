@@ -7,10 +7,11 @@ import (
 )
 
 type remain_saldo struct {
-	ID   float64 `json:"id"`
-	Name string  `json:"name"`
-	Debt float64 `json:"debt"`
-	Cred float64 `json:"cred"`
+	ID    float64 `json:"id"`
+	Name  string  `json:"name"`
+	Debt  float64 `json:"debt"`
+	Cred  float64 `json:"cred"`
+	Saldo float64 `json:"saldo"`
 }
 
 func GetRemainSaldo(w http.ResponseWriter, r *http.Request) {
@@ -30,14 +31,61 @@ func GetRemainSaldo(w http.ResponseWriter, r *http.Request) {
 func get_remain_saldo() ([]remain_saldo, error) {
 
 	var saldos []remain_saldo
+	/*
 
-	var sqlStatement = `SELECT 
-		t.id, t.name, SUM(COALESCE(d.debt,0)) AS debt, SUM(COALESCE(d.cred,0)) as cred
-	FROM trx_detail d
-	INNER JOIN trx o ON o.id = d.trx_id
-	RIGHT JOIN trx_type t ON t.id = o.trx_type_id
-	GROUP BY t.id
-	ORDER BY t.id`
+	   union all
+
+	   	select g.id, g.name,
+	   		coalesce(sum(d.debt),0) debt,
+	   		coalesce(sum(d.cred),0) cred,
+	   		coalesce(sum(d.debt-d.cred), 0) as saldo
+	   		from trx_detail d
+	   		inner join acc_code c on c.id = d.code_id
+	   		inner join acc_type t on t.id = c.type_id
+	   		inner join acc_group g on g.id = t.group_id
+	   		WHERE g.id != 1
+	   		group by g.id
+	*/
+	var sqlStatement = `with recursive rs as (
+		select g.id, 'Pendatpaan' as name,
+		0 as cred,
+		coalesce(sum(d.debt),0) as dbet,
+		0 as saldo
+		from trx_detail d
+		inner join acc_code c on c.id = d.code_id
+		inner join acc_type t on t.id = c.type_id
+		inner join acc_group g on g.id = t.group_id
+		WHERE g.id = 1
+		group by g.id
+
+	union all
+
+		select g.id, 'Pengeluaran' as name, 
+		coalesce(sum(d.cred),0) as debt,
+		0 as cred,
+		0 as saldo
+		from trx_detail d
+		inner join acc_code c on c.id = d.code_id
+		inner join acc_type t on t.id = c.type_id
+		inner join acc_group g on g.id = t.group_id
+		WHERE g.id = 1
+		group by g.id
+
+
+	)
+		select
+			t.id,
+			t.name,
+			t.debt,
+			t.cred,
+			sum(t.cred - t.debt) as saldo
+		from rs t
+		
+		group BY t.id,
+		t.name,
+			t.debt,
+			t.cred;
+										`
 
 	rs, err := Sql().Query(sqlStatement)
 
@@ -56,6 +104,7 @@ func get_remain_saldo() ([]remain_saldo, error) {
 			&p.Name,
 			&p.Debt,
 			&p.Cred,
+			&p.Saldo,
 		)
 
 		if err != nil {

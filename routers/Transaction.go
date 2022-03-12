@@ -10,7 +10,7 @@ func TransactionRouter(router *mux.Router) {
 
 	router.HandleFunc("/", middleware.GetTransactions).Methods("GET")
 	router.HandleFunc("/search/", middleware.SearchTransactions).Methods("POST")
-	router.HandleFunc("/group-type/{id}/", middleware.GetTransactionsByType).Methods("GET")
+	router.HandleFunc("/group/{id}/", middleware.GetTransactionsByGroup).Methods("GET")
 	router.HandleFunc("/month/{id}/", middleware.GetTransactionsByMonth).Methods("GET")
 	//router.HandleFunc("/props/", middleware.GetTransactionProps).Methods("GET")
 	//router.HandleFunc("/{id}/", middleware.GetTransaction).Methods("GET")

@@ -24,8 +24,8 @@ func createRouter() {
 }
 
 func loadEnvirontment() {
-	err := godotenv.Load("/home/mastur/.env")
-	//err := godotenv.Load(".env")
+	//err := godotenv.Load("/home/mastur/.env")
+	err := godotenv.Load(".env")
 
 	if err != nil {
 		log.Fatalf("Error loading .env file")
@@ -36,6 +36,9 @@ func loadRouter() {
 
 	routers.InitializeRoute(mainRouter)
 
+	routers.AccGroupRouter(mainRouter.PathPrefix("/api/acc-group/").Subrouter())
+	routers.AccountTypeRouter(mainRouter.PathPrefix("/api/acc-type/").Subrouter())
+	routers.AccountCodeRouter(mainRouter.PathPrefix("/api/acc-code/").Subrouter())
 	routers.ActionRouter(mainRouter.PathPrefix("/api/actions/").Subrouter())
 	routers.BranchRouter(mainRouter.PathPrefix("/api/branchs/").Subrouter())
 	routers.CustomerRouter(mainRouter.PathPrefix("/api/customers/").Subrouter())
@@ -53,9 +56,6 @@ func loadRouter() {
 	routers.WarehouseRouter(mainRouter.PathPrefix("/api/warehouses/").Subrouter())
 	routers.WheelRouter(mainRouter.PathPrefix("/api/wheels/").Subrouter())
 	routers.PropertyRouter(mainRouter.PathPrefix("/api/properties/").Subrouter())
-	routers.AccountTypeRouter(mainRouter.PathPrefix("/api/acc-type/").Subrouter())
-	routers.AccountCodeRouter(mainRouter.PathPrefix("/api/acc-code/").Subrouter())
-	routers.TransactionTypeRouter(mainRouter.PathPrefix("/api/trx-type/").Subrouter())
 	routers.TransactionRouter(mainRouter.PathPrefix("/api/trx/").Subrouter())
 	routers.TransactionDetailRouter(mainRouter.PathPrefix("/api/trx-detail/").Subrouter())
 	routers.SaldoRouter(mainRouter.PathPrefix("/api/saldo/").Subrouter())
