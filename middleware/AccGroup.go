@@ -16,30 +16,22 @@ import (
 )
 
 type all_accounts struct {
-	Groups   []models.AccGroup `json:"groups,ommitempty"`
-	Types    []models.AccType  `json:"types,ommitempty"`
-	Accounts []models.AccCode  `json:"accounts,ommitempty"`
+	models.AccCode
+	IsGroup   bool `json:"isGroup"`
+	IsType    bool `json:"isType"`
+	IsAccount bool `json:"isAccount"`
 }
 
 func Group_GetAllAccount(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 
-	var accounts all_accounts
+	accounts, err := get_all_accounts()
 
-	g, _ := getAllAccGroups()
-	accounts.Groups = g
-
-	t, _ := getAllAccTypes()
-	accounts.Types = t
-
-	a, _ := getAllAccCodes()
-	accounts.Accounts = a
-
-	// if err != nil {
-	// 	log.Printf("Unable to get all account groups. %v", err)
-	// 	http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-	// 	return
-	// }
+	if err != nil {
+		log.Printf("Unable to get all account groups. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
 
 	json.NewEncoder(w).Encode(&accounts)
 }
@@ -56,6 +48,81 @@ func GetAccGroups(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(&groups)
+}
+func Group_GetTypes(w http.ResponseWriter, r *http.Request) {
+
+	EnableCors(&w)
+
+	params := mux.Vars(r)
+
+	id, err := strconv.Atoi(params["id"])
+
+	if err != nil {
+		log.Printf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	acc_group, err := group_get_types(&id)
+
+	if err != nil {
+		log.Printf("Unable to get account group. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+	}
+
+	json.NewEncoder(w).Encode(&acc_group)
+}
+
+/*
+
+
+type Acc_Type struct {
+	GroupID      int32             `json:"groupId"`
+	ID           int32             `json:"id"`
+	Name         string            `json:"name"`
+	Descriptions models.NullString `json:"descriptions"`
+	Accounts     json.RawMessage   `json:"accounts"`
+}
+
+
+	var sqlStatement = `SELECT t.group_id, t.id, t.name, t.descriptions,
+	coalesce((SELECT array_to_json(array_agg(row_to_json(x)))
+        FROM (select c.id, c.name from acc_code c where c.type_id = t.id) x),
+      '[]') AS accounts
+	FROM acc_type t
+	WHERE t.group_id=$1 OR 0=$1
+	ORDER BY t.id`
+*/
+
+func group_get_types(id *int) ([]models.AccType, error) {
+	var results []models.AccType
+
+	var sqlStatement = `SELECT group_id, id, name, descriptions FROM acc_type
+	WHERE group_id=$1 OR 0 = $1
+	ORDER BY id`
+
+	rs, err := Sql().Query(sqlStatement, id)
+
+	if err != nil {
+		log.Printf("Unable to execute account type query %v", err)
+		return nil, err
+	}
+
+	defer rs.Close()
+
+	for rs.Next() {
+		var p models.AccType
+
+		err := rs.Scan(&p.GroupID, &p.ID, &p.Name, &p.Descriptions)
+
+		if err != nil {
+			log.Fatalf("Unable to scan the row. %v", err)
+		}
+
+		results = append(results, p)
+	}
+
+	return results, err
 }
 
 func GetAccGroup(w http.ResponseWriter, r *http.Request) {
@@ -272,12 +339,11 @@ func createAccGroup(p *models.AccGroup) (int64, error) {
 func updateAccGroup(id *int, p *models.AccGroup) (int64, error) {
 
 	sqlStatement := `UPDATE acc_group SET
-	id=$2, name=$3, descriptions=$4
+	name=$2, descriptions=$3
 	WHERE id=$1`
 
 	res, err := Sql().Exec(sqlStatement,
 		id,
-		p.ID,
 		p.Name,
 		p.Descriptions,
 	)
@@ -317,4 +383,69 @@ func deleteAccGroup(id *int) (int64, error) {
 	}
 
 	return rowsAffected, err
+}
+
+func get_all_accounts() ([]all_accounts, error) {
+	var accounts []all_accounts
+	var sqlStatement = `with recursive rs as (
+
+		SELECT true as is_group, false is_type, false is_account,
+		id, name, 0 as type_id, descriptions, 0 as receivable_option, false as is_active, false as is_auto_debet
+		FROM acc_group
+
+		union all
+
+		SELECT false as is_group, true is_type, false is_account,
+		id, name, group_id as type_id, descriptions, 0 as receivable_option, false is_active, false as is_auto_debet
+		FROM acc_type
+
+		union all
+
+		SELECT false as is_group, false is_type, true is_account,
+		id, name, type_id, descriptions, receivable_option, is_active, is_auto_debet
+		FROM acc_code 
+		ORDER BY name
+	)
+
+	select
+		t.is_group, t.is_type, t.is_account,
+		t.id, t.name, t.type_id, t.descriptions, t.receivable_option, t.is_active, t.is_auto_debet
+	from rs t
+	order by t.is_group, t.is_account, t.id;
+
+	`
+
+	rs, err := Sql().Query(sqlStatement)
+
+	if err != nil {
+		log.Printf("Unable to execute saldo query %v", err)
+		return nil, err
+	}
+
+	defer rs.Close()
+
+	for rs.Next() {
+		var p all_accounts
+
+		err := rs.Scan(
+			&p.IsGroup,
+			&p.IsType,
+			&p.IsAccount,
+			&p.ID,
+			&p.Name,
+			&p.TypeID,
+			&p.Descriptions,
+			&p.ReceivableOption,
+			&p.IsActive,
+			&p.IsAutoDebet,
+		)
+
+		if err != nil {
+			log.Fatalf("Unable to scan the row. %v", err)
+		}
+
+		accounts = append(accounts, p)
+	}
+
+	return accounts, err
 }

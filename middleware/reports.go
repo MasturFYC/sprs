@@ -122,23 +122,29 @@ func get_report_trx_by_month(m *int, y *int) ([]reportMonth, error) {
 
 	var reports []reportMonth
 
-	var sqlStatement = `with recursive rs as (
-		select 0 as group, 0 as id, 'Saldo awal' as name, 0 as debt, coalesce(sum(d.debt - d.cred), 0) as cred
-		from trx_detail d
-		inner join trx x on x.id = d.trx_id
-		inner join acc_code c on c.id = d.code_id
-		inner join acc_type t on t.id = c.type_id
-		WHERE t.group_id = 1 and extract(MONTH FROM x.trx_date) < $1 AND
-		extract(YEAR  FROM x.trx_date) = $2		
+	var sqlStatement = `WITH RECURSIVE rs AS (
+		SELECT 0 AS group, 0 AS id, 'Saldo awal' AS name,
+			-- COALESCE(SUM(d.debt), 0) AS debt,
+			0 AS debt,
+			COALESCE(SUM(d.debt - d.cred), 0) AS cred
+		FROM trx_detail d
+		INNER JOIN trx x on x.id = d.trx_id
+		INNER JOIN acc_code c on c.id = d.code_id
+		-- INNER JOIN acc_type t on t.id = c.type_id
+		WHERE c.receivable_option = 1 AND
+			EXTRACT(MONTH FROM x.trx_date) < $1 AND
+			EXTRACT(YEAR  FROM x.trx_date) = $2		
 
 		UNION ALL
 		
-		select 1 as group, t.id, t.name, sum(coalesce(d.debt, 0)) debt, sum(coalesce(d.cred, 0)) cred
+		SELECT 1 as group, t.id, t.name, 
+			COALESCE(sum(d.debt), 0) AS debt,
+			COALESCE(sum(d.cred), 0) AS cred
 		from trx_detail d
 		inner join trx x on x.id = d.trx_id
 		inner join acc_code c on c.id = d.code_id
 		inner join acc_type t on t.id = c.type_id
-		where t.group_id !=1 AND
+		where c.receivable_option != 1 AND
 			extract(MONTH FROM x.trx_date) = $1 
 			AND extract(YEAR  FROM x.trx_date) = $2
 		group by t.id
@@ -195,12 +201,14 @@ func get_report_trx_by_type_month(group_id *int32, m *int, y *int) ([]reportType
 	var reports []reportType
 
 	var sqlStatement = `WITH RECURSIVE rs AS (
-		SELECT c.id as id, c.name, SUM(d.debt) debt, SUM(d.cred) cred
-		from trx_detail d
+		SELECT 
+			c.id as id, c.name, 0, 0
+			-- SUM(d.debt) debt, SUM(d.cred) cred
+		FROM trx_detail d
 		INNER JOIN trx x on x.id = d.trx_id
 		INNER JOIN acc_code c on c.id = d.code_id
 		INNER JOIN acc_type t on t.id = c.type_id
-		WHERE t.group_id > 1 AND 
+		WHERE c.receivable_option != 1 AND 
 			t.id = $1 AND
 			EXTRACT(MONTH FROM x.trx_date) = $2	AND
 			EXTRACT(YEAR  FROM x.trx_date) = $3
@@ -210,10 +218,12 @@ func get_report_trx_by_type_month(group_id *int32, m *int, y *int) ([]reportType
 	SELECT
 		t.id,
 		t.name,
-		t.debt,
-		t.cred,
-		SUM(t.cred + t.debt)
-		OVER (ORDER BY t.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS saldo
+		0,
+		-- t.debt,
+		0,
+		--t.cred,
+		0
+		-- SUM(t.cred + t.debt) OVER (ORDER BY t.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS saldo
 	FROM rs t
 	ORDER BY t.id;`
 
@@ -271,8 +281,9 @@ func get_trx_details_by_acc(acc *int32, group_id *int32, m *int, y *int) ([]repo
 		t.id,
 		t.trx_date,
 		t.name,
-		t.debt, t.cred,
-		SUM(t.cred + t.debt)
+		t.debt,
+		t.cred,
+		SUM(t.debt - t.cred)
 		OVER (ORDER BY t.id, t.trx_date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS saldo
 	FROM rs t
 	ORDER BY t.id, t.trx_date;`

@@ -596,10 +596,11 @@ func get_details(trxID *int64) ([]local_detail, error) {
 	var details []local_detail
 
 	var sqlStatement = `SELECT
-	a.id, a.name, d.code_id, d.debt, d.cred
+	c.id, c.name, d.code_id, d.debt, d.cred
 	FROM trx_detail d
-	INNER JOIN acc_code a ON a.id = d.code_id
-	WHERE d.trx_id=$1
+	INNER JOIN acc_code c ON c.id = d.code_id
+	WHERE d.trx_id=$1 
+	-- AND c.receivable_option != 1
 	ORDER BY d.id`
 
 	rs, err := Sql().Query(sqlStatement, trxID)

@@ -13,12 +13,21 @@ type AccType struct {
 }
 
 type AccCode struct {
-	TypeID       int32      `json:"typeId"`
-	ID           int32      `json:"id"`
-	Name         string     `json:"name"`
-	Descriptions NullString `json:"descriptions"`
-	IsActive     bool       `json:"isActive"`
-	IsAutoDebet  bool       `json:"isAutoDebet"`
+	TypeID           int32      `json:"typeId"`
+	ID               int32      `json:"id"`
+	Name             string     `json:"name"`
+	Descriptions     NullString `json:"descriptions"`
+	IsActive         bool       `json:"isActive"`
+	IsAutoDebet      bool       `json:"isAutoDebet"`
+	ReceivableOption int        `json:"option"`
+}
+
+type AccInfo struct {
+	AccCode
+	TypeName  string     `json:"typeName"`
+	TypeDesc  NullString `json:"typeDesc"`
+	GroupName string     `json:"groupName"`
+	GroupDesc NullString `json:"groupDesc"`
 }
 
 type Trx struct {

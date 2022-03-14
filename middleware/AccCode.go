@@ -15,6 +15,30 @@ import (
 	"github.com/gorilla/mux"
 )
 
+type account_specific struct {
+	ID           int32             `json:"id"`
+	Name         string            `json:"name"`
+	Descriptions models.NullString `json:"descriptions"`
+}
+
+func Account_GetSpec(w http.ResponseWriter, r *http.Request) {
+	EnableCors(&w)
+
+	params := mux.Vars(r)
+
+	spec_id, err := strconv.Atoi(params["id"])
+
+	accounts, err := get_accounts_spec(&spec_id)
+
+	if err != nil || len(accounts) == 0 {
+		log.Printf("Unable to get all account codes. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+
+	json.NewEncoder(w).Encode(&accounts)
+}
+
 func GetAccountCodeProps(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 
@@ -219,14 +243,18 @@ func DeleteAccountCode(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-func getAccCode(id *int) (models.AccCode, error) {
+func getAccCode(id *int) (models.AccInfo, error) {
 
-	var p models.AccCode
+	var p models.AccInfo
 
 	var sqlStatement = `SELECT 
-		type_id, id, name, descriptions, is_active, is_auto_debet
-	FROM acc_code
-	WHERE id=$1`
+		c.type_id, c.id, c.name, c.descriptions, c.is_active, c.is_auto_debet, c.receivable_option,
+		t.name as type_name, g.name as group_name, t.descriptions as type_desc, g.descriptions as group_desc
+
+	FROM acc_code c
+	INNER JOIN acc_type t ON t.id = c.type_id
+	INNER JOIN acc_group g ON g.id = t.group_id
+	WHERE c.id=$1`
 
 	rs := Sql().QueryRow(sqlStatement, id)
 
@@ -237,6 +265,11 @@ func getAccCode(id *int) (models.AccCode, error) {
 		&p.Descriptions,
 		&p.IsActive,
 		&p.IsAutoDebet,
+		&p.ReceivableOption,
+		&p.TypeName,
+		&p.GroupName,
+		&p.TypeDesc,
+		&p.GroupDesc,
 	)
 
 	switch err {
@@ -258,9 +291,9 @@ func getAccCodeByType(id *int) ([]models.AccCode, error) {
 	var results []models.AccCode
 
 	var sqlStatement = `SELECT 
-		type_id, id, name, descriptions, is_active, is_auto_debet
+		type_id, id, name, descriptions, is_active, is_auto_debet, receivable_option
 	FROM acc_code
-	WHERE type_id=$1
+	WHERE type_id=$1 OR 0=$1
 	ORDER BY id`
 
 	rs, err := Sql().Query(sqlStatement, id)
@@ -282,6 +315,7 @@ func getAccCodeByType(id *int) ([]models.AccCode, error) {
 			&p.Descriptions,
 			&p.IsActive,
 			&p.IsAutoDebet,
+			&p.ReceivableOption,
 		)
 
 		if err != nil {
@@ -299,7 +333,7 @@ func searchAccCodeByName(txt *string) ([]models.AccCode, error) {
 	var results []models.AccCode
 
 	var sqlStatement = `SELECT 
-		type_id, id, name, descriptions, is_active, is_auto_debet
+		type_id, id, name, descriptions, is_active, is_auto_debet, receivable_option
 	FROM acc_code
 	WHERE token_name @@ to_tsquery('indonesian', $1)
 	ORDER BY id`
@@ -323,6 +357,7 @@ func searchAccCodeByName(txt *string) ([]models.AccCode, error) {
 			&p.Descriptions,
 			&p.IsActive,
 			&p.IsAutoDebet,
+			&p.ReceivableOption,
 		)
 
 		if err != nil {
@@ -340,7 +375,7 @@ func getAllAccCodes() ([]models.AccCode, error) {
 	var results []models.AccCode
 
 	var sqlStatement = `SELECT 
-		type_id, id, name, descriptions, is_active, is_auto_debet
+		type_id, id, name, descriptions, is_active, is_auto_debet, receivable_option
 	FROM acc_code
 	ORDER BY id`
 
@@ -363,6 +398,7 @@ func getAllAccCodes() ([]models.AccCode, error) {
 			&p.Descriptions,
 			&p.IsActive,
 			&p.IsAutoDebet,
+			&p.ReceivableOption,
 		)
 
 		if err != nil {
@@ -378,8 +414,8 @@ func getAllAccCodes() ([]models.AccCode, error) {
 func createAccCode(p *models.AccCode) (int64, error) {
 
 	sqlStatement := `INSERT INTO 
-	acc_code (type_id, id, name, descriptions, is_active, is_auto_debet, token_name)
-	VALUES ($1, $2, $3, $4, $5, $6, to_tsvector('indonesian', $7))`
+	acc_code (type_id, id, name, descriptions, is_active, is_auto_debet, receivable_option, token_name)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, to_tsvector('indonesian', $8))`
 
 	token := fmt.Sprintf("%s %s", p.Name, p.Descriptions)
 
@@ -390,6 +426,7 @@ func createAccCode(p *models.AccCode) (int64, error) {
 		p.Descriptions,
 		p.IsActive,
 		p.IsAutoDebet,
+		p.ReceivableOption,
 		token,
 	)
 
@@ -410,7 +447,8 @@ func createAccCode(p *models.AccCode) (int64, error) {
 func updateAccCode(id *int, p *models.AccCode) (int64, error) {
 
 	sqlStatement := `UPDATE acc_code SET 
-	type_id=$2, id=$3, name=$4, descriptions=$5, is_active=$6, is_auto_debet=$7,
+	type_id=$2, name=$3, descriptions=$4, is_active=$5, is_auto_debet=$6,
+	receivable_option=$7,
 	token_name=to_tsvector('indonesian', $8)	
 	WHERE id=$1`
 
@@ -419,11 +457,11 @@ func updateAccCode(id *int, p *models.AccCode) (int64, error) {
 	res, err := Sql().Exec(sqlStatement,
 		id,
 		p.TypeID,
-		p.ID,
 		p.Name,
 		p.Descriptions,
 		p.IsActive,
 		p.IsAutoDebet,
+		p.ReceivableOption,
 		token,
 	)
 
@@ -493,6 +531,44 @@ func getAllAccCodeProps() ([]models.AccCodeType, error) {
 			&p.TypeName,
 			&p.Descriptions,
 			&p.IsActive,
+		)
+
+		if err != nil {
+			log.Fatalf("Unable to scan the row. %v", err)
+		}
+
+		results = append(results, p)
+	}
+
+	return results, err
+}
+
+func get_accounts_spec(specId *int) ([]account_specific, error) {
+
+	var results []account_specific
+
+	var sqlStatement = `SELECT 
+		id, name, descriptions
+	FROM acc_code
+	WHERE receivable_option = $1
+	ORDER BY id`
+
+	rs, err := Sql().Query(sqlStatement, specId)
+
+	if err != nil {
+		log.Printf("Unable to execute account code property query %v", err)
+		return nil, err
+	}
+
+	defer rs.Close()
+
+	for rs.Next() {
+		var p account_specific
+
+		err := rs.Scan(
+			&p.ID,
+			&p.Name,
+			&p.Descriptions,
 		)
 
 		if err != nil {

@@ -240,13 +240,12 @@ func createAccType(p *models.AccType) (int64, error) {
 func updateAccType(id *int, p *models.AccType) (int64, error) {
 
 	sqlStatement := `UPDATE acc_type SET
-		group_id=$2, id=$3, name=$4, descriptions=$5
+		group_id=$2, name=$3, descriptions=$4
 		WHERE id=$1`
 
 	res, err := Sql().Exec(sqlStatement,
 		id,
 		p.GroupID,
-		p.ID,
 		p.Name,
 		p.Descriptions,
 	)
