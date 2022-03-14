@@ -2,13 +2,13 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 13.5 (Debian 13.5-0+deb11u1)
--- Dumped by pg_dump version 13.5 (Debian 13.5-0+deb11u1)
+-- Dumped from database version 12.10 (Ubuntu 12.10-1.pgdg20.04+1)
+-- Dumped by pg_dump version 14.2 (Ubuntu 14.2-1.pgdg20.04+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'SQL_ASCII';
+SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
@@ -193,6 +193,84 @@ CREATE TABLE public.home_addresses (
 
 
 ALTER TABLE public.home_addresses OWNER TO postgres;
+
+--
+-- Name: invoice_details; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.invoice_details (
+    invoice_id integer NOT NULL,
+    id integer NOT NULL,
+    order_id integer NOT NULL,
+    price numeric(12,2) DEFAULT 0 NOT NULL,
+    tax numeric(12,2) DEFAULT 0 NOT NULL
+);
+
+
+ALTER TABLE public.invoice_details OWNER TO postgres;
+
+--
+-- Name: invoice_details_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.invoice_details_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.invoice_details_id_seq OWNER TO postgres;
+
+--
+-- Name: invoice_details_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.invoice_details_id_seq OWNED BY public.invoice_details.id;
+
+
+--
+-- Name: invoices; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.invoices (
+    id integer NOT NULL,
+    invoice_at date NOT NULL,
+    payment_term smallint DEFAULT 0 NOT NULL,
+    due_at date NOT NULL,
+    salesman character varying(50) NOT NULL,
+    finance_id smallint NOT NULL,
+    memo character varying(256),
+    total numeric(12,2) DEFAULT 0 NOT NULL,
+    account_id smallint DEFAULT 0 NOT NULL
+);
+
+
+ALTER TABLE public.invoices OWNER TO postgres;
+
+--
+-- Name: invoices_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.invoices_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.invoices_id_seq OWNER TO postgres;
+
+--
+-- Name: invoices_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.invoices_id_seq OWNED BY public.invoices.id;
+
 
 --
 -- Name: ktp_addresses; Type: TABLE; Schema: public; Owner: postgres
@@ -579,6 +657,20 @@ CREATE TABLE public.wheels (
 ALTER TABLE public.wheels OWNER TO postgres;
 
 --
+-- Name: invoice_details id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.invoice_details ALTER COLUMN id SET DEFAULT nextval('public.invoice_details_id_seq'::regclass);
+
+
+--
+-- Name: invoices id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.invoices ALTER COLUMN id SET DEFAULT nextval('public.invoices_id_seq'::regclass);
+
+
+--
 -- Name: merks id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -704,6 +796,22 @@ COPY public.home_addresses (order_id, street, region, city, phone, zip) FROM std
 
 
 --
+-- Data for Name: invoice_details; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.invoice_details (invoice_id, id, order_id, price, tax) FROM stdin;
+\.
+
+
+--
+-- Data for Name: invoices; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.invoices (id, invoice_at, payment_term, due_at, salesman, finance_id, memo, total, account_id) FROM stdin;
+\.
+
+
+--
 -- Data for Name: ktp_addresses; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -772,9 +880,8 @@ COPY public.tasks (order_id, descriptions, period_from, period_to, recipient_nam
 
 COPY public.trx (id, ref_id, division, descriptions, trx_date, memo, trx_token) FROM stdin;
 104	9	TRX-Order	Piutang jasa Mandiri Tunas Finance (MTF) Order SPK: /X-256/BAF/VII/2002	2022-03-14	Kendaraan R2 Yamaha Fino 125 , Nopol E5968GHJ	'/ref-9':13 '/x-256/baf/vii/2002':1 '125':5 'e5968ghj':6 'finance':9 'fino':4 'jatibarang':11 'mandir':7 'mastur':12 'mtf':10 'order':16 'r2':2 'trx':15 'trx-order':14 'tunas':8 'yamaha':3
-105	0	TRX-Auto	Pencairan invoice	2022-03-14	\N	'/id-0':3 'auto':6 'cair':1 'invoice':2 'trx':5 'trx-auto':4
 106	8	TRX-Order	Piutang jasa Bussan Auto Finance (BAF) Order SPK: /88258-Ed	2022-03-14	Kendaraan R4 Honda Brio 1000 , Nopol E 2581 PBF	'/88258-ed':1 '/ref-8':15 '1000':5 '2581':7 'auto':10 'baf':12 'brio':4 'bussan':9 'e':6 'finance':11 'honda':3 'jatibarang':13 'mastur':14 'order':18 'pbf':8 'r4':2 'trx':17 'trx-order':16
-107	0	TRX-Auto	Pencairan invoice	2022-03-15	\N	'/id-107':13 'auto':5 'cair':1 'dapat':9,11 'invoice':2,10 'jasa':12 'kas':6,8 'kecil':7 'trx':4 'trx-auto':3
+111	0	TRX-Auto	Modal awal	2022-03-14	\N	'/id-0':3 'auto':6 'awal':2 'modal':1 'trx':5 'trx-auto':4
 \.
 
 
@@ -783,14 +890,8 @@ COPY public.trx (id, ref_id, division, descriptions, trx_date, memo, trx_token) 
 --
 
 COPY public.trx_detail (id, code_id, trx_id, debt, cred) FROM stdin;
-1	5511	104	1200000.00	0.00
-2	1112	104	0.00	1200000.00
-1	1112	105	1200000.00	0.00
-2	4111	105	0.00	1200000.00
-1	5511	106	1040000.00	0.00
-2	1112	106	0.00	1040000.00
-1	1111	107	5000000.00	0.00
-2	4111	107	0.00	5000000.00
+1	1111	111	25000000.00	0.00
+2	3111	111	0.00	25000000.00
 \.
 
 
@@ -877,6 +978,20 @@ SELECT pg_catalog.setval('public.finance_id_seq', 3, true);
 
 
 --
+-- Name: invoice_details_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.invoice_details_id_seq', 1, false);
+
+
+--
+-- Name: invoices_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.invoices_id_seq', 1, false);
+
+
+--
 -- Name: merk_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
@@ -901,7 +1016,7 @@ SELECT pg_catalog.setval('public.trx_detail_seq', 1, false);
 -- Name: trx_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.trx_seq', 107, true);
+SELECT pg_catalog.setval('public.trx_seq', 111, true);
 
 
 --
@@ -1018,6 +1133,22 @@ ALTER TABLE ONLY public.warehouses
 
 ALTER TABLE ONLY public.home_addresses
     ADD CONSTRAINT home_addresses_order_id_key UNIQUE (order_id);
+
+
+--
+-- Name: invoice_details invoice_details_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.invoice_details
+    ADD CONSTRAINT invoice_details_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: invoices invoices_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.invoices
+    ADD CONSTRAINT invoices_pkey PRIMARY KEY (id);
 
 
 --
@@ -1272,6 +1403,34 @@ CREATE INDEX ix_gin_trx ON public.trx USING gin (trx_token);
 
 
 --
+-- Name: ix_invoice_account; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_invoice_account ON public.invoices USING btree (account_id);
+
+
+--
+-- Name: ix_invoice_detail_invoice; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_invoice_detail_invoice ON public.invoice_details USING btree (invoice_id);
+
+
+--
+-- Name: ix_invoice_detail_order; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_invoice_detail_order ON public.invoice_details USING btree (order_id);
+
+
+--
+-- Name: ix_invoice_finance; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_invoice_finance ON public.invoices USING btree (finance_id);
+
+
+--
 -- Name: ix_order_token; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1338,6 +1497,38 @@ ALTER TABLE ONLY public.types
 
 ALTER TABLE ONLY public.types
     ADD CONSTRAINT fk_type_roda FOREIGN KEY (wheel_id) REFERENCES public.wheels(id) ON DELETE RESTRICT;
+
+
+--
+-- Name: invoice_details fkey_invdetail_invoice; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.invoice_details
+    ADD CONSTRAINT fkey_invdetail_invoice FOREIGN KEY (invoice_id) REFERENCES public.invoices(id) ON DELETE CASCADE;
+
+
+--
+-- Name: invoice_details fkey_invdetail_order; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.invoice_details
+    ADD CONSTRAINT fkey_invdetail_order FOREIGN KEY (order_id) REFERENCES public.orders(id);
+
+
+--
+-- Name: invoices fkey_invoice_account; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.invoices
+    ADD CONSTRAINT fkey_invoice_account FOREIGN KEY (account_id) REFERENCES public.acc_code(id);
+
+
+--
+-- Name: invoices fkey_invoice_finance; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.invoices
+    ADD CONSTRAINT fkey_invoice_finance FOREIGN KEY (finance_id) REFERENCES public.finances(id);
 
 
 --

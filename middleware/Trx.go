@@ -26,7 +26,7 @@ type local_detail struct {
 
 type local_trx struct {
 	models.Trx
-	Details []local_detail `json:"details,omitempty"`
+	Details json.RawMessage `json:"details,omitempty"`
 }
 
 func GetTransactionsByMonth(w http.ResponseWriter, r *http.Request) {
@@ -209,25 +209,25 @@ func UpdateTransaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(trx.Details) > 0 {
+	// if len(trx.Details) > 0 {
 
-		_, err = deleteDetailsByOrder(&id)
-		if err != nil {
-			log.Printf("Unable to delete all details by transaction.  %v", err)
-			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-			return
-		}
+	// 	_, err = deleteDetailsByOrder(&id)
+	// 	if err != nil {
+	// 		log.Printf("Unable to delete all details by transaction.  %v", err)
+	// 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+	// 		return
+	// 	}
 
-		var newId int64 = 0
+	// 	var newId int64 = 0
 
-		err = bulkInsertDetails(trx.Details, &newId)
+	err = bulkInsertDetails(trx.Details, &id)
 
-		if err != nil {
-			log.Printf("Unable to insert transaction details.  %v", err)
-			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-			return
-		}
+	if err != nil {
+		log.Printf("Unable to insert transaction details (message from command).  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
 	}
+	//	}
 
 	msg := fmt.Sprintf("Transaction updated successfully. Total rows/record affected %v", updatedRows)
 
@@ -278,7 +278,7 @@ func bulkInsertDetails(rows []models.TrxDetail, id *int64) error {
 	stmt := fmt.Sprintf("INSERT INTO trx_detail (id, code_id, trx_id, debt, cred) VALUES %s",
 		strings.Join(valueStrings, ","))
 	//log.Printf("%s %v", stmt, valueArgs)
-	_, err := Sql().Exec(stmt, valueArgs...)
+	_, err := Sql().Exec(stmt+" ON CONFLICT (trx_id, id) DO UPDATE SET code_id=EXCLUDED.code_id, trx_id=EXCLUDED.trx_id, debt=EXCLUDED.debt, cred=EXCLUDED.cred", valueArgs...)
 	return err
 }
 
@@ -328,11 +328,24 @@ func getTransaction(id *int64) (local_trx, error) {
 
 	var p local_trx
 
-	var sqlStatement = `SELECT 
-		id, ref_id, division, trx_date, descriptions, memo,
-		(select sum(d.debt) as debt from trx_detail d where d.trx_id = t.id) saldo
-	FROM trx
-	WHERE id=$1`
+	var sqlStatement = `SELECT t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
+(SELECT COALESCE(sum(s.debt),0) AS debt FROM trx_detail s WHERE s.trx_id = t.id) saldo,
+COALESCE
+(
+(
+SELECT array_to_json(array_agg(row_to_json(x))) FROM
+(
+SELECT c.id, c.name, d.code_id, d.debt, d.cred
+FROM trx_detail d
+INNER JOIN acc_code c ON c.id = d.code_id
+WHERE d.trx_id=t.id 
+ORDER BY d.id
+) x
+),
+'[]'
+) AS details
+FROM trx t
+WHERE t.id=$1`
 
 	rs := Sql().QueryRow(sqlStatement, id)
 
@@ -356,8 +369,8 @@ func getTransaction(id *int64) (local_trx, error) {
 		log.Fatalf("Unable to scan the row. %v", err)
 	}
 
-	d, _ := get_details(&p.ID)
-	p.Details = d
+	// d, _ := get_details(&p.ID)
+	// p.Details = d
 
 	// return empty user on error
 	return p, err
@@ -367,11 +380,25 @@ func get_all_transactions() ([]local_trx, error) {
 
 	var results []local_trx
 
-	var sqlStatement = `SELECT 
-		t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
-		(select sum(d.debt) as debt from trx_detail d where d.trx_id = t.id) saldo
-	FROM trx t
-	ORDER BY t.id DESC`
+	var sqlStatement = `SELECT t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
+(SELECT COALESCE(sum(s.debt),0) AS debt FROM trx_detail s WHERE s.trx_id = t.id) saldo,
+COALESCE
+(
+(
+SELECT array_to_json(array_agg(row_to_json(x))) FROM
+(
+SELECT c.id, c.name, d.code_id, d.debt, d.cred
+FROM trx_detail d
+INNER JOIN acc_code c ON c.id = d.code_id
+WHERE d.trx_id=t.id 
+ORDER BY d.id
+) x
+),
+'[]'
+) AS details
+			
+FROM trx t
+ORDER BY t.id DESC`
 
 	rs, err := Sql().Query(sqlStatement)
 
@@ -393,14 +420,15 @@ func get_all_transactions() ([]local_trx, error) {
 			&p.Descriptions,
 			&p.Memo,
 			&p.Saldo,
+			&p.Details,
 		)
 
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
 		}
 
-		d, _ := get_details(&p.ID)
-		p.Details = d
+		// d, _ := get_details(&p.ID)
+		// p.Details = d
 
 		results = append(results, p)
 	}
@@ -496,17 +524,25 @@ func searchTransactions(txt *string) ([]local_trx, error) {
 
 	var results []local_trx
 
-	var sqlStatement = `SELECT 
-	t.id,
-	t.ref_id,
-	t.division,
-	t.trx_date,
-	t.descriptions,
-	t.memo,
-	coalesce((select sum(d.debt) as debt from trx_detail d where d.trx_id = t.id), 0) saldo
-	FROM trx t
-	WHERE t.trx_token @@ to_tsquery('indonesian', $1)
-	ORDER BY t.id DESC`
+	var sqlStatement = `SELECT t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
+(SELECT COALESCE(sum(s.debt),0) AS debt FROM trx_detail s WHERE s.trx_id = t.id) saldo,
+COALESCE
+(
+(
+SELECT array_to_json(array_agg(row_to_json(x))) FROM
+(
+SELECT c.id, c.name, d.code_id, d.debt, d.cred
+FROM trx_detail d
+INNER JOIN acc_code c ON c.id = d.code_id
+WHERE d.trx_id=t.id 
+ORDER BY d.id
+) x
+),
+'[]'
+) AS details
+FROM trx t
+WHERE t.trx_token @@ to_tsquery('indonesian', $1)
+ORDER BY t.id DESC`
 
 	rs, err := Sql().Query(sqlStatement, txt)
 
@@ -528,14 +564,15 @@ func searchTransactions(txt *string) ([]local_trx, error) {
 			&p.Descriptions,
 			&p.Memo,
 			&p.Saldo,
+			&p.Details,
 		)
 
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
 		}
 
-		d, _ := get_details(&p.ID)
-		p.Details = d
+		// d, _ := get_details(&p.ID)
+		// p.Details = d
 
 		results = append(results, p)
 	}
@@ -547,15 +584,28 @@ func getTransactionsByGroup(id *int64) ([]local_trx, error) {
 
 	var results []local_trx
 
-	var sqlStatement = `SELECT 
-	t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
-	(select sum(d.debt) as debt from trx_detail d where d.trx_id = t.id) saldo
-	FROM trx t
-	INNER JOIN trx_detail d ON d.trx_id = d.id
-	INNER JOIN acc_type e ON e.id = d.code_id
-	INNER JOIN acc_code c ON c.id = e.group_id
-	WHERE c.group_id=$1
-	ORDER BY t.id DESC`
+	var sqlStatement = `SELECT t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
+(SELECT COALESCE(sum(s.debt),0) AS debt FROM trx_detail s WHERE s.trx_id = t.id) saldo,
+COALESCE
+(
+(
+SELECT array_to_json(array_agg(row_to_json(x))) FROM
+(
+SELECT c.id, c.name, d.code_id, d.debt, d.cred
+FROM trx_detail d
+INNER JOIN acc_code c ON c.id = d.code_id
+WHERE d.trx_id=t.id 
+ORDER BY d.id
+) x
+),
+'[]'
+) AS details
+FROM trx t
+INNER JOIN trx_detail d ON d.trx_id = d.id
+INNER JOIN acc_type e ON e.id = d.code_id
+INNER JOIN acc_code c ON c.id = e.group_id
+WHERE c.group_id=$1
+ORDER BY t.id DESC`
 
 	rs, err := Sql().Query(sqlStatement, id)
 
@@ -577,13 +627,14 @@ func getTransactionsByGroup(id *int64) ([]local_trx, error) {
 			&p.Descriptions,
 			&p.Memo,
 			&p.Saldo,
+			&p.Details,
 		)
 
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
 		}
-		d, _ := get_details(&p.ID)
-		p.Details = d
+		// d, _ := get_details(&p.ID)
+		// p.Details = d
 
 		results = append(results, p)
 	}
@@ -591,6 +642,7 @@ func getTransactionsByGroup(id *int64) ([]local_trx, error) {
 	return results, err
 }
 
+/*
 func get_details(trxID *int64) ([]local_detail, error) {
 
 	var details []local_detail
@@ -599,7 +651,7 @@ func get_details(trxID *int64) ([]local_detail, error) {
 	c.id, c.name, d.code_id, d.debt, d.cred
 	FROM trx_detail d
 	INNER JOIN acc_code c ON c.id = d.code_id
-	WHERE d.trx_id=$1 
+	WHERE d.trx_id=$1
 	-- AND c.receivable_option != 1
 	ORDER BY d.id`
 
@@ -631,17 +683,30 @@ func get_details(trxID *int64) ([]local_detail, error) {
 
 	return details, err
 }
-
+*/
 func get_trx_by_month(id *int) ([]local_trx, error) {
 
 	var results []local_trx
 
-	var sqlStatement = `SELECT 
-	t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
-	(select sum(d.debt) as debt from trx_detail d where d.trx_id = t.id) saldo
-	FROM trx t
-	WHERE EXTRACT(MONTH from trx_date)=$1
-	ORDER BY t.id DESC`
+	var sqlStatement = `SELECT t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
+(SELECT COALESCE(sum(s.debt),0) AS debt FROM trx_detail s WHERE s.trx_id = t.id) saldo,
+COALESCE
+(
+(
+SELECT array_to_json(array_agg(row_to_json(x))) FROM
+(
+SELECT c.id, c.name, d.code_id, d.debt, d.cred
+FROM trx_detail d
+INNER JOIN acc_code c ON c.id = d.code_id
+WHERE d.trx_id=t.id 
+ORDER BY d.id
+) x
+),
+'[]'
+) AS details
+FROM trx t
+WHERE EXTRACT(MONTH from t.trx_date)=$1
+ORDER BY t.id DESC`
 
 	rs, err := Sql().Query(sqlStatement, id)
 
@@ -663,13 +728,14 @@ func get_trx_by_month(id *int) ([]local_trx, error) {
 			&p.Descriptions,
 			&p.Memo,
 			&p.Saldo,
+			&p.Details,
 		)
 
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
 		}
-		d, _ := get_details(&p.ID)
-		p.Details = d
+		// d, _ := get_details(&p.ID)
+		// p.Details = d
 
 		results = append(results, p)
 	}

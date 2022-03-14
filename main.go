@@ -60,6 +60,7 @@ func loadRouter() {
 	routers.TransactionDetailRouter(mainRouter.PathPrefix("/api/trx-detail/").Subrouter())
 	routers.SaldoRouter(mainRouter.PathPrefix("/api/saldo/").Subrouter())
 	routers.ReportRouter(mainRouter.PathPrefix("/api/report/").Subrouter())
+	routers.InvoiceRouter(mainRouter.PathPrefix("/api/invoice/").Subrouter())
 }
 
 func runServer() {

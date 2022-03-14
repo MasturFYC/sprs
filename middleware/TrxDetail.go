@@ -114,6 +114,14 @@ func DeleteTransactionDetail(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
 
+	trxid, err := strconv.ParseInt(params["trxid"], 10, 64)
+
+	if err != nil {
+		log.Printf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
 	id, err := strconv.Atoi(params["id"])
 
 	if err != nil {
@@ -122,7 +130,7 @@ func DeleteTransactionDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deletedRows, err := deleteTransactionDetail(&id)
+	deletedRows, err := deleteTransactionDetail(&trxid, &id)
 
 	if err != nil {
 		log.Printf("Unable to delete transaction detail.  %v", err)
@@ -237,11 +245,11 @@ func updateTransactionDetail(id *int64, p *models.TrxDetail) (int64, error) {
 	return rowsAffected, err
 }
 
-func deleteTransactionDetail(id *int) (int64, error) {
+func deleteTransactionDetail(trxid *int64, id *int) (int64, error) {
 
-	sqlStatement := `DELETE FROM trx_detail WHERE id=$1`
+	sqlStatement := `DELETE FROM trx_detail WHERE trx_id=$1 AND id =$2`
 
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := Sql().Exec(sqlStatement, trxid, id)
 
 	if err != nil {
 		log.Printf("Unable to delete transaction detail. %v", err)
