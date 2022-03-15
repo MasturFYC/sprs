@@ -52,9 +52,9 @@ func GetOrdersByFinance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	acc_codes, err := get_order_by_finance(&id)
+	orders, err := get_order_by_finance(&id)
 
-	if err != nil || len(acc_codes) == 0 {
+	if err != nil || len(orders) == 0 {
 		//log.Printf("Unable to get all account codes. %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
@@ -63,7 +63,7 @@ func GetOrdersByFinance(w http.ResponseWriter, r *http.Request) {
 		//return
 	}
 
-	json.NewEncoder(w).Encode(&acc_codes)
+	json.NewEncoder(w).Encode(&orders)
 }
 
 func GetOrdersByBranch(w http.ResponseWriter, r *http.Request) {

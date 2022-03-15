@@ -83,9 +83,9 @@ func runServer() {
 
 	handler := cor.Handler(mainRouter)
 
-	fmt.Println("web server run at local: http://localhost:8181/")
-	fmt.Println("web server run at: http://pixel.id:8181/")
-	log.Fatal(http.ListenAndServe(":8181", handler))
+	fmt.Println("web server run at local: http://localhost:8282/")
+	fmt.Println("web server run at: http://pixel.id:8282/")
+	log.Fatal(http.ListenAndServe(":8282", handler))
 }
 
 func main() {

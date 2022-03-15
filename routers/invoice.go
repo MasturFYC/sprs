@@ -9,9 +9,9 @@ import (
 func InvoiceRouter(router *mux.Router) {
 
 	router.HandleFunc("/", middleware.Invoice_GetAll).Methods("GET")
-	router.HandleFunc("/{id}/", middleware.Invoice_GetItem).Methods("GET")
-	//	router.HandleFunc("/{id}/", middleware.DeleteFinance).Methods("DELETE")
-	//	router.HandleFunc("/", middleware.CreateFinance).Methods("POST")
-	//	router.HandleFunc("/{id}/", middleware.UpdateFinance).Methods("PUT")
+	router.HandleFunc("/{invoceId}/", middleware.Invoice_GetItem).Methods("GET")
+	router.HandleFunc("/{financeId}/{invoiceId}/", middleware.Invoice_GetOrders).Methods("GET")
+	router.HandleFunc("/", middleware.Invoice_Create).Methods("POST")
+	router.HandleFunc("/{id}/", middleware.Invoice_Update).Methods("PUT")
 
 }

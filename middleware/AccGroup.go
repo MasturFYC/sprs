@@ -387,7 +387,7 @@ func deleteAccGroup(id *int) (int64, error) {
 
 func get_all_accounts() ([]all_accounts, error) {
 	var accounts []all_accounts
-	var sqlStatement = `with recursive rs as (
+	var sqlStatement = `WITH RECURSIVE rs AS (
 
 		SELECT true as is_group, false is_type, false is_account,
 		id, name, 0 as type_id, descriptions, 0 as receivable_option, false as is_active, false as is_auto_debet
