@@ -2,13 +2,13 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 13.5 (Debian 13.5-0+deb11u1)
--- Dumped by pg_dump version 13.5 (Debian 13.5-0+deb11u1)
+-- Dumped from database version 12.10 (Ubuntu 12.10-1.pgdg20.04+1)
+-- Dumped by pg_dump version 14.2 (Ubuntu 14.2-1.pgdg20.04+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'SQL_ASCII';
+SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
@@ -673,13 +673,13 @@ COPY public.acc_code (id, name, type_id, descriptions, token_name, is_active, re
 5112	Biaya Listrik	51	Biaya pemakaian listrik	'biaya':1,3 'listrik':2,5 'pakai':4	t	3	t
 5114	Biaya Internet	51	Biaya jaringan internet ke Biznet	'biaya':1,3 'biznet':7 'internet':2,5 'jaring':4 'ke':6	t	3	t
 5116	Biaya ATK	51	Biaya alat tulis kantor termasuk termasuk peralatan seperti komputer, meja, kursi, lemari	'alat':4,9 'atk':2 'biaya':1,3 'kantor':6 'komputer':11 'kursi':13 'lemar':14 'masuk':7,8 'meja':12 'sepert':10 'tulis':5	t	3	t
-4111	Pendapatan Invoice	41	Penarikan dana dari pihak Finance karena adanya ...	'ada':9 'arik':3 'dana':4 'dapat':1 'dari':5 'finance':7 'invoice':2 'karena':8 'pihak':6	t	2	t
 5119	Biaya Lain-lain	51	Biaya yg terdiri dari bermacam transaksi serta tidak tercantum pada salah satu perkiraan yang terdapat dalam transaksi perusahaan	'biaya':1,5 'cantum':13 'dalam':20 'dapat':19 'dari':8 'diri':7 'kira':17 'lain':3,4 'lain-lain':2 'macam':9 'pada':14 'salah':15 'satu':16 'serta':11 'tidak':12 'transaksi':10,21 'usaha':22 'yang':18 'yg':6	t	3	t
 5411	Upah Tenaga Kerja	54	Biaya overhead perusahaan yg dikeluarkan untuk memayar upah karena mengerjakan sesuatu	'biaya':4 'erja':13 'karena':12 'keluar':8 'kerja':3 'overhead':5 'payar':10 'sesuatu':14 'tenaga':2 'untuk':9 'upah':1,11 'usaha':6 'yg':7	t	3	f
 3111	Modal Pak Kris	31	Modal yg diterima dari pak Kris	'dari':7 'kris':3,9 'modal':1,4 'pak':2,8 'terima':6 'yg':5	t	2	t
 2311	Hutang Pajak	23	Pajak yg belum dibayar karena menunggu pembayaran dari tarikan	'bayar':6,9 'belum':5 'dari':10 'hutang':1 'karena':7 'pajak':2,3 'tari':11 'unggu':8 'yg':4	t	2	f
 1112	Bank BCA 0856212654	11	Atas nama Opik	'0856212654':3 'atas':4 'bank':1 'bca':2 'nama':5 'opik':6	t	1	f
 5511	Piutang Jasa	55	Pendanaan yg dikeluarkan untuk operasi penarikan berdasarkan SPK dari Finance sejumlah BT Matel	'arik':8 'bt':14 'dana':3 'dari':11 'dasar':9 'finance':12 'jasa':2 'keluar':5 'matel':15 'operasi':7 'piutang':1 'sejum':13 'spk':10 'untuk':6 'yg':4	t	3	f
+4111	Pendapatan Invoice	41	Penarikan dana dari pihak Finance karena adanya ...	'ada':9 'arik':3 'dana':4 'dapat':1 'dari':5 'finance':7 'invoice':2 'karena':8 'pihak':6	t	2	f
 \.
 
 
@@ -770,6 +770,7 @@ COPY public.home_addresses (order_id, street, region, city, phone, zip) FROM std
 --
 
 COPY public.invoice_details (invoice_id, order_id) FROM stdin;
+99	9
 66	10
 66	8
 \.
@@ -780,7 +781,8 @@ COPY public.invoice_details (invoice_id, order_id) FROM stdin;
 --
 
 COPY public.invoices (id, invoice_at, payment_term, due_at, salesman, finance_id, memo, total, account_id, tax, token) FROM stdin;
-66	2022-03-17	2	2022-03-17	wrewqrer	1	\N	2800000.00	1112	0.00	'/id-0':2 'wrewqrer':1
+99	2022-03-17	2	2022-03-17	Junaedi	3	\N	1500000.00	1112	150000.00	'/id-99':2 '0856212654':9 '125':12 'bank':7 'bca':8 'e5968ghj':10 'finance':5 'fino':11 'junaed':1 'mandir':3 'mtf':6 'tunas':4
+66	2022-03-17	2	2022-03-17	wrewqrer	1	\N	2800000.00	1112	0.00	'/id-66':2 '0856212654':9 '1000':17 '125':12 '2581':14 'auto':4 'baf':6 'bank':7 'bca':8 'brio':16 'bussan':3 'e':13 'e25632ff':10 'finance':5 'fino':11 'pbf':15 'wrewqrer':1
 \.
 
 
@@ -859,7 +861,8 @@ COPY public.trx (id, ref_id, division, descriptions, trx_date, memo, trx_token) 
 111	0	TRX-Auto	Modal awal	2022-03-14	\N	'/id-0':3 'auto':6 'awal':2 'modal':1 'trx':5 'trx-auto':4
 112	10	TRX-Order	Piutang jasa Bussan Auto Finance (BAF) Order SPK: /qweqwe qweqwe	2022-03-16	Kendaraan R2 Yamaha Fino 125 , Nopol E25632FF	'/qweqwe':1 '/ref-10':14 '125':6 'auto':9 'baf':11 'bussan':8 'e25632ff':7 'finance':10 'fino':5 'jatibarang':12 'mastur':13 'order':17 'qweqwe':2 'r2':3 'trx':16 'trx-order':15 'yamaha':4
 113	11	TRX-Order	Piutang jasa Bussan Auto Finance (BAF) Order SPK: /x-001254	2022-03-16	Kendaraan R2 Honda Vario 125 , Nopol E56985698	'/ref-11':13 '/x-001254':1 '125':5 'auto':8 'baf':10 'bussan':7 'e56985698':6 'finance':9 'honda':3 'jatibarang':11 'mastur':12 'order':16 'r2':2 'trx':15 'trx-order':14 'vario':4
-129	66	trx-invoice	Pendapatan jasa dari Bussan Auto Finance Invoice #66	2022-03-17	\N	'/id-0pendapatan':2 '66':9 'auto':6 'bussan':5 'dari':4 'finance':7 'invoice':8 'jasa':3 'wrewqrer':1
+162	99	trx-invoice	Pendapatan jasa dari Mandiri Tunas Finance Invoice #99	2022-03-17	\N	'/id-99':2 '0856212654':9 '125':12 'bank':7 'bca':8 'e5968ghj':10 'finance':5 'fino':11 'junaed':1 'mandir':3 'mtf':6 'tunas':4
+129	66	trx-invoice	Pendapatan jasa dari Bussan Auto Finance Invoice #66	2022-03-17	\N	'/id-66':2 '0856212654':9 '1000':17 '125':12 '2581':14 'auto':4 'baf':6 'bank':7 'bca':8 'brio':16 'bussan':3 'e':13 'e25632ff':10 'finance':5 'fino':11 'pbf':15 'wrewqrer':1
 \.
 
 
@@ -874,6 +877,9 @@ COPY public.trx_detail (id, code_id, trx_id, debt, cred) FROM stdin;
 2	1112	112	0.00	1200000.00
 1	5511	113	960000.00	0.00
 2	1112	113	0.00	960000.00
+1	4111	162	0.00	1500000.00
+2	1112	162	1350000.00	0.00
+3	6011	162	150000.00	0.00
 1	4111	129	0.00	2800000.00
 2	1112	129	2800000.00	0.00
 \.
@@ -967,7 +973,7 @@ SELECT pg_catalog.setval('public.finance_id_seq', 3, true);
 -- Name: invoices_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.invoices_id_seq', 98, true);
+SELECT pg_catalog.setval('public.invoices_id_seq', 99, true);
 
 
 --
@@ -995,7 +1001,7 @@ SELECT pg_catalog.setval('public.trx_detail_seq', 1, false);
 -- Name: trx_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.trx_seq', 161, true);
+SELECT pg_catalog.setval('public.trx_seq', 162, true);
 
 
 --

@@ -23,6 +23,128 @@ type invoice_create_param struct {
 	Trx       models.Trx     `json:"transaction"`
 }
 
+func Invoice_GetSearch(w http.ResponseWriter, r *http.Request) {
+	EnableCors(&w)
+	w.Header().Set("Access-Control-Allow-Methods", "POST")
+
+	var t models.SearchGroup
+
+	err := json.NewDecoder(r.Body).Decode(&t)
+
+	if err != nil {
+		log.Printf("Unable to decode the request body to transaction.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+	}
+
+	invoices, err := invoices_search(&t.Txt)
+
+	if err != nil || len(invoices) == 0 {
+		//log.Printf("Unable to get all account codes. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+
+	json.NewEncoder(w).Encode(&invoices)
+
+}
+
+func Invoice_GetByFinance(w http.ResponseWriter, r *http.Request) {
+	EnableCors(&w)
+	params := mux.Vars(r)
+
+	id, err := strconv.Atoi(params["id"])
+
+	invoices, err := invoices_by_finance(&id)
+
+	if err != nil || len(invoices) == 0 {
+		//log.Printf("Unable to get all account codes. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+
+	json.NewEncoder(w).Encode(&invoices)
+
+}
+
+func Invoice_GetByMonth(w http.ResponseWriter, r *http.Request) {
+	EnableCors(&w)
+	params := mux.Vars(r)
+
+	m, err := strconv.Atoi(params["month"])
+	y, err := strconv.Atoi(params["year"])
+
+	invoices, err := invoices_by_month(&m, &y)
+
+	if err != nil || len(invoices) == 0 {
+		//log.Printf("Unable to get all account codes. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+
+	json.NewEncoder(w).Encode(&invoices)
+
+}
+
+func Invoice_GetAll(w http.ResponseWriter, r *http.Request) {
+	EnableCors(&w)
+
+	invoices, err := invoice_get_all()
+
+	if err != nil {
+		log.Fatalf("Unable to get all merks. %v", err)
+	}
+
+	json.NewEncoder(w).Encode(&invoices)
+}
+
+// router invoice.go
+func Invoice_GetOrders(w http.ResponseWriter, r *http.Request) {
+	EnableCors(&w)
+
+	params := mux.Vars(r)
+
+	finance_id, err := strconv.Atoi(params["financeId"])
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	invoice_id, err := strconv.ParseInt(params["id"], 10, 64)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	invoices, err := invoice_get_orders(&finance_id, &invoice_id)
+
+	if err != nil || len(invoices) == 0 {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+
+	json.NewEncoder(w).Encode(&invoices)
+}
+
+func Invoice_GetItem(w http.ResponseWriter, r *http.Request) {
+	EnableCors(&w)
+
+	params := mux.Vars(r)
+
+	id, err := strconv.ParseInt(params["id"], 10, 64)
+
+	invoice, err := invoice_get_item(&id)
+
+	if err != nil {
+		log.Printf("Unable to get all account groups. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+
+	json.NewEncoder(w).Encode(&invoice)
+}
+
 func Invoice_Create(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 	w.Header().Set("Access-Control-Allow-Methods", "POST")
@@ -254,65 +376,6 @@ func invocie_delete_details(id *int64) (int64, error) {
 	return rowsAffected, err
 }
 
-func Invoice_GetAll(w http.ResponseWriter, r *http.Request) {
-	EnableCors(&w)
-
-	invoices, err := invoice_get_all()
-
-	if err != nil {
-		log.Fatalf("Unable to get all merks. %v", err)
-	}
-
-	json.NewEncoder(w).Encode(&invoices)
-}
-
-// router invoice.go
-func Invoice_GetOrders(w http.ResponseWriter, r *http.Request) {
-
-	params := mux.Vars(r)
-
-	finance_id, err := strconv.Atoi(params["financeId"])
-
-	if err != nil {
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-		return
-	}
-
-	invoice_id, err := strconv.ParseInt(params["id"], 10, 64)
-
-	if err != nil {
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-		return
-	}
-
-	invoices, err := invoice_get_orders(&finance_id, &invoice_id)
-
-	if err != nil || len(invoices) == 0 {
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		return
-	}
-
-	json.NewEncoder(w).Encode(&invoices)
-}
-
-func Invoice_GetItem(w http.ResponseWriter, r *http.Request) {
-	EnableCors(&w)
-
-	params := mux.Vars(r)
-
-	id, err := strconv.ParseInt(params["id"], 10, 64)
-
-	invoice, err := invoice_get_item(&id)
-
-	if err != nil {
-		log.Printf("Unable to get all account groups. %v", err)
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		return
-	}
-
-	json.NewEncoder(w).Encode(&invoice)
-}
-
 type invoice_item struct {
 	models.Invoice
 	Finance     json.RawMessage `json:"finance,ommitempty"`
@@ -355,7 +418,7 @@ func invoice_get_item(id *int64) (invoice_item, error) {
 	x.trx_date AS "trxDate", x.memo, %s AS details
 	FROM trx x WHERE x.ref_id = v.id`, nestQuery(queryTansactionDetails))
 
-	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, memo, total, account_id,
+	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, memo, total, tax, account_id,
 %s AS finance,
 %s AS account,
 COALESCE(%s, '{}') AS transaction,
@@ -378,6 +441,7 @@ WHERE v.id=$1`,
 		&item.FinanceID,
 		&item.Memo,
 		&item.Total,
+		&item.Tax,
 		&item.AccountId,
 		&item.Finance,
 		&item.Account,
@@ -444,9 +508,9 @@ func invoice_delete(id *int64) int64 {
 func invoice_create(inv *models.Invoice, token *string) (int64, error) {
 
 	sqlStatement := `INSERT INTO invoices 
-	(invoice_at, payment_term, due_at, salesman, finance_id, memo, total, account_id, token) 
+	(invoice_at, payment_term, due_at, salesman, finance_id, memo, total, tax, account_id, token) 
 	VALUES 
-	($1, $2, $3, $4, $5, $6, $7, $8, to_tsvector('indonesian', $9))
+	($1, $2, $3, $4, $5, $6, $7, $8, $9, to_tsvector('indonesian', $10))
 	RETURNING id`
 
 	var id int64
@@ -459,6 +523,7 @@ func invoice_create(inv *models.Invoice, token *string) (int64, error) {
 		inv.FinanceID,
 		inv.Memo,
 		inv.Total,
+		inv.Tax,
 		inv.AccountId,
 		token,
 	).Scan(&id)
@@ -480,9 +545,10 @@ func invoice_update(id *int64, inv *models.Invoice, token *string) (int64, error
 	finance_id=$5,
 	memo=$6,
 	total=$7,
-	account_id=$8,
-	token=to_tsvector('indonesian', $9)
-	WHERE id=$10`
+	tax=$8,
+	account_id=$9,
+	token=to_tsvector('indonesian', $10)
+	WHERE id=$11`
 
 	res, err := Sql().Exec(sqlStatement,
 		inv.InvoiceAt,
@@ -492,6 +558,7 @@ func invoice_update(id *int64, inv *models.Invoice, token *string) (int64, error
 		inv.FinanceID,
 		inv.Memo,
 		inv.Total,
+		inv.Tax,
 		inv.AccountId,
 		token,
 		id,
@@ -523,7 +590,7 @@ func invoice_get_all() ([]invoice_all, error) {
 	var querFinance = `SELECT f.id, f.name, f.short_name "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email FROM finances f WHERE f.id = v.finance_id`
 	var queryAccount = `SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`
 
-	var sqlStatement = fmt.Sprintf("SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, memo, total, account_id, %s AS finance, %s AS account FROM invoices AS v ORDER BY v.id DESC",
+	var sqlStatement = fmt.Sprintf("SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, memo, total, tax, account_id, %s AS finance, %s AS account FROM invoices AS v ORDER BY v.id DESC",
 		nestQuerySingle(querFinance),
 		nestQuerySingle(queryAccount),
 	)
@@ -548,6 +615,7 @@ func invoice_get_all() ([]invoice_all, error) {
 			&item.FinanceID,
 			&item.Memo,
 			&item.Total,
+			&item.Tax,
 			&item.AccountId,
 			&item.Finance,
 			&item.Account,
@@ -678,4 +746,151 @@ func invoice_get_orders(finance_id *int, invoice_id *int64) ([]invoice_order, er
 
 	return invoices, err
 
+}
+
+func invoices_search(txt *string) ([]invoice_all, error) {
+	var invoices []invoice_all
+	var querFinance = `SELECT f.id, f.name, f.short_name "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email FROM finances f WHERE f.id = v.finance_id`
+	var queryAccount = `SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`
+
+	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, memo, total, tax, account_id, %s AS finance, %s AS account 
+		FROM invoices AS v
+		WHERE token @@ to_tsquery('indonesian', $1) 
+		ORDER BY v.id DESC`,
+		nestQuerySingle(querFinance),
+		nestQuerySingle(queryAccount),
+	)
+
+	rs, err := Sql().Query(sqlStatement, txt)
+
+	if err != nil {
+		log.Fatalf("Unable to execute merks query %v", err)
+	}
+
+	defer rs.Close()
+
+	for rs.Next() {
+		var item invoice_all
+
+		err := rs.Scan(
+			&item.ID,
+			&item.InvoiceAt,
+			&item.PaymentTerm,
+			&item.DueAt,
+			&item.Salesman,
+			&item.FinanceID,
+			&item.Memo,
+			&item.Total,
+			&item.Tax,
+			&item.AccountId,
+			&item.Finance,
+			&item.Account,
+		)
+
+		if err != nil {
+			log.Fatalf("Unable to scan the row. %v", err)
+		}
+
+		invoices = append(invoices, item)
+	}
+
+	return invoices, err
+}
+
+func invoices_by_month(month *int, year *int) ([]invoice_all, error) {
+	var invoices []invoice_all
+	var querFinance = `SELECT f.id, f.name, f.short_name "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email FROM finances f WHERE f.id = v.finance_id`
+	var queryAccount = `SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`
+
+	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, memo, total, tax, account_id, %s AS finance, %s AS account 
+		FROM invoices AS v
+		WHERE EXTRACT(MONTH FROM v.invoice_at)=$1 AND EXTRACT(YEAR FROM v.invoice_at)=$2 OR 0=$1
+		ORDER BY v.id DESC`,
+		nestQuerySingle(querFinance),
+		nestQuerySingle(queryAccount),
+	)
+
+	rs, err := Sql().Query(sqlStatement, month, year)
+
+	if err != nil {
+		log.Fatalf("Unable to execute merks query %v", err)
+	}
+
+	defer rs.Close()
+
+	for rs.Next() {
+		var item invoice_all
+
+		err := rs.Scan(
+			&item.ID,
+			&item.InvoiceAt,
+			&item.PaymentTerm,
+			&item.DueAt,
+			&item.Salesman,
+			&item.FinanceID,
+			&item.Memo,
+			&item.Total,
+			&item.Tax,
+			&item.AccountId,
+			&item.Finance,
+			&item.Account,
+		)
+
+		if err != nil {
+			log.Fatalf("Unable to scan the row. %v", err)
+		}
+
+		invoices = append(invoices, item)
+	}
+
+	return invoices, err
+}
+
+func invoices_by_finance(finance_id *int) ([]invoice_all, error) {
+	var invoices []invoice_all
+	var querFinance = `SELECT f.id, f.name, f.short_name "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email FROM finances f WHERE f.id = v.finance_id`
+	var queryAccount = `SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`
+
+	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, memo, total, tax, account_id, %s AS finance, %s AS account 
+		FROM invoices AS v
+		WHERE v.finance_id=$1 OR 0=$1
+		ORDER BY v.id DESC`,
+		nestQuerySingle(querFinance),
+		nestQuerySingle(queryAccount),
+	)
+
+	rs, err := Sql().Query(sqlStatement, finance_id)
+
+	if err != nil {
+		log.Fatalf("Unable to execute merks query %v", err)
+	}
+
+	defer rs.Close()
+
+	for rs.Next() {
+		var item invoice_all
+
+		err := rs.Scan(
+			&item.ID,
+			&item.InvoiceAt,
+			&item.PaymentTerm,
+			&item.DueAt,
+			&item.Salesman,
+			&item.FinanceID,
+			&item.Memo,
+			&item.Total,
+			&item.Tax,
+			&item.AccountId,
+			&item.Finance,
+			&item.Account,
+		)
+
+		if err != nil {
+			log.Fatalf("Unable to scan the row. %v", err)
+		}
+
+		invoices = append(invoices, item)
+	}
+
+	return invoices, err
 }
