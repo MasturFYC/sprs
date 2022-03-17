@@ -60,7 +60,7 @@ func loadRouter() {
 	routers.TransactionDetailRouter(mainRouter.PathPrefix("/api/trx-detail/").Subrouter())
 	routers.SaldoRouter(mainRouter.PathPrefix("/api/saldo/").Subrouter())
 	routers.ReportRouter(mainRouter.PathPrefix("/api/report/").Subrouter())
-	routers.InvoiceRouter(mainRouter.PathPrefix("/api/invoice/").Subrouter())
+	routers.InvoiceRouter(mainRouter.PathPrefix("/api/invoices/").Subrouter())
 }
 
 func runServer() {
@@ -83,9 +83,9 @@ func runServer() {
 
 	handler := cor.Handler(mainRouter)
 
-	fmt.Println("web server run at local: http://localhost:8282/")
-	fmt.Println("web server run at: http://pixel.id:8282/")
-	log.Fatal(http.ListenAndServe(":8282", handler))
+	fmt.Println("web server run at local: http://localhost:8181/")
+	fmt.Println("web server run at: http://pixel.id:8181/")
+	log.Fatal(http.ListenAndServe(":8181", handler))
 }
 
 func main() {

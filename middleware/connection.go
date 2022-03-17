@@ -67,7 +67,7 @@ func CombineString(a string, b string) string {
 var Sql = LoadConnection()
 
 func nestQuerySingle(query string) string {
-	return fmt.Sprintf("(SELECT row_to_json(x) FROM (%s) x)", query)
+	return fmt.Sprintf(`(SELECT row_to_json(x) FROM (%s) x)`, query)
 }
 
 func nestQuery(query string) string {

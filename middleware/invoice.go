@@ -20,6 +20,7 @@ type invoice_create_param struct {
 	Invoice   models.Invoice `json:"invoice"`
 	DetailIDs []int64        `json:"detailIds"`
 	Token     string         `json:"token"`
+	Trx       models.Trx     `json:"transaction"`
 }
 
 func Invoice_Create(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +46,30 @@ func Invoice_Create(w http.ResponseWriter, r *http.Request) {
 
 	if len(param.DetailIDs) > 0 {
 
-		err = invocie_insert_details(param.DetailIDs, &id)
+		err = invoice_insert_details(param.DetailIDs, &id)
+
+		if err != nil {
+			log.Printf("Unable to insert invoice details.  %v", err)
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
+		}
+	}
+
+	param.Trx.RefID = id
+	var stoken = fmt.Sprintf("%s%s%v", param.Token, param.Trx.Descriptions, id)
+	param.Trx.Descriptions = fmt.Sprintf("%s%v", param.Trx.Descriptions, id)
+
+	trxId, err := createTransaction(&param.Trx, stoken)
+
+	if err != nil {
+		log.Printf("(API) Unable to create transaction.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
+
+	if len(param.Trx.Details) > 0 {
+
+		err = bulkInsertDetails(param.Trx.Details, &trxId)
 
 		if err != nil {
 			log.Printf("Unable to insert transaction details.  %v", err)
@@ -56,20 +80,47 @@ func Invoice_Create(w http.ResponseWriter, r *http.Request) {
 
 	res := Response{
 		ID:      id,
-		Message: "Transaction was succesfully inserted.",
+		Message: "Invoice was succesfully inserted.",
 	}
 
 	json.NewEncoder(w).Encode(&res)
 
 }
 
+func Invoice_Delete(w http.ResponseWriter, r *http.Request) {
+	EnableCors(&w)
+	w.Header().Set("Access-Control-Allow-Methods", "DELETE")
+	params := mux.Vars(r)
+
+	invoice_id, err := strconv.ParseInt(params["id"], 10, 64)
+
+	if err != nil {
+		log.Printf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	deletedRows := invoice_delete(&invoice_id)
+	deletedRows = invoice_delete_transaction(&invoice_id)
+	msg := fmt.Sprintf("Invoice deleted successfully. Total rows/record affected %v", deletedRows)
+
+	// format the reponse message
+	res := Response{
+		ID:      invoice_id,
+		Message: msg,
+	}
+
+	// send the response
+	json.NewEncoder(w).Encode(res)
+}
+
 func Invoice_Update(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
-	w.Header().Set("Access-Control-Allow-Methods", "POST")
+	w.Header().Set("Access-Control-Allow-Methods", "PUT")
 
 	params := mux.Vars(r)
 
-	invoice_id, err := strconv.ParseInt(params["invoiceId"], 10, 64)
+	invoice_id, err := strconv.ParseInt(params["id"], 10, 64)
 
 	if err != nil {
 		log.Printf("Unable to convert the string into int.  %v", err)
@@ -98,10 +149,29 @@ func Invoice_Update(w http.ResponseWriter, r *http.Request) {
 
 	if len(param.DetailIDs) > 0 {
 
-		err = invocie_insert_details(param.DetailIDs, &id)
+		err = invoice_insert_details(param.DetailIDs, &invoice_id)
 
 		if err != nil {
-			log.Printf("Unable to insert transaction details.  %v", err)
+			log.Printf("Unable to insert invoice --- details.  %v", err)
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
+		}
+	}
+
+	_, err = invocie_update_transaction(&param.Trx.ID, &param.Trx, param.Token)
+
+	if err != nil {
+		log.Printf("(API) Unable to create transaction.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
+
+	if len(param.Trx.Details) > 0 {
+
+		err = bulkInsertDetails(param.Trx.Details, &param.Trx.ID)
+
+		if err != nil {
+			log.Printf("Unable to insert transaction details from invoices.  %v", err)
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return
 		}
@@ -116,7 +186,38 @@ func Invoice_Update(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func invocie_insert_details(ids []int64, id *int64) error {
+func invocie_update_transaction(id *int64, p *models.Trx, token string) (int64, error) {
+
+	sqlStatement := `UPDATE trx SET
+		descriptions=$2,
+		memo=$3,
+		trx_token=to_tsvector('indonesian', $4)
+	WHERE ref_id=$1`
+
+	res, err := Sql().Exec(sqlStatement,
+		p.RefID,
+		p.Descriptions,
+		p.Memo,
+		token,
+	)
+
+	if err != nil {
+		log.Printf("Unable to update transaction. %v", err)
+		return 0, err
+	}
+
+	// check how many rows affected
+	rowsAffected, err := res.RowsAffected()
+
+	if err != nil {
+		log.Printf("Error while updating transaction. %v", err)
+		return 0, err
+	}
+
+	return rowsAffected, err
+}
+
+func invoice_insert_details(ids []int64, id *int64) error {
 	valueStrings := make([]string, 0, len(ids))
 	valueArgs := make([]interface{}, 0, len(ids)*2)
 	i := 0
@@ -177,7 +278,7 @@ func Invoice_GetOrders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	invoice_id, err := strconv.ParseInt(params["invoiceId"], 10, 64)
+	invoice_id, err := strconv.ParseInt(params["id"], 10, 64)
 
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -199,7 +300,7 @@ func Invoice_GetItem(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
 
-	id, err := strconv.ParseInt(params["invoceId"], 10, 64)
+	id, err := strconv.ParseInt(params["id"], 10, 64)
 
 	invoice, err := invoice_get_item(&id)
 
@@ -214,9 +315,10 @@ func Invoice_GetItem(w http.ResponseWriter, r *http.Request) {
 
 type invoice_item struct {
 	models.Invoice
-	Finance json.RawMessage `json:"finance,ommitempty"`
-	Account json.RawMessage `json:"account,ommitempty"`
-	Details json.RawMessage `json:"details,ommitempty"`
+	Finance     json.RawMessage `json:"finance,ommitempty"`
+	Account     json.RawMessage `json:"account,ommitempty"`
+	Details     json.RawMessage `json:"details,ommitempty"`
+	Transaction json.RawMessage `json:"transaction,ommitempty"`
 }
 
 func invoice_get_item(id *int64) (invoice_item, error) {
@@ -242,19 +344,27 @@ func invoice_get_item(id *int64) (invoice_item, error) {
 		o.is_stnk AS "isStnk", o.stnk_price AS "stnkPrice", matrix, true AS "isSelected", %s AS unit 
 	FROM orders o
 	INNER JOIN invoice_details d ON d.order_id = o.id
-	WHERE d.invoice_id = v.id`, nestQuery(queryUnit))
+	WHERE d.invoice_id = v.id`, nestQuerySingle(queryUnit))
 
 	var querFinance = `SELECT f.id, f.name, f.short_name AS "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email FROM finances f WHERE f.id = v.finance_id`
 	var queryAccount = `SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`
 
+	var queryTansactionDetails = `SELECT id, code_id AS "codeId", trx_id AS "trxId", debt, cred FROM trx_detail WHERE trx_id = x.id`
+
+	var queryTansaction = fmt.Sprintf(`SELECT x.id, x.ref_id AS "refId", x.division, x.descriptions,
+	x.trx_date AS "trxDate", x.memo, %s AS details
+	FROM trx x WHERE x.ref_id = v.id`, nestQuery(queryTansactionDetails))
+
 	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, memo, total, account_id,
 %s AS finance,
 %s AS account,
+COALESCE(%s, '{}') AS transaction,
 %s AS details
 FROM invoices v
 WHERE v.id=$1`,
 		nestQuerySingle(querFinance),
 		nestQuerySingle(queryAccount),
+		nestQuerySingle(queryTansaction),
 		nestQuery(queryDetails))
 
 	rs := Sql().QueryRow(sqlStatement, id)
@@ -271,6 +381,7 @@ WHERE v.id=$1`,
 		&item.AccountId,
 		&item.Finance,
 		&item.Account,
+		&item.Transaction,
 		&item.Details,
 	)
 
@@ -288,15 +399,36 @@ WHERE v.id=$1`,
 	return item, err
 }
 
+func invoice_delete_transaction(ref_id *int64) int64 {
+	// create the delete sql query
+	sqlStatement := `DELETE FROM trx WHERE ref_id=$1`
+
+	// execute the sql statement
+	res, err := Sql().Exec(sqlStatement, ref_id)
+
+	if err != nil {
+		log.Fatalf("Unable to delete invoice. %v", err)
+	}
+
+	// check how many rows affected
+	rowsAffected, err := res.RowsAffected()
+
+	if err != nil {
+		log.Fatalf("Error while checking the affected rows. %v", err)
+	}
+
+	return rowsAffected
+}
+
 func invoice_delete(id *int64) int64 {
 	// create the delete sql query
-	sqlStatement := `DELETE FROM invoice WHERE id=$1`
+	sqlStatement := `DELETE FROM invoices WHERE id=$1`
 
 	// execute the sql statement
 	res, err := Sql().Exec(sqlStatement, id)
 
 	if err != nil {
-		log.Fatalf("Unable to delete finance. %v", err)
+		log.Fatalf("Unable to delete invoice. %v", err)
 	}
 
 	// check how many rows affected
@@ -340,7 +472,7 @@ func invoice_create(inv *models.Invoice, token *string) (int64, error) {
 
 func invoice_update(id *int64, inv *models.Invoice, token *string) (int64, error) {
 
-	sqlStatement := `UPDATE invoice SET
+	sqlStatement := `UPDATE invoices SET
 	invoice_at=$1,
 	payment_term=$2,
 	due_at=$3,
@@ -360,7 +492,6 @@ func invoice_update(id *int64, inv *models.Invoice, token *string) (int64, error
 		inv.FinanceID,
 		inv.Memo,
 		inv.Total,
-		inv.AccountId,
 		inv.AccountId,
 		token,
 		id,
@@ -392,7 +523,7 @@ func invoice_get_all() ([]invoice_all, error) {
 	var querFinance = `SELECT f.id, f.name, f.short_name "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email FROM finances f WHERE f.id = v.finance_id`
 	var queryAccount = `SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`
 
-	var sqlStatement = fmt.Sprintf("SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, memo, total, account_id, %s AS finance, %s AS account FROM invoices AS v ORDER BY v.id",
+	var sqlStatement = fmt.Sprintf("SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, memo, total, account_id, %s AS finance, %s AS account FROM invoices AS v ORDER BY v.id DESC",
 		nestQuerySingle(querFinance),
 		nestQuerySingle(queryAccount),
 	)
@@ -443,8 +574,8 @@ func invoice_get_orders(finance_id *int, invoice_id *int64) ([]invoice_order, er
 
 	var invoices []invoice_order
 
-	var queryWheel = `SELECT w.id, w.name, w.short_name as "shortName" FROM wheels w WHERE w.id = t.wheel_id`
-	var queryMerk = `SELECT m.id, m.name FROM merks m WHERE m.id = t.merk_id`
+	var queryWheel = `SELECT id, name, short_name as "shortName" FROM wheels WHERE id = t.wheel_id`
+	var queryMerk = `SELECT id, name FROM merks WHERE id = t.merk_id`
 
 	var queryTye = fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId", %s AS wheel, %s AS merk FROM types t WHERE t.id = u.type_id`,
 		nestQuerySingle(queryWheel),
@@ -457,43 +588,50 @@ func invoice_get_orders(finance_id *int, invoice_id *int64) ([]invoice_order, er
 		WHERE u.order_id = o.id`,
 		nestQuerySingle(queryTye))
 
-	var queryBranch = `SELECT b.id, b.name, b.street, b.city, b.phone, b.cell, b.zip, b.head_branch AS "headBranch", b.email
+	var queryBranch = `SELECT b.id, b.name, b.street, b.city, b.phone,
+	b.cell, b.zip, b.head_branch AS "headBranch", b.email
 	FROM branchs AS b
 	WHERE b.id = o.branch_id`
 
 	var sqlStatement = fmt.Sprintf(`WITH RECURSIVE rs AS(
-		SELECT o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel, o.ppn,
+		SELECT true as is_selected, o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel, o.ppn,
 		o.nominal, o.subtotal, o.user_name, o.verified_by, o.validated_by, o.finance_id, o.branch_id,
-		o.is_stnk, o.stnk_price, o.matrix, false AS is_selected,
+		o.is_stnk, o.stnk_price, o.matrix,
+		%s AS branch,
+		%s AS unit
+	FROM orders AS o
+	WHERE o.id IN (SELECT d.order_id FROM invoice_details as d WHERE d.invoice_id = $2)
+	
+	UNION ALL
+
+	SELECT false as is_selected, o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel, o.ppn,
+		o.nominal, o.subtotal, o.user_name, o.verified_by, o.validated_by, o.finance_id, o.branch_id,
+		o.is_stnk, o.stnk_price, o.matrix,
 		%s AS branch,
 		%s AS unit
 	FROM orders AS o
 	WHERE o.finance_id=$1 AND o.verified_by IS NOT NULL
-	
-	UNION ALL
-
-	SELECT o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel, o.ppn,
-		o.nominal, o.subtotal, o.user_name, o.verified_by, o.validated_by, o.finance_id, o.branch_id,
-		o.is_stnk, o.stnk_price, o.matrix, true AS is_selected",
-		%s AS branch,
-	  %s AS unit
-	FROM invoice_details AS d
-	INNER JOIN orders AS o ON o.id = d.order_id
-	WHERE d.invoice_id = $2 OR 0 = $2
+	AND o.id NOT IN (
+    SELECT order_id
+    FROM invoice_details
+		-- WHERE 0 = $2
+    -- WHERE d.invoice_id = $2
+)
 	)
 	
-	SELECT o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel, o.ppn,
-		o.nominal, o.subtotal, o.user_name, o.verified_by, o.validated_by, o.finance_id, o.branch_id,
-		o.is_stnk, o.stnk_price, o.matrix, o.is_selected,
-		o.branch,
-		o.unit
-		FROM rs AS o		
-		ORDER BY o.finance_id, o.id DESC
+	SELECT t.is_selected, t.id, t.name, t.order_at, t.printed_at, t.bt_finance, t.bt_percent, t.bt_matel, t.ppn,
+		t.nominal, t.subtotal, t.user_name, t.verified_by, t.validated_by, t.finance_id, t.branch_id,
+		t.is_stnk, t.stnk_price, t.matrix,
+		t.branch,
+		t.unit
+		FROM rs AS t
+		ORDER BY t.is_selected DESC, t.finance_id, t.id DESC
 	`,
 		nestQuerySingle(queryBranch),
 		nestQuerySingle(queryUnit),
 		nestQuerySingle(queryBranch),
-		nestQuerySingle(queryUnit))
+		nestQuerySingle(queryUnit),
+	)
 
 	rs, err := Sql().Query(sqlStatement, finance_id, invoice_id)
 
@@ -505,37 +643,37 @@ func invoice_get_orders(finance_id *int, invoice_id *int64) ([]invoice_order, er
 	defer rs.Close()
 
 	for rs.Next() {
-		var o invoice_order
+		var invoice invoice_order
 
 		err := rs.Scan(
-			&o.ID,
-			&o.Name,
-			&o.OrderAt,
-			&o.PrintedAt,
-			&o.BtFinance,
-			&o.BtPercent,
-			&o.BtMatel,
-			&o.Ppn,
-			&o.Nominal,
-			&o.Subtotal,
-			&o.UserName,
-			&o.VerifiedBy,
-			&o.ValidatedBy,
-			&o.FinanceID,
-			&o.BranchID,
-			&o.IsStnk,
-			&o.StnkPrice,
-			&o.Matrix,
-			&o.IsSelected,
-			&o.Branch,
-			&o.Unit,
+			&invoice.IsSelected,
+			&invoice.ID,
+			&invoice.Name,
+			&invoice.OrderAt,
+			&invoice.PrintedAt,
+			&invoice.BtFinance,
+			&invoice.BtPercent,
+			&invoice.BtMatel,
+			&invoice.Ppn,
+			&invoice.Nominal,
+			&invoice.Subtotal,
+			&invoice.UserName,
+			&invoice.VerifiedBy,
+			&invoice.ValidatedBy,
+			&invoice.FinanceID,
+			&invoice.BranchID,
+			&invoice.IsStnk,
+			&invoice.StnkPrice,
+			&invoice.Matrix,
+			&invoice.Branch,
+			&invoice.Unit,
 		)
 
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
 		}
 
-		invoices = append(invoices, o)
+		invoices = append(invoices, invoice)
 	}
 
 	return invoices, err
