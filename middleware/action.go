@@ -3,9 +3,14 @@ package middleware
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 
 	"fyc.com/sprs/models"
@@ -13,6 +18,64 @@ import (
 )
 
 // get all action by order
+
+func Action_UploadFile(w http.ResponseWriter, r *http.Request) {
+	EnableCors(&w)
+	w.Header().Set("Access-Control-Allow-Methods", "POST")
+
+	params := mux.Vars(r)
+
+	id, err := strconv.ParseInt(params["id"], 10, 64)
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err = r.ParseMultipartForm(5 << 20) // maxMemory 32MB
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	//Access the photo key - First Approach
+	file, h, err := r.FormFile("file")
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	targetPath := filepath.Join(os.Getenv("UPLOADFILE_LOCATION"), h.Filename)
+
+	tmpfile, err := os.Create(targetPath)
+	defer tmpfile.Close()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	_, err = io.Copy(tmpfile, file)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	rowsAffected, err := update_file_name(&id, &h.Filename)
+
+	if err != nil {
+		w.WriteHeader(http.StatusRequestURITooLong)
+		return
+	}
+
+	msg := fmt.Sprintf("File successfully uploaded. Total rows/record affected %v", rowsAffected)
+
+	// format the response message
+	res := Response{
+		ID:      rowsAffected,
+		Message: msg,
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(res)
+}
+
 func GetActions(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 
@@ -151,7 +214,7 @@ func getAllActions(OrderID *int64) ([]models.Action, error) {
 	var actions []models.Action
 
 	sqlStatement := `SELECT
-		id, action_at, code, pic, descriptions, order_id
+		id, action_at, code, pic, descriptions, order_id, file_name
 	FROM actions
 	WHERE order_id=$1`
 
@@ -172,6 +235,7 @@ func getAllActions(OrderID *int64) ([]models.Action, error) {
 			&act.Pic,
 			&act.Descriptions,
 			&act.OrderId,
+			&act.FileName,
 		)
 
 		if err != nil {
@@ -188,7 +252,7 @@ func getAction(id *int64) (models.Action, error) {
 	var act models.Action
 
 	sqlStatement := `SELECT
-		id, action_at, code, pic, descriptions, order_id
+		id, action_at, code, pic, descriptions, order_id, file_name
 	FROM actions
 	WHERE id=$1`
 	//stmt, _ := Sql().Prepare(sqlStatement)
@@ -196,7 +260,15 @@ func getAction(id *int64) (models.Action, error) {
 	//defer stmt.Close()
 	row := Sql().QueryRow(sqlStatement, id)
 
-	err := row.Scan(&act.ID, &act.ActionAt, &act.Code, &act.Pic, &act.Descriptions, &act.OrderId)
+	err := row.Scan(
+		&act.ID,
+		&act.ActionAt,
+		&act.Code,
+		&act.Pic,
+		&act.Descriptions,
+		&act.OrderId,
+		&act.FileName,
+	)
 
 	switch err {
 	case sql.ErrNoRows:
@@ -329,4 +401,56 @@ func updateAction(id *int64, act *models.Action) (int64, error) {
 	}
 
 	return rowsAffected, err
+}
+
+func update_file_name(id *int64, file_name *string) (int64, error) {
+
+	sqlStatement := `UPDATE actions SET file_name=$2 WHERE id=$1`
+
+	res, err := Sql().Exec(sqlStatement, id, file_name)
+
+	if err != nil {
+		log.Printf("Unable to update action. %v", err)
+		return 0, err
+	}
+
+	// check how many rows affected
+	rowsAffected, err := res.RowsAffected()
+
+	if err != nil {
+		log.Printf("Error while updating action. %v", err)
+	}
+
+	return rowsAffected, err
+}
+
+func exists(path string) bool {
+	_, err := os.Stat(path)
+	return !errors.Is(err, os.ErrNotExist)
+}
+
+func Action_GetFile(w http.ResponseWriter, r *http.Request) {
+	EnableCors(&w)
+
+	params := mux.Vars(r)
+
+	txt := params["txt"]
+
+	targetPath := filepath.Join(os.Getenv("UPLOADFILE_LOCATION"), txt)
+
+	if exists(targetPath) {
+		fileBytes, err := ioutil.ReadFile(targetPath)
+
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.WriteHeader(http.StatusOK)
+		w.Write(fileBytes)
+		return
+	}
+	w.WriteHeader(http.StatusNotFound)
+	return
 }

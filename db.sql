@@ -2,13 +2,13 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.10 (Ubuntu 12.10-1.pgdg20.04+1)
--- Dumped by pg_dump version 14.2 (Ubuntu 14.2-1.pgdg20.04+1)
+-- Dumped from database version 13.5 (Debian 13.5-0+deb11u1)
+-- Dumped by pg_dump version 13.5 (Debian 13.5-0+deb11u1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
+SET client_encoding = 'SQL_ASCII';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
@@ -90,7 +90,8 @@ CREATE TABLE public.actions (
     code character varying(50) NOT NULL,
     pic character varying(50) NOT NULL,
     descriptions text,
-    order_id integer NOT NULL
+    order_id integer NOT NULL,
+    file_name character varying(128)
 );
 
 
@@ -673,13 +674,13 @@ COPY public.acc_code (id, name, type_id, descriptions, token_name, is_active, re
 5112	Biaya Listrik	51	Biaya pemakaian listrik	'biaya':1,3 'listrik':2,5 'pakai':4	t	3	t
 5114	Biaya Internet	51	Biaya jaringan internet ke Biznet	'biaya':1,3 'biznet':7 'internet':2,5 'jaring':4 'ke':6	t	3	t
 5116	Biaya ATK	51	Biaya alat tulis kantor termasuk termasuk peralatan seperti komputer, meja, kursi, lemari	'alat':4,9 'atk':2 'biaya':1,3 'kantor':6 'komputer':11 'kursi':13 'lemar':14 'masuk':7,8 'meja':12 'sepert':10 'tulis':5	t	3	t
+4111	Pendapatan Invoice	41	Penarikan dana dari pihak Finance karena adanya ...	'ada':9 'arik':3 'dana':4 'dapat':1 'dari':5 'finance':7 'invoice':2 'karena':8 'pihak':6	t	2	t
 5119	Biaya Lain-lain	51	Biaya yg terdiri dari bermacam transaksi serta tidak tercantum pada salah satu perkiraan yang terdapat dalam transaksi perusahaan	'biaya':1,5 'cantum':13 'dalam':20 'dapat':19 'dari':8 'diri':7 'kira':17 'lain':3,4 'lain-lain':2 'macam':9 'pada':14 'salah':15 'satu':16 'serta':11 'tidak':12 'transaksi':10,21 'usaha':22 'yang':18 'yg':6	t	3	t
 5411	Upah Tenaga Kerja	54	Biaya overhead perusahaan yg dikeluarkan untuk memayar upah karena mengerjakan sesuatu	'biaya':4 'erja':13 'karena':12 'keluar':8 'kerja':3 'overhead':5 'payar':10 'sesuatu':14 'tenaga':2 'untuk':9 'upah':1,11 'usaha':6 'yg':7	t	3	f
 3111	Modal Pak Kris	31	Modal yg diterima dari pak Kris	'dari':7 'kris':3,9 'modal':1,4 'pak':2,8 'terima':6 'yg':5	t	2	t
 2311	Hutang Pajak	23	Pajak yg belum dibayar karena menunggu pembayaran dari tarikan	'bayar':6,9 'belum':5 'dari':10 'hutang':1 'karena':7 'pajak':2,3 'tari':11 'unggu':8 'yg':4	t	2	f
 1112	Bank BCA 0856212654	11	Atas nama Opik	'0856212654':3 'atas':4 'bank':1 'bca':2 'nama':5 'opik':6	t	1	f
 5511	Piutang Jasa	55	Pendanaan yg dikeluarkan untuk operasi penarikan berdasarkan SPK dari Finance sejumlah BT Matel	'arik':8 'bt':14 'dana':3 'dari':11 'dasar':9 'finance':12 'jasa':2 'keluar':5 'matel':15 'operasi':7 'piutang':1 'sejum':13 'spk':10 'untuk':6 'yg':4	t	3	f
-4111	Pendapatan Invoice	41	Penarikan dana dari pihak Finance karena adanya ...	'ada':9 'arik':3 'dana':4 'dapat':1 'dari':5 'finance':7 'invoice':2 'karena':8 'pihak':6	t	2	f
 \.
 
 
@@ -725,7 +726,9 @@ COPY public.acc_type (id, name, descriptions, group_id) FROM stdin;
 -- Data for Name: actions; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.actions (id, action_at, code, pic, descriptions, order_id) FROM stdin;
+COPY public.actions (id, action_at, code, pic, descriptions, order_id, file_name) FROM stdin;
+1	2022-03-19	qewqe	qweqwe	qweqweqwe	10	OIP.jpg
+2	2022-03-19	twetrt	qrqeqwe	qweqweqwe	10	my-upload_vX_hnp3M6j.jpg
 \.
 
 
@@ -770,9 +773,6 @@ COPY public.home_addresses (order_id, street, region, city, phone, zip) FROM std
 --
 
 COPY public.invoice_details (invoice_id, order_id) FROM stdin;
-99	9
-66	10
-66	8
 \.
 
 
@@ -781,8 +781,6 @@ COPY public.invoice_details (invoice_id, order_id) FROM stdin;
 --
 
 COPY public.invoices (id, invoice_at, payment_term, due_at, salesman, finance_id, memo, total, account_id, tax, token) FROM stdin;
-99	2022-03-17	2	2022-03-17	Junaedi	3	\N	1500000.00	1112	150000.00	'/id-99':2 '0856212654':9 '125':12 'bank':7 'bca':8 'e5968ghj':10 'finance':5 'fino':11 'junaed':1 'mandir':3 'mtf':6 'tunas':4
-66	2022-03-17	2	2022-03-17	wrewqrer	1	\N	2800000.00	1112	0.00	'/id-66':2 '0856212654':9 '1000':17 '125':12 '2581':14 'auto':4 'baf':6 'bank':7 'bca':8 'brio':16 'bussan':3 'e':13 'e25632ff':10 'finance':5 'fino':11 'pbf':15 'wrewqrer':1
 \.
 
 
@@ -820,10 +818,10 @@ COPY public.office_addresses (order_id, street, region, city, phone, zip) FROM s
 --
 
 COPY public.orders (id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn, user_name, verified_by, validated_by, finance_id, branch_id, nominal, subtotal, is_stnk, stnk_price, matrix, token) FROM stdin;
-8	88258-Ed	2022-03-01	2022-03-04	1300000.00	20.00	1040000.00	0.00	Opick	test	\N	1	1	0.00	260000.00	f	200000.00	1500000.00	'-01':5 '-03':4 '00':7 '00z':8 '1000':23 '2015':27 '2022':3 '2581':20 '4':30 '88258':1 'ada':18 'auto':10 'baf':12 'biru':26 'brio':22 'bussan':9 'e':19 'ed':2 'finance':11 'gudang':24 'honda':28 'jatibarang':13 'mastur':14 'patrol':25 'pbf':21 'r4':31 'roda':29 'stnk':16 'stnk-tidak-ada':15 't00':6 'tidak':17
-9	X-256/BAF/VII/2002	2022-01-07	2022-01-07	1500000.00	20.00	1200000.00	10.00	Opick	test	\N	3	1	150000.00	150000.00	f	200000.00	1700000.00	'-01':5 '-07':6 '-256':2 '/baf/vii/2002':3 '00':8 '00z':9 '125':22 '2':32 '2022':4,26 'ada':19 'dodo':29 'e5968ghj':20 'finance':12 'fino':21 'gudang':23 'hitam':25 'jatibarang':14 'mandir':10 'mastur':15 'mata':27 'motor':28 'mtf':13 'pusat':24 'r2':33 'roda':31 'stnk':17 'stnk-tidak-ada':16 't00':7 'tidak':18 'tunas':11 'x':1 'yamaha':30
-10	qweqwe qweqwe	2022-03-16	2022-03-16	1500000.00	20.00	1200000.00	0.00	Opick	test	\N	1	1	0.00	300000.00	t	0.00	1500000.00	'-03':4 '-16':5 '00':7 '00z':8 '125':20 '2':26 '2022':3,23 'ada':17 'auto':10 'baf':12 'bussan':9 'e25632ff':18 'finance':11 'fino':19 'gudang':21 'jatibarang':13 'mastur':14 'pusat':22 'qweqwe':1,2 'r2':27 'roda':25 'stnk':16 'stnk-ada':15 't00':6 'yamaha':24
-11	x-001254	2022-03-16	2022-03-16	1200000.00	20.00	960000.00	0.00	Opick	test	\N	1	1	0.00	240000.00	t	0.00	1200000.00	'-001254':2 '-03':4 '-16':5 '00':7 '00z':8 '125':20 '2':26 '2022':3,23 'ada':17 'auto':10 'baf':12 'bussan':9 'e56985698':18 'finance':11 'gudang':21 'honda':24 'jatibarang':13 'mastur':14 'pusat':22 'r2':27 'roda':25 'stnk':16 'stnk-ada':15 't00':6 'vario':19 'x':1
+8	88258-Ed	2022-03-01	2022-03-04	1300000.00	20.00	1040000.00	0.00	Opick	\N	\N	1	1	0.00	260000.00	f	200000.00	1500000.00	'-01':5 '-03':4 '00':7 '00z':8 '1000':23 '2015':27 '2022':3 '2581':20 '4':30 '88258':1 'ada':18 'auto':10 'baf':12 'biru':26 'brio':22 'bussan':9 'e':19 'ed':2 'finance':11 'gudang':24 'honda':28 'jatibarang':13 'mastur':14 'patrol':25 'pbf':21 'r4':31 'roda':29 'stnk':16 'stnk-tidak-ada':15 't00':6 'tidak':17
+9	X-256/BAF/VII/2002	2022-01-07	2022-01-07	1500000.00	20.00	1200000.00	10.00	Opick	\N	\N	3	1	150000.00	150000.00	f	200000.00	1700000.00	'-01':5 '-07':6 '-256':2 '/baf/vii/2002':3 '00':8 '00z':9 '125':22 '2':32 '2022':4,26 'ada':19 'dodo':29 'e5968ghj':20 'finance':12 'fino':21 'gudang':23 'hitam':25 'jatibarang':14 'mandir':10 'mastur':15 'mata':27 'motor':28 'mtf':13 'pusat':24 'r2':33 'roda':31 'stnk':17 'stnk-tidak-ada':16 't00':7 'tidak':18 'tunas':11 'x':1 'yamaha':30
+10	qweqwe qweqwe	2022-03-16	2022-03-16	1500000.00	20.00	1200000.00	0.00	Opick	\N	\N	1	1	0.00	300000.00	t	0.00	1500000.00	'-03':4 '-16':5 '00':7 '00z':8 '125':20 '2':26 '2022':3,23 'ada':17 'auto':10 'baf':12 'bussan':9 'e25632ff':18 'finance':11 'fino':19 'gudang':21 'jatibarang':13 'mastur':14 'pusat':22 'qweqwe':1,2 'r2':27 'roda':25 'stnk':16 'stnk-ada':15 't00':6 'yamaha':24
+11	x-001254	2022-03-16	2022-03-16	1200000.00	20.00	960000.00	0.00	Opick	\N	\N	1	1	0.00	240000.00	t	0.00	1200000.00	'-001254':2 '-03':4 '-16':5 '00':7 '00z':8 '125':20 '2':26 '2022':3,23 'ada':17 'auto':10 'baf':12 'bussan':9 'e56985698':18 'finance':11 'gudang':21 'honda':24 'jatibarang':13 'mastur':14 'pusat':22 'r2':27 'roda':25 'stnk':16 'stnk-ada':15 't00':6 'vario':19 'x':1
 \.
 
 
@@ -856,13 +854,6 @@ COPY public.tasks (order_id, descriptions, period_from, period_to, recipient_nam
 --
 
 COPY public.trx (id, ref_id, division, descriptions, trx_date, memo, trx_token) FROM stdin;
-104	9	TRX-Order	Piutang jasa Mandiri Tunas Finance (MTF) Order SPK: /X-256/BAF/VII/2002	2022-03-14	Kendaraan R2 Yamaha Fino 125 , Nopol E5968GHJ	'/ref-9':13 '/x-256/baf/vii/2002':1 '125':5 'e5968ghj':6 'finance':9 'fino':4 'jatibarang':11 'mandir':7 'mastur':12 'mtf':10 'order':16 'r2':2 'trx':15 'trx-order':14 'tunas':8 'yamaha':3
-106	8	TRX-Order	Piutang jasa Bussan Auto Finance (BAF) Order SPK: /88258-Ed	2022-03-14	Kendaraan R4 Honda Brio 1000 , Nopol E 2581 PBF	'/88258-ed':1 '/ref-8':15 '1000':5 '2581':7 'auto':10 'baf':12 'brio':4 'bussan':9 'e':6 'finance':11 'honda':3 'jatibarang':13 'mastur':14 'order':18 'pbf':8 'r4':2 'trx':17 'trx-order':16
-111	0	TRX-Auto	Modal awal	2022-03-14	\N	'/id-0':3 'auto':6 'awal':2 'modal':1 'trx':5 'trx-auto':4
-112	10	TRX-Order	Piutang jasa Bussan Auto Finance (BAF) Order SPK: /qweqwe qweqwe	2022-03-16	Kendaraan R2 Yamaha Fino 125 , Nopol E25632FF	'/qweqwe':1 '/ref-10':14 '125':6 'auto':9 'baf':11 'bussan':8 'e25632ff':7 'finance':10 'fino':5 'jatibarang':12 'mastur':13 'order':17 'qweqwe':2 'r2':3 'trx':16 'trx-order':15 'yamaha':4
-113	11	TRX-Order	Piutang jasa Bussan Auto Finance (BAF) Order SPK: /x-001254	2022-03-16	Kendaraan R2 Honda Vario 125 , Nopol E56985698	'/ref-11':13 '/x-001254':1 '125':5 'auto':8 'baf':10 'bussan':7 'e56985698':6 'finance':9 'honda':3 'jatibarang':11 'mastur':12 'order':16 'r2':2 'trx':15 'trx-order':14 'vario':4
-162	99	trx-invoice	Pendapatan jasa dari Mandiri Tunas Finance Invoice #99	2022-03-17	\N	'/id-99':2 '0856212654':9 '125':12 'bank':7 'bca':8 'e5968ghj':10 'finance':5 'fino':11 'junaed':1 'mandir':3 'mtf':6 'tunas':4
-129	66	trx-invoice	Pendapatan jasa dari Bussan Auto Finance Invoice #66	2022-03-17	\N	'/id-66':2 '0856212654':9 '1000':17 '125':12 '2581':14 'auto':4 'baf':6 'bank':7 'bca':8 'brio':16 'bussan':3 'e':13 'e25632ff':10 'finance':5 'fino':11 'pbf':15 'wrewqrer':1
 \.
 
 
@@ -871,17 +862,6 @@ COPY public.trx (id, ref_id, division, descriptions, trx_date, memo, trx_token) 
 --
 
 COPY public.trx_detail (id, code_id, trx_id, debt, cred) FROM stdin;
-1	1111	111	25000000.00	0.00
-2	3111	111	0.00	25000000.00
-1	5511	112	1200000.00	0.00
-2	1112	112	0.00	1200000.00
-1	5511	113	960000.00	0.00
-2	1112	113	0.00	960000.00
-1	4111	162	0.00	1500000.00
-2	1112	162	1350000.00	0.00
-3	6011	162	150000.00	0.00
-1	4111	129	0.00	2800000.00
-2	1112	129	2800000.00	0.00
 \.
 
 
@@ -952,7 +932,7 @@ COPY public.wheels (id, name, short_name) FROM stdin;
 -- Name: action_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.action_id_seq', 1, false);
+SELECT pg_catalog.setval('public.action_id_seq', 2, true);
 
 
 --
@@ -973,7 +953,7 @@ SELECT pg_catalog.setval('public.finance_id_seq', 3, true);
 -- Name: invoices_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.invoices_id_seq', 99, true);
+SELECT pg_catalog.setval('public.invoices_id_seq', 98, true);
 
 
 --
@@ -1001,7 +981,7 @@ SELECT pg_catalog.setval('public.trx_detail_seq', 1, false);
 -- Name: trx_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.trx_seq', 162, true);
+SELECT pg_catalog.setval('public.trx_seq', 161, true);
 
 
 --
