@@ -17,5 +17,5 @@ func InvoiceRouter(router *mux.Router) {
 	router.HandleFunc("/", middleware.Invoice_Create).Methods("POST")
 	router.HandleFunc("/{id}/", middleware.Invoice_Update).Methods("PUT")
 	router.HandleFunc("/{id}/", middleware.Invoice_Delete).Methods("DELETE")
-
+	router.HandleFunc("/download/{id}", middleware.Pdf_GenInvoice).Methods("GET")
 }

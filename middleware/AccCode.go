@@ -31,7 +31,7 @@ func Account_GetSpec(w http.ResponseWriter, r *http.Request) {
 	accounts, err := get_accounts_spec(&spec_id)
 
 	if err != nil || len(accounts) == 0 {
-		log.Printf("Unable to get all account codes. %v", err)
+		//log.Printf("Unable to get all account codes. %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
