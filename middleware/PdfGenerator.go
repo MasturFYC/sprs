@@ -145,30 +145,33 @@ func createInvoice(w io.Writer, invoice_id *int64, inv *invoice_item, finance *m
 	pw = pw - ml - mr
 
 	pdf.AddPage()
+
+	pdf.SetY(10)
+	pdf.SetFont(font, "B", 16)
+	pdf.CellFormat(pw, lh, "PT. SARANA PADMA RIDHO SEPUH", "", 1, "C", false, 0, "")
+	pdf.SetFont(font, "", 10)
+	pdf.SetY(pdf.GetY() + 2)
+	pdf.CellFormat(pw, lh, "GENERAL SUPPLIER, CONTRACTOR, COLLECTION", "", 1, "C", false, 0, "")
+	pdf.CellFormat(pw, lh, "Jl. Gator Subroto Villa Gatsu No. 01 - Indramayu", "", 1, "C", false, 0, "")
+
+	pdf.SetLineWidth(0.75)
+	pdf.Line(ml, pdf.GetY()+2, ml+pw, pdf.GetY()+2)
+	pdf.SetLineWidth(0.25)
+	pdf.Line(ml, pdf.GetY()+3, ml+pw, pdf.GetY()+3)
+
+	lastY := pdf.GetY() + 5
+
+	x := (pw+ml)/2 + 40
+	w2 := pw - x
+	y := lastY - 2
+	koma := w2/2 + 12
+
+	pdf.SetXY(x, y)
 	pdf.SetFont(font, "B", 16)
 	pdf.CellFormat(pw, 15, fmt.Sprintf("INVOICE #%d", (*invoice_id)), "", 1, "L", false, 0, "")
 
-	pdf.SetFont(font, "B", 10)
-	pdf.CellFormat(pw, lh, finance.Name+" - "+finance.ShortName, "", 1, "L", false, 0, "")
-
+	y += 12
 	pdf.SetFont(font, "", 10)
-
-	address := fmt.Sprintf("%s%s%s\n%s%s\n%s",
-		finance.Street,
-		isNullString(finance.City, ", ", " "),
-		finance.Zip,
-		isNullString(finance.Phone, "Telp. ", ""),
-		isNullString(finance.Cell, " / ", ""),
-		isNullString(finance.Email, "e-mail: ", ""),
-	)
-
-	pdf.MultiCell(pw/2, lh, address, "", "L", false)
-
-	x := (pw+ml)/2 + 25
-	w2 := pw - x
-	y := mt + 15
-	koma := w2/2 + 5
-
 	pdf.SetXY(x, y)
 	pdf.Cell(koma, lh, "Tanggal:")
 	pdf.Cell(w2/2, lh, format_long_date(inv.InvoiceAt))
@@ -188,14 +191,36 @@ func createInvoice(w io.Writer, invoice_id *int64, inv *invoice_item, finance *m
 	pdf.Cell(koma, lh, "Jatuh tempo:")
 	pdf.Cell(w2/2, lh, format_long_date(inv.DueAt))
 
-	y += lh + 5
+	pdf.SetY(lastY + 2)
+	pdf.CellFormat(pw, lh, "Customer / Mitra kerja:", "", 1, "L", false, 0, "")
+	pdf.SetFont(font, "B", 10)
+	pdf.CellFormat(pw, lh, finance.Name+" - "+finance.ShortName, "", 1, "L", false, 0, "")
+
+	pdf.SetFont(font, "", 10)
+
+	address := fmt.Sprintf("%s%s%s\n%s%s\n%s",
+		finance.Street,
+		isNullString(finance.City, ", ", " "),
+		finance.Zip,
+		isNullString(finance.Phone, "Telp. ", ""),
+		isNullString(finance.Cell, " / ", ""),
+		isNullString(finance.Email, "e-mail: ", ""),
+	)
+
+	pdf.MultiCell(pw/2, lh, address, "", "L", false)
+
+	if pdf.GetY() < lastY {
+		y = lastY + 5
+	} else {
+		y = pdf.GetY() + 5
+	}
 	x = ml
 	pdf.SetXY(x, y)
 
 	pdf.SetFont(font, "B", 10)
-	pdf.CellFormat(30, lh, "Invoice details", "", 0, "L", false, 0, "")
+	pdf.CellFormat(pw, lh, "Invoice details", "", 1, "L", false, 0, "")
 
-	y += lh + 2
+	y = pdf.GetY() + 2
 	pdf.SetXY(x, y)
 
 	r, g, b := pdf.GetFillColor()

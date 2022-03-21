@@ -52,6 +52,7 @@ func Action_UploadFile(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
 	_, err = io.Copy(tmpfile, file)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -449,6 +450,7 @@ func Action_GetFile(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/octet-stream")
 		w.WriteHeader(http.StatusOK)
 		w.Write(fileBytes)
+
 		return
 	}
 	w.WriteHeader(http.StatusNotFound)
