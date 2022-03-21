@@ -394,17 +394,16 @@ func invoice_get_item(id *int64) (invoice_item, error) {
 		nestQuerySingle(queryMerk))
 
 	var queryUnit = fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber",
-		u.machine_number AS "machineNumber", u.bpkb_name AS "bpkbName",
-		color, dealer, surveyor, u.type_id AS "typeId", u.warehouse_id AS "warehouseId", %s AS type
+		u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId", %s AS type
 		FROM units u
 		WHERE u.order_id = o.id`,
 		nestQuerySingle(queryTye))
 
 	var queryDetails = fmt.Sprintf(`SELECT o.id, o.name, o.order_at as "orderAt", o.printed_at AS "printedAt",
-	o.bt_finance as "btFinance", o.bt_percent AS "btPercent", o.bt_matel AS "btMatel", o.ppn,
-		o.nominal, o.subtotal, o.user_name AS "userName", o.verified_by AS "verifiedBy",
-		o.validated_by AS "validatedBy", o.finance_id AS "financeId", o.branch_id AS "branchId",
-		o.is_stnk AS "isStnk", o.stnk_price AS "stnkPrice", matrix, true AS "isSelected", %s AS unit 
+	o.bt_finance as "btFinance", o.bt_percent AS "btPercent", o.bt_matel AS "btMatel",
+	o.user_name AS "userName", o.verified_by AS "verifiedBy",
+	o.finance_id AS "financeId", o.branch_id AS "branchId",
+	o.is_stnk AS "isStnk", o.stnk_price AS "stnkPrice", matrix, true AS "isSelected", %s AS unit 
 	FROM orders o
 	INNER JOIN invoice_details d ON d.order_id = o.id
 	WHERE d.invoice_id = v.id`, nestQuerySingle(queryUnit))
@@ -418,7 +417,8 @@ func invoice_get_item(id *int64) (invoice_item, error) {
 	x.trx_date AS "trxDate", x.memo, %s AS details
 	FROM trx x WHERE x.ref_id = v.id`, nestQuery(queryTansactionDetails))
 
-	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, memo, total, tax, account_id,
+	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at,
+	v.salesman, v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo,
 %s AS finance,
 %s AS account,
 COALESCE(%s, '{}') AS transaction,
@@ -439,10 +439,12 @@ WHERE v.id=$1`,
 		&item.DueAt,
 		&item.Salesman,
 		&item.FinanceID,
-		&item.Memo,
-		&item.Total,
+		&item.Subtotal,
+		&item.Ppn,
 		&item.Tax,
+		&item.Total,
 		&item.AccountId,
+		&item.Memo,
 		&item.Finance,
 		&item.Account,
 		&item.Transaction,
@@ -508,9 +510,9 @@ func invoice_delete(id *int64) int64 {
 func invoice_create(inv *models.Invoice, token *string) (int64, error) {
 
 	sqlStatement := `INSERT INTO invoices 
-	(invoice_at, payment_term, due_at, salesman, finance_id, memo, total, tax, account_id, token) 
+	(invoice_at, payment_term, due_at, salesman, finance_id, subtotal, ppn, tax, total, account_id, memo, token) 
 	VALUES 
-	($1, $2, $3, $4, $5, $6, $7, $8, $9, to_tsvector('indonesian', $10))
+	($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, to_tsvector('indonesian', $12))
 	RETURNING id`
 
 	var id int64
@@ -521,10 +523,12 @@ func invoice_create(inv *models.Invoice, token *string) (int64, error) {
 		inv.DueAt,
 		inv.Salesman,
 		inv.FinanceID,
-		inv.Memo,
-		inv.Total,
+		inv.Subtotal,
+		inv.Ppn,
 		inv.Tax,
+		inv.Total,
 		inv.AccountId,
+		inv.Memo,
 		token,
 	).Scan(&id)
 
@@ -538,30 +542,34 @@ func invoice_create(inv *models.Invoice, token *string) (int64, error) {
 func invoice_update(id *int64, inv *models.Invoice, token *string) (int64, error) {
 
 	sqlStatement := `UPDATE invoices SET
-	invoice_at=$1,
-	payment_term=$2,
-	due_at=$3,
-	salesman=$4,
-	finance_id=$5,
-	memo=$6,
-	total=$7,
-	tax=$8,
-	account_id=$9,
-	token=to_tsvector('indonesian', $10)
-	WHERE id=$11`
+	invoice_at=$2,
+	payment_term=$3,
+	due_at=$4,
+	salesman=$5,
+	finance_id=$6,
+	subtotal=$7,
+	ppn=$8,
+	tax=$9,
+	total=$10,
+	account_id=$11,
+	memo=$12,
+	token=to_tsvector('indonesian', $13)
+	WHERE id=$1`
 
 	res, err := Sql().Exec(sqlStatement,
+		id,
 		inv.InvoiceAt,
 		inv.PaymentTerm,
 		inv.DueAt,
 		inv.Salesman,
 		inv.FinanceID,
-		inv.Memo,
-		inv.Total,
+		inv.Subtotal,
+		inv.Ppn,
 		inv.Tax,
+		inv.Total,
 		inv.AccountId,
+		inv.Memo,
 		token,
-		id,
 	)
 
 	if err != nil {
@@ -590,7 +598,7 @@ func invoice_get_all() ([]invoice_all, error) {
 	var querFinance = `SELECT f.id, f.name, f.short_name "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email FROM finances f WHERE f.id = v.finance_id`
 	var queryAccount = `SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`
 
-	var sqlStatement = fmt.Sprintf("SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, memo, total, tax, account_id, %s AS finance, %s AS account FROM invoices AS v ORDER BY v.id DESC",
+	var sqlStatement = fmt.Sprintf("SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo, %s AS finance, %s AS account FROM invoices AS v ORDER BY v.id DESC",
 		nestQuerySingle(querFinance),
 		nestQuerySingle(queryAccount),
 	)
@@ -613,10 +621,12 @@ func invoice_get_all() ([]invoice_all, error) {
 			&item.DueAt,
 			&item.Salesman,
 			&item.FinanceID,
-			&item.Memo,
-			&item.Total,
+			&item.Subtotal,
+			&item.Ppn,
 			&item.Tax,
+			&item.Total,
 			&item.AccountId,
+			&item.Memo,
 			&item.Finance,
 			&item.Account,
 		)
@@ -650,8 +660,7 @@ func invoice_get_orders(finance_id *int, invoice_id *int64) ([]invoice_order, er
 		nestQuerySingle(queryMerk))
 
 	var queryUnit = fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber",
-		u.machine_number AS "machineNumber", u.bpkb_name AS "bpkbName",
-		color, dealer, surveyor, u.type_id AS "typeId", u.warehouse_id AS "warehouseId", %s AS type
+		u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId", %s AS type
 		FROM units u
 		WHERE u.order_id = o.id`,
 		nestQuerySingle(queryTye))
@@ -662,8 +671,8 @@ func invoice_get_orders(finance_id *int, invoice_id *int64) ([]invoice_order, er
 	WHERE b.id = o.branch_id`
 
 	var sqlStatement = fmt.Sprintf(`WITH RECURSIVE rs AS(
-		SELECT true as is_selected, o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel, o.ppn,
-		o.nominal, o.subtotal, o.user_name, o.verified_by, o.validated_by, o.finance_id, o.branch_id,
+		SELECT true as is_selected, o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel, 
+		o.user_name, o.verified_by, o.finance_id, o.branch_id,
 		o.is_stnk, o.stnk_price, o.matrix,
 		%s AS branch,
 		%s AS unit
@@ -672,8 +681,8 @@ func invoice_get_orders(finance_id *int, invoice_id *int64) ([]invoice_order, er
 	
 	UNION ALL
 
-	SELECT false as is_selected, o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel, o.ppn,
-		o.nominal, o.subtotal, o.user_name, o.verified_by, o.validated_by, o.finance_id, o.branch_id,
+	SELECT false as is_selected, o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel,
+		o.user_name, o.verified_by, o.finance_id, o.branch_id,
 		o.is_stnk, o.stnk_price, o.matrix,
 		%s AS branch,
 		%s AS unit
@@ -687,11 +696,9 @@ func invoice_get_orders(finance_id *int, invoice_id *int64) ([]invoice_order, er
 )
 	)
 	
-	SELECT t.is_selected, t.id, t.name, t.order_at, t.printed_at, t.bt_finance, t.bt_percent, t.bt_matel, t.ppn,
-		t.nominal, t.subtotal, t.user_name, t.verified_by, t.validated_by, t.finance_id, t.branch_id,
-		t.is_stnk, t.stnk_price, t.matrix,
-		t.branch,
-		t.unit
+	SELECT t.is_selected, t.id, t.name, t.order_at, t.printed_at, t.bt_finance,
+		t.bt_percent, t.bt_matel, t.user_name, t.verified_by,
+		t.finance_id, t.branch_id, t.is_stnk, t.stnk_price, t.matrix, t.branch, t.unit
 		FROM rs AS t
 		ORDER BY t.is_selected DESC, t.finance_id, t.id DESC
 	`,
@@ -722,12 +729,12 @@ func invoice_get_orders(finance_id *int, invoice_id *int64) ([]invoice_order, er
 			&invoice.BtFinance,
 			&invoice.BtPercent,
 			&invoice.BtMatel,
-			&invoice.Ppn,
-			&invoice.Nominal,
-			&invoice.Subtotal,
+			//	&invoice.Ppn,
+			//	&invoice.Nominal,
+			//			&invoice.Subtotal,
 			&invoice.UserName,
 			&invoice.VerifiedBy,
-			&invoice.ValidatedBy,
+			//	&invoice.ValidatedBy,
 			&invoice.FinanceID,
 			&invoice.BranchID,
 			&invoice.IsStnk,
@@ -753,7 +760,8 @@ func invoices_search(txt *string) ([]invoice_all, error) {
 	var querFinance = `SELECT f.id, f.name, f.short_name "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email FROM finances f WHERE f.id = v.finance_id`
 	var queryAccount = `SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`
 
-	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, memo, total, tax, account_id, %s AS finance, %s AS account 
+	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo,
+		%s AS finance, %s AS account 
 		FROM invoices AS v
 		WHERE token @@ to_tsquery('indonesian', $1) 
 		ORDER BY v.id DESC`,
@@ -779,10 +787,12 @@ func invoices_search(txt *string) ([]invoice_all, error) {
 			&item.DueAt,
 			&item.Salesman,
 			&item.FinanceID,
-			&item.Memo,
-			&item.Total,
+			&item.Subtotal,
+			&item.Ppn,
 			&item.Tax,
+			&item.Total,
 			&item.AccountId,
+			&item.Memo,
 			&item.Finance,
 			&item.Account,
 		)
@@ -802,7 +812,8 @@ func invoices_by_month(month *int, year *int) ([]invoice_all, error) {
 	var querFinance = `SELECT f.id, f.name, f.short_name "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email FROM finances f WHERE f.id = v.finance_id`
 	var queryAccount = `SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`
 
-	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, memo, total, tax, account_id, %s AS finance, %s AS account 
+	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo,
+		%s AS finance, %s AS account 
 		FROM invoices AS v
 		WHERE EXTRACT(MONTH FROM v.invoice_at)=$1 AND EXTRACT(YEAR FROM v.invoice_at)=$2 OR 0=$1
 		ORDER BY v.id DESC`,
@@ -828,10 +839,12 @@ func invoices_by_month(month *int, year *int) ([]invoice_all, error) {
 			&item.DueAt,
 			&item.Salesman,
 			&item.FinanceID,
-			&item.Memo,
-			&item.Total,
+			&item.Subtotal,
+			&item.Ppn,
 			&item.Tax,
+			&item.Total,
 			&item.AccountId,
+			&item.Memo,
 			&item.Finance,
 			&item.Account,
 		)
@@ -851,7 +864,8 @@ func invoices_by_finance(finance_id *int) ([]invoice_all, error) {
 	var querFinance = `SELECT f.id, f.name, f.short_name "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email FROM finances f WHERE f.id = v.finance_id`
 	var queryAccount = `SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`
 
-	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, memo, total, tax, account_id, %s AS finance, %s AS account 
+	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo,
+		%s AS finance, %s AS account 
 		FROM invoices AS v
 		WHERE v.finance_id=$1 OR 0=$1
 		ORDER BY v.id DESC`,

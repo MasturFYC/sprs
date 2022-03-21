@@ -9,22 +9,22 @@ type Order struct {
 	// nomor SPK
 	Name string `json:"name"`
 	// tanggal penerimaan SPK
-	OrderAt     string     `json:"orderAt"`
-	PrintedAt   string     `json:"printedAt"`
-	BtFinance   float64    `json:"btFinance"`
-	BtPercent   float32    `json:"btPercent"`
-	BtMatel     float64    `json:"btMatel"`
-	Ppn         float32    `json:"ppn"`
-	Nominal     float64    `json:"nominal"`
-	Subtotal    float64    `json:"subtotal"`
-	UserName    string     `json:"userName"`
-	VerifiedBy  NullString `json:"verifiedBy"`
-	ValidatedBy NullString `json:"validatedBy"`
-	FinanceID   int        `json:"financeId"`
-	BranchID    int        `json:"branchId"`
-	IsStnk      bool       `json:"isStnk"`
-	StnkPrice   float64    `json:"stnkPrice"`
-	Matrix      float64    `json:"matrix"`
+	OrderAt   string  `json:"orderAt"`
+	PrintedAt string  `json:"printedAt"`
+	BtFinance float64 `json:"btFinance"`
+	BtPercent float32 `json:"btPercent"`
+	BtMatel   float64 `json:"btMatel"`
+	//	Ppn         float32    `json:"ppn"`
+	//	Nominal     float64    `json:"nominal"`
+	//	Subtotal   float64    `json:"subtotal"`
+	UserName   string     `json:"userName"`
+	VerifiedBy NullString `json:"verifiedBy"`
+	//ValidatedBy NullString `json:"validatedBy"`
+	FinanceID int     `json:"financeId"`
+	BranchID  int     `json:"branchId"`
+	IsStnk    bool    `json:"isStnk"`
+	StnkPrice float64 `json:"stnkPrice"`
+	Matrix    float64 `json:"matrix"`
 
 	// * badan keuangan
 	Finance Finance `json:"finance,omitempty"`
@@ -34,7 +34,7 @@ type Order struct {
 	// data pelanggan
 	Customer Customer `json:"customer,omitempty"`
 	// data tunggakan
-	Receivable Receivable `json:"receivable,omitempty"`
+	//	Receivable Receivable `json:"receivable,omitempty"`
 	// data unit kendaraan
 	Unit Unit `json:"unit,omitempty"`
 	// tindakan2 yg pernah dilakukan

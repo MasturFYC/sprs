@@ -19,5 +19,6 @@ func OrderRouter(router *mux.Router) {
 	//router.HandleFunc("/{id}/", middleware.IsAuthorized(middleware.DeleteOrder)).Methods("DELETE")
 	router.HandleFunc("/", middleware.CreateOrder).Methods("POST")
 	router.HandleFunc("/{id}/", middleware.UpdateOrder).Methods("PUT")
+	router.HandleFunc("/name-seq", middleware.Order_GetNameSeq).Methods("GET")
 
 }

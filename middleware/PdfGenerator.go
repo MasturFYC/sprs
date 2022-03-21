@@ -123,16 +123,16 @@ func createInvoice(w io.Writer, invoice_id *int64, inv *invoice_item, finance *m
 		col5        = "NOPOL"
 		col6        = "TAHUN"
 		col7        = "BT FINANCE"
-		col8        = "PAJAK"
+		//		col8        = "PAJAK"
 
 		cw1 = 35
 		cw2 = 18
 		cw3 = 20
 		cw4 = 20
 		cw5 = 20
-		cw6 = 12
-		cw7 = 25
-		cw8 = 15
+		cw6 = 17
+		cw7 = 35
+		//		cw8 = 15
 	)
 	var lh float64 = 5.5
 	var mt float64 = 25
@@ -235,8 +235,8 @@ func createInvoice(w io.Writer, invoice_id *int64, inv *invoice_item, finance *m
 	pdf.CellFormat(cw4, lh, col4, "1", 0, "L", true, 0, "")
 	pdf.CellFormat(cw5, lh, col5, "1", 0, "L", true, 0, "")
 	pdf.CellFormat(cw6, lh, col6, "1", 0, "C", true, 0, "")
-	pdf.CellFormat(cw7, lh, col7, "1", 0, "R", true, 0, "")
-	pdf.CellFormat(cw8, lh, col8, "1", 1, "R", true, 0, "")
+	pdf.CellFormat(cw7, lh, col7, "1", 1, "R", true, 0, "")
+	//pdf.CellFormat(cw8, lh, col8, "1", 1, "R", true, 0, "")
 
 	// y += lh + 2
 	pdf.SetX(x)
@@ -252,32 +252,27 @@ func createInvoice(w io.Writer, invoice_id *int64, inv *invoice_item, finance *m
 		pdf.CellFormat(cw4, lh, o.Unit.Type.Name, "1", 0, "L", false, 0, "")
 		pdf.CellFormat(cw5, lh, o.Unit.Nopol, "1", 0, "L", false, 0, "")
 		pdf.CellFormat(cw6, lh, fmt.Sprintf("%d", o.Unit.Year), "1", 0, "C", false, 0, "")
-		pdf.CellFormat(cw7, lh, format_number(o.BtFinance), "1", 0, "R", false, 0, "")
-		pdf.CellFormat(cw8, lh, format_number(o.Nominal), "1", 1, "R", false, 0, "")
+		pdf.CellFormat(cw7, lh, format_number(o.BtFinance), "1", 1, "R", false, 0, "")
+		//		pdf.CellFormat(cw8, lh, format_number(o.Nominal), "1", 1, "R", false, 0, "")
 	}
 
 	pdf.SetY(pdf.GetY() + 0.4)
 
 	x = ml + cw1 + cw2 + cw3 + cw4
 	pdf.SetX(x)
-	pdf.SetFont(font, "", 8)
+	pdf.CellFormat(cw5+cw6, lh, "Subtotal:", "", 0, "L", false, 0, "")
+	pdf.CellFormat(cw7, lh, format_number(inv.Subtotal), "1", 1, "R", false, 0, "")
+	pdf.SetX(x)
+	pdf.CellFormat(cw5+cw6, lh, fmt.Sprintf("PPN: %s%%", format_number(float64(inv.Ppn))), "", 0, "L", false, 0, "")
+	pdf.CellFormat(cw7, lh, format_number(float64(inv.Tax)), "1", 1, "R", false, 0, "")
+	pdf.SetX(x)
 	pdf.CellFormat(cw5+cw6, lh, "Total invoice:", "", 0, "L", false, 0, "")
 	pdf.SetFont(font, "B", 8)
-	pdf.CellFormat(cw7+cw8, lh, format_number(inv.Total), "1", 1, "R", false, 0, "")
-	pdf.SetX(x)
-	pdf.SetFont(font, "", 8)
-	pdf.CellFormat(cw5+cw6, lh, "Pajak:", "", 0, "L", false, 0, "")
-	pdf.SetFont(font, "B", 8)
-	pdf.CellFormat(cw7+cw8, lh, format_number(inv.Tax), "1", 1, "R", false, 0, "")
-	pdf.SetX(x)
-	pdf.SetFont(font, "", 8)
-	pdf.CellFormat(cw5+cw6, lh, "Grand Total:", "", 0, "L", false, 0, "")
-	pdf.SetFont(font, "B", 8)
-	pdf.CellFormat(cw7+cw8, lh, format_number(inv.Tax+inv.Total), "1", 1, "R", false, 0, "")
+	pdf.CellFormat(cw7, lh, format_number(inv.Total), "1", 1, "R", false, 0, "")
 
 	pdf.SetFont(font, "", 10)
 
-	pw = (cw1 + cw2 + cw3 + cw4 + cw5 + cw6 + cw7 + cw8) / 2
+	pw = (cw1 + cw2 + cw3 + cw4 + cw5 + cw6 + cw7) / 2
 	pdf.SetY(pdf.GetY() + 10)
 	pdf.CellFormat(pw*2, lh, "Mengetahui:", "0", 1, "C", false, 0, "")
 	pdf.SetY(pdf.GetY() + 15)

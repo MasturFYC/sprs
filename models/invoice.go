@@ -7,10 +7,12 @@ type Invoice struct {
 	DueAt       string     `json:"dueAt"`
 	Salesman    string     `json:"salesman"`
 	FinanceID   int32      `json:"financeId"`
-	Memo        NullString `json:"memo"`
-	Total       float64    `json:"total"`
+	Subtotal    float64    `json:"subtotal"`
+	Ppn         float32    `json:"ppn"`
 	Tax         float64    `json:"tax"`
-	AccountId   float64    `json:"accountId"`
+	Total       float64    `json:"total"`
+	AccountId   int32      `json:"accountId"`
+	Memo        NullString `json:"memo"`
 }
 
 type InvoiceDetail struct {

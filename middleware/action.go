@@ -215,7 +215,7 @@ func getAllActions(OrderID *int64) ([]models.Action, error) {
 	var actions []models.Action
 
 	sqlStatement := `SELECT
-		id, action_at, code, pic, descriptions, order_id, file_name
+		id, action_at, pic, descriptions, order_id, file_name
 	FROM actions
 	WHERE order_id=$1`
 
@@ -232,7 +232,7 @@ func getAllActions(OrderID *int64) ([]models.Action, error) {
 		err := rows.Scan(
 			&act.ID,
 			&act.ActionAt,
-			&act.Code,
+			//	&act.Code,
 			&act.Pic,
 			&act.Descriptions,
 			&act.OrderId,
@@ -253,7 +253,7 @@ func getAction(id *int64) (models.Action, error) {
 	var act models.Action
 
 	sqlStatement := `SELECT
-		id, action_at, code, pic, descriptions, order_id, file_name
+		id, action_at, pic, descriptions, order_id, file_name
 	FROM actions
 	WHERE id=$1`
 	//stmt, _ := Sql().Prepare(sqlStatement)
@@ -264,7 +264,7 @@ func getAction(id *int64) (models.Action, error) {
 	err := row.Scan(
 		&act.ID,
 		&act.ActionAt,
-		&act.Code,
+		//	&act.Code,
 		&act.Pic,
 		&act.Descriptions,
 		&act.OrderId,
@@ -358,16 +358,16 @@ func deleteAction(id *int64) int64 {
 func createAction(act *models.Action) (int64, error) {
 
 	sqlStatement := `INSERT INTO actions
-		(action_at, code, pic, descriptions, order_id)
+		(action_at, pic, descriptions, order_id)
 	VALUES
-		($1, $2, $3, $4, $5)
+		($1, $2, $3, $4)
 	RETURNING id`
 
 	var id int64
 
 	err := Sql().QueryRow(sqlStatement,
 		act.ActionAt,
-		act.Code,
+		//	act.Code,
 		act.Pic,
 		act.Descriptions,
 		act.OrderId).Scan(&id)
@@ -383,11 +383,17 @@ func createAction(act *models.Action) (int64, error) {
 func updateAction(id *int64, act *models.Action) (int64, error) {
 
 	sqlStatement := `UPDATE actions SET 
-		action_at=$2, code=$3, pic=$4, descriptions=$5, order_id=$6
+		action_at=$2, pic=$3, descriptions=$4, order_id=$5
 	WHERE id=$1`
 
-	res, err := Sql().Exec(sqlStatement, id, act.ActionAt,
-		act.Code, act.Pic, act.Descriptions, act.OrderId)
+	res, err := Sql().Exec(sqlStatement,
+		id,
+		act.ActionAt,
+		// act.Code,
+		act.Pic,
+		act.Descriptions,
+		act.OrderId,
+	)
 
 	if err != nil {
 		log.Printf("Unable to update action. %v", err)

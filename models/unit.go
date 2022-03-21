@@ -16,12 +16,12 @@ type Unit struct {
 	MachineNumber string `json:"machineNumber"`
 
 	//bpkb atas nama
-	BpkbName string `json:"bpkbName"`
+	// BpkbName string `json:"bpkbName"`
 
 	//warna kendaraan
-	Color    string `json:"color"`
-	Dealer   string `json:"dealer"`
-	Surveyor string `json:"surveyor"`
+	Color string `json:"color"`
+	// Dealer   string `json:"dealer"`
+	// Surveyor string `json:"surveyor"`
 
 	// tipe unit
 	TypeID int64 `json:"typeId"`

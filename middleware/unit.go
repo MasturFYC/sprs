@@ -157,8 +157,8 @@ func getUnit(id *int64) (models.Unit, error) {
 	var unit models.Unit
 
 	var sqlStatement = `SELECT 
-		order_id, nopol, year, frame_number, machine_number, bpkb_name,
-		color, dealer, surveyor, type_id, warehouse_id 
+		order_id, nopol, year, frame_number, machine_number,
+		color, type_id, warehouse_id 
 	FROM units
 	WHERE order_id=$1`
 
@@ -169,10 +169,10 @@ func getUnit(id *int64) (models.Unit, error) {
 		&unit.Year,
 		&unit.FrameNumber,
 		&unit.MachineNumber,
-		&unit.BpkbName,
+		//		&unit.BpkbName,
 		&unit.Color,
-		&unit.Dealer,
-		&unit.Surveyor,
+		//		&unit.Dealer,
+		//		&unit.Surveyor,
 		&unit.TypeID,
 		&unit.WarehouseID,
 	)
@@ -269,10 +269,8 @@ func deleteUnit(id *int64) int64 {
 func createUnit(t *models.Unit) (int64, error) {
 
 	sqlStatement := `INSERT INTO units 
-	(order_id, nopol, year, frame_number, machine_number, bpkb_name,
-		color, dealer, surveyor, type_id, warehouse_id)
-	VALUES ($1, $2, $3, $4, $5, $6,
-		$7, $8, $9, $10, $11)`
+	(order_id, nopol, year, frame_number, machine_number, color, type_id, warehouse_id)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
 
 	res, err := Sql().Exec(sqlStatement,
 		t.OrderID,
@@ -280,10 +278,10 @@ func createUnit(t *models.Unit) (int64, error) {
 		t.Year,
 		t.FrameNumber,
 		t.MachineNumber,
-		t.BpkbName,
+		//		t.BpkbName,
 		t.Color,
-		t.Dealer,
-		t.Surveyor,
+		// t.Dealer,
+		// t.Surveyor,
 		t.TypeID,
 		t.WarehouseID,
 	)
@@ -308,8 +306,8 @@ func createUnit(t *models.Unit) (int64, error) {
 func updateUnit(id *int64, t *models.Unit) (int64, error) {
 
 	sqlStatement := `UPDATE units SET
-		nopol=$2, year=$3, frame_number=$4, machine_number=$5, bpkb_name=$6,
-		color=$7, dealer=$8, surveyor=$9, type_id=$10, warehouse_id=$11
+		nopol=$2, year=$3, frame_number=$4, machine_number=$5,
+		color=$6, type_id=$7, warehouse_id=$8
 	WHERE order_id=$1`
 
 	res, err := Sql().Exec(sqlStatement,
@@ -318,10 +316,10 @@ func updateUnit(id *int64, t *models.Unit) (int64, error) {
 		t.Year,
 		t.FrameNumber,
 		t.MachineNumber,
-		t.BpkbName,
+		//t.BpkbName,
 		t.Color,
-		t.Dealer,
-		t.Surveyor,
+		//t.Dealer,
+		//t.Surveyor,
 		t.TypeID,
 		t.WarehouseID,
 	)

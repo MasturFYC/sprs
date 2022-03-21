@@ -184,6 +184,26 @@ func DeleteOrder(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+func Order_GetNameSeq(w http.ResponseWriter, r *http.Request) {
+	EnableCors(&w)
+
+	id, err := create_name_seq()
+
+	if err != nil {
+		log.Printf("Nama order tidak boleh sama.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
+
+	res := Response{
+		ID:      id,
+		Message: "Nama urut baru order",
+	}
+
+	json.NewEncoder(w).Encode(&res)
+
+}
+
 func CreateOrder(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 
@@ -256,9 +276,8 @@ func getOrder(id *int64) (models.Order, error) {
 	var o models.Order
 
 	var sqlStatement = `SELECT 
-		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn,
-		nominal, subtotal, user_name, verified_by, validated_by, finance_id, branch_id,
-		is_stnk, stnk_price, matrix
+		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, 
+		user_name, verified_by, finance_id, branch_id, is_stnk, stnk_price, matrix
 	FROM orders
 	WHERE id=$1`
 
@@ -272,12 +291,12 @@ func getOrder(id *int64) (models.Order, error) {
 		&o.BtFinance,
 		&o.BtPercent,
 		&o.BtMatel,
-		&o.Ppn,
-		&o.Nominal,
-		&o.Subtotal,
+		// &o.Ppn,
+		// &o.Nominal,
+		// &o.Subtotal,
 		&o.UserName,
 		&o.VerifiedBy,
-		&o.ValidatedBy,
+		// &o.ValidatedBy,
 		&o.FinanceID,
 		&o.BranchID,
 		&o.IsStnk,
@@ -307,9 +326,8 @@ func getAllOrders() ([]models.Order, error) {
 	var orders []models.Order
 
 	var sqlStatement = `SELECT
-		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn,
-		nominal, subtotal, user_name, verified_by, validated_by, finance_id, branch_id,
-		is_stnk, stnk_price, matrix
+		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, 
+		user_name, verified_by, finance_id, branch_id, is_stnk, stnk_price, matrix
 	FROM orders
 	ORDER BY id DESC`
 
@@ -333,12 +351,12 @@ func getAllOrders() ([]models.Order, error) {
 			&o.BtFinance,
 			&o.BtPercent,
 			&o.BtMatel,
-			&o.Ppn,
-			&o.Nominal,
-			&o.Subtotal,
+			// &o.Ppn,
+			// &o.Nominal,
+			// &o.Subtotal,
 			&o.UserName,
 			&o.VerifiedBy,
-			&o.ValidatedBy,
+			//&o.ValidatedBy,
 			&o.FinanceID,
 			&o.BranchID,
 			&o.IsStnk,
@@ -379,15 +397,30 @@ func deleteOrder(id *int64) int64 {
 	return rowsAffected
 }
 
+func create_name_seq() (int64, error) {
+
+	sqlStatement := "SELECT nextval('order_name_seq'::regclass) AS id"
+
+	var id int64
+
+	err := Sql().QueryRow(sqlStatement).Scan(&id)
+
+	if err != nil {
+		log.Printf("Unable to create order name sequence. %v", err)
+	}
+
+	return id, err
+}
+
 func createOrder(p *models.Order) (int64, error) {
 
 	sqlStatement := `INSERT INTO orders (
-		name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn,
-		nominal, subtotal, user_name, verified_by, validated_by, finance_id, branch_id,
+		name, order_at, printed_at, bt_finance, bt_percent, bt_matel,
+		user_name, verified_by, finance_id, branch_id,
 		is_stnk, stnk_price, matrix, token
 	)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 
-		to_tsvector('indonesian', $18))
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
+		to_tsvector('indonesian', $14))
 	RETURNING id`
 
 	var id int64
@@ -401,12 +434,12 @@ func createOrder(p *models.Order) (int64, error) {
 		p.BtFinance,
 		p.BtPercent,
 		p.BtMatel,
-		p.Ppn,
-		p.Nominal,
-		p.Subtotal,
+		// p.Ppn,
+		// p.Nominal,
+		//	p.Subtotal,
 		p.UserName,
 		p.VerifiedBy,
-		p.ValidatedBy,
+		//p.ValidatedBy,
 		p.FinanceID,
 		p.BranchID,
 		p.IsStnk,
@@ -421,6 +454,7 @@ func createOrder(p *models.Order) (int64, error) {
 
 	return id, err
 }
+
 func create_token(p *models.Order) []string {
 	var s []string
 
@@ -460,17 +494,17 @@ func create_token(p *models.Order) []string {
 			s = append(s, strconv.FormatInt(p.Unit.Year, 10))
 		}
 
-		if p.Unit.Dealer != "" {
-			s = append(s, p.Unit.Dealer)
-		}
+		// if p.Unit.Dealer != "" {
+		// 	s = append(s, p.Unit.Dealer)
+		// }
 
-		if p.Unit.Surveyor != "" {
-			s = append(s, p.Unit.Surveyor)
-		}
+		// if p.Unit.Surveyor != "" {
+		// 	s = append(s, p.Unit.Surveyor)
+		// }
 
-		if p.Unit.BpkbName != "" {
-			s = append(s, p.Unit.BpkbName)
-		}
+		// if p.Unit.BpkbName != "" {
+		// 	s = append(s, p.Unit.BpkbName)
+		// }
 
 		if p.Unit.Type.MerkID > 0 {
 			s = append(s, p.Unit.Type.Merk.Name)
@@ -488,9 +522,9 @@ func create_token(p *models.Order) []string {
 func updateOrder(id *int64, p *models.Order) (int64, error) {
 
 	sqlStatement := `UPDATE orders SET
-		name=$2, order_at=$3, printed_at=$4, bt_finance=$5, bt_percent=$6, bt_matel=$7, ppn=$8,
-		nominal=$9, subtotal=$10, user_name=$11, verified_by=$12, validated_by=$13, finance_id=$14, branch_id=$15,
-		is_stnk=$16, stnk_price=$17, matrix=$18, token=to_tsvector('indonesian', $19)
+		name=$2, order_at=$3, printed_at=$4, bt_finance=$5, bt_percent=$6, bt_matel=$7, 
+		user_name=$8, verified_by=$9, finance_id=$10, branch_id=$11,
+		is_stnk=$12, stnk_price=$13, matrix=$14, token=to_tsvector('indonesian', $15)
 	WHERE id=$1`
 
 	token := strings.Join(create_token(p), " ")
@@ -503,12 +537,12 @@ func updateOrder(id *int64, p *models.Order) (int64, error) {
 		p.BtFinance,
 		p.BtPercent,
 		p.BtMatel,
-		p.Ppn,
-		p.Nominal,
-		p.Subtotal,
+		// p.Ppn,
+		// p.Nominal,
+		// p.Subtotal,
 		p.UserName,
 		p.VerifiedBy,
-		p.ValidatedBy,
+		//p.ValidatedBy,
 		p.FinanceID,
 		p.BranchID,
 		p.IsStnk,
@@ -537,8 +571,8 @@ func searchOrders(txt *string) ([]models.Order, error) {
 	var orders []models.Order
 
 	var sqlStatement = `SELECT
-		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn,
-		nominal, subtotal, user_name, verified_by, validated_by, finance_id, branch_id,
+		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel,
+		user_name, verified_by, finance_id, branch_id,
 		is_stnk, stnk_price, matrix
 	FROM orders
 	WHERE token @@ to_tsquery('indonesian', $1)
@@ -564,12 +598,12 @@ func searchOrders(txt *string) ([]models.Order, error) {
 			&o.BtFinance,
 			&o.BtPercent,
 			&o.BtMatel,
-			&o.Ppn,
-			&o.Nominal,
-			&o.Subtotal,
+			// &o.Ppn,
+			// &o.Nominal,
+			// &o.Subtotal,
 			&o.UserName,
 			&o.VerifiedBy,
-			&o.ValidatedBy,
+			//&o.ValidatedBy,
 			&o.FinanceID,
 			&o.BranchID,
 			&o.IsStnk,
@@ -594,8 +628,8 @@ func get_order_by_finance(id *int) ([]models.Order, error) {
 	var orders []models.Order
 
 	var sqlStatement = `SELECT
-		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn,
-		nominal, subtotal, user_name, verified_by, validated_by, finance_id, branch_id,
+		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, 
+		user_name, verified_by, finance_id, branch_id,
 		is_stnk, stnk_price, matrix
 	FROM orders
 	WHERE finance_id=$1
@@ -621,12 +655,12 @@ func get_order_by_finance(id *int) ([]models.Order, error) {
 			&o.BtFinance,
 			&o.BtPercent,
 			&o.BtMatel,
-			&o.Ppn,
-			&o.Nominal,
-			&o.Subtotal,
+			// &o.Ppn,
+			// &o.Nominal,
+			// &o.Subtotal,
 			&o.UserName,
 			&o.VerifiedBy,
-			&o.ValidatedBy,
+			//&o.ValidatedBy,
 			&o.FinanceID,
 			&o.BranchID,
 			&o.IsStnk,
@@ -651,8 +685,8 @@ func get_order_by_branch(id *int) ([]models.Order, error) {
 	var orders []models.Order
 
 	var sqlStatement = `SELECT
-		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn,
-		nominal, subtotal, user_name, verified_by, validated_by, finance_id, branch_id,
+		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel,
+		user_name, verified_by, finance_id, branch_id,
 		is_stnk, stnk_price, matrix
 	FROM orders
 	WHERE branch_id=$1
@@ -678,12 +712,12 @@ func get_order_by_branch(id *int) ([]models.Order, error) {
 			&o.BtFinance,
 			&o.BtPercent,
 			&o.BtMatel,
-			&o.Ppn,
-			&o.Nominal,
-			&o.Subtotal,
+			// &o.Ppn,
+			// &o.Nominal,
+			// &o.Subtotal,
 			&o.UserName,
 			&o.VerifiedBy,
-			&o.ValidatedBy,
+			//&o.ValidatedBy,
 			&o.FinanceID,
 			&o.BranchID,
 			&o.IsStnk,
@@ -713,8 +747,8 @@ func set_child(o *models.Order) {
 	cust, _ := getCustomer(&o.ID)
 	o.Customer = cust
 
-	receivable, _ := getReceivable(&o.ID)
-	o.Receivable = receivable
+	// receivable, _ := getReceivable(&o.ID)
+	// o.Receivable = receivable
 
 	unit, _ := getUnit(&o.ID)
 	o.Unit = unit
@@ -743,8 +777,8 @@ func get_order_by_month(id *int) ([]models.Order, error) {
 	var orders []models.Order
 
 	var sqlStatement = `SELECT
-		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, ppn,
-		nominal, subtotal, user_name, verified_by, validated_by, finance_id, branch_id,
+		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, 
+		user_name, verified_by, finance_id, branch_id,
 		is_stnk, stnk_price, matrix
 	FROM orders
 	WHERE EXTRACT(MONTH from order_at)=$1
@@ -770,12 +804,12 @@ func get_order_by_month(id *int) ([]models.Order, error) {
 			&o.BtFinance,
 			&o.BtPercent,
 			&o.BtMatel,
-			&o.Ppn,
-			&o.Nominal,
-			&o.Subtotal,
+			// &o.Ppn,
+			// &o.Nominal,
+			// &o.Subtotal,
 			&o.UserName,
 			&o.VerifiedBy,
-			&o.ValidatedBy,
+			//&o.ValidatedBy,
 			&o.FinanceID,
 			&o.BranchID,
 			&o.IsStnk,

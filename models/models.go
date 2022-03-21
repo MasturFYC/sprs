@@ -36,7 +36,7 @@ type Action struct {
 	Pic          string     `json:"pic"`
 	Descriptions NullString `json:"descriptions"`
 	// kode tindakan
-	Code     string     `json:"code"`
+	//Code     string     `json:"code"`
 	FileName NullString `json:"fileName"`
 }
 

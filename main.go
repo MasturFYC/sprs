@@ -49,7 +49,7 @@ func loadRouter() {
 	routers.OfficeAddressRouter(mainRouter.PathPrefix("/api/office-address/").Subrouter())
 	routers.OrderRouter(mainRouter.PathPrefix("/api/orders/").Subrouter())
 	routers.PostAddressRouter(mainRouter.PathPrefix("/api/post-address/").Subrouter())
-	routers.ReceivableRouter(mainRouter.PathPrefix("/api/receivables/").Subrouter())
+	// routers.ReceivableRouter(mainRouter.PathPrefix("/api/receivables/").Subrouter())
 	routers.TaskRouter(mainRouter.PathPrefix("/api/tasks/").Subrouter())
 	routers.TypeRouter(mainRouter.PathPrefix("/api/types/").Subrouter())
 	routers.UnitRouter(mainRouter.PathPrefix("/api/units/").Subrouter())
