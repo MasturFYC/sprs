@@ -279,7 +279,7 @@ func getOrder(id *int64) (order_all, error) {
 	var o order_all
 	b := strings.Builder{}
 
-	q_wheel := `SELECT id, name, short_name AS "short_name" FROM wheels WHERE id = t.wheel_id`
+	q_wheel := `SELECT id, name, short_name AS "shortName" FROM wheels WHERE id = t.wheel_id`
 	q_merk := "SELECT id, name FROM merks WHERE id = t.merk_id"
 	q_type := fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId",
 		%s as wheel, %s as merk
@@ -289,7 +289,7 @@ func getOrder(id *int64) (order_all, error) {
 		nestQuerySingle(q_merk),
 	)
 	q_unit := fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber", 
-	u.machine_number AS "machineNumber", u.color, u.type_id AS "type_id", u.warehouse_id AS "warehouseId",
+	u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId",
 	%s as type
 	FROM units AS u WHERE u.order_id = o.id`,
 		nestQuerySingle(q_type))
@@ -368,7 +368,7 @@ func getAllOrders() ([]order_all, error) {
 
 	b := strings.Builder{}
 
-	q_wheel := `SELECT id, name, short_name AS "short_name" FROM wheels WHERE id = t.wheel_id`
+	q_wheel := `SELECT id, name, short_name AS "shortName" FROM wheels WHERE id = t.wheel_id`
 	q_merk := "SELECT id, name FROM merks WHERE id = t.merk_id"
 	q_type := fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId",
 		%s as wheel, %s as merk
@@ -378,7 +378,7 @@ func getAllOrders() ([]order_all, error) {
 		nestQuerySingle(q_merk),
 	)
 	q_unit := fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber", 
-	u.machine_number AS "machineNumber", u.color, u.type_id AS "type_id", u.warehouse_id AS "warehouseId",
+	u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId",
 	%s as type
 	FROM units AS u WHERE u.order_id = o.id`,
 		nestQuerySingle(q_type))
@@ -672,7 +672,7 @@ func searchOrders(txt *string) ([]order_all, error) {
 
 	b := strings.Builder{}
 
-	q_wheel := `SELECT id, name, short_name AS "short_name" FROM wheels WHERE id = t.wheel_id`
+	q_wheel := `SELECT id, name, short_name AS "shortName" FROM wheels WHERE id = t.wheel_id`
 	q_merk := "SELECT id, name FROM merks WHERE id = t.merk_id"
 	q_type := fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId",
 		%s as wheel, %s as merk
@@ -682,7 +682,7 @@ func searchOrders(txt *string) ([]order_all, error) {
 		nestQuerySingle(q_merk),
 	)
 	q_unit := fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber", 
-	u.machine_number AS "machineNumber", u.color, u.type_id AS "type_id", u.warehouse_id AS "warehouseId",
+	u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId",
 	%s as type
 	FROM units AS u WHERE u.order_id = o.id`,
 		nestQuerySingle(q_type))
@@ -753,7 +753,7 @@ func get_order_by_finance(id *int) ([]order_all, error) {
 	var orders []order_all
 	b := strings.Builder{}
 
-	q_wheel := `SELECT id, name, short_name AS "short_name" FROM wheels WHERE id = t.wheel_id`
+	q_wheel := `SELECT id, name, short_name AS "shortName" FROM wheels WHERE id = t.wheel_id`
 	q_merk := "SELECT id, name FROM merks WHERE id = t.merk_id"
 	q_type := fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId",
 		%s as wheel, %s as merk
@@ -763,7 +763,7 @@ func get_order_by_finance(id *int) ([]order_all, error) {
 		nestQuerySingle(q_merk),
 	)
 	q_unit := fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber", 
-	u.machine_number AS "machineNumber", u.color, u.type_id AS "type_id", u.warehouse_id AS "warehouseId",
+	u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId",
 	%s as type
 	FROM units AS u WHERE u.order_id = o.id`,
 		nestQuerySingle(q_type))
@@ -834,7 +834,7 @@ func get_order_by_branch(id *int) ([]order_all, error) {
 	var orders []order_all
 	b := strings.Builder{}
 
-	q_wheel := `SELECT id, name, short_name AS "short_name" FROM wheels WHERE id = t.wheel_id`
+	q_wheel := `SELECT id, name, short_name AS "shortName" FROM wheels WHERE id = t.wheel_id`
 	q_merk := "SELECT id, name FROM merks WHERE id = t.merk_id"
 	q_type := fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId",
 		%s as wheel, %s as merk
@@ -844,7 +844,7 @@ func get_order_by_branch(id *int) ([]order_all, error) {
 		nestQuerySingle(q_merk),
 	)
 	q_unit := fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber", 
-	u.machine_number AS "machineNumber", u.color, u.type_id AS "type_id", u.warehouse_id AS "warehouseId",
+	u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId",
 	%s as type
 	FROM units AS u WHERE u.order_id = o.id`,
 		nestQuerySingle(q_type))
@@ -950,7 +950,7 @@ func get_order_by_month(id *int) ([]order_all, error) {
 	var orders []order_all
 	b := strings.Builder{}
 
-	q_wheel := `SELECT id, name, short_name AS "short_name" FROM wheels WHERE id = t.wheel_id`
+	q_wheel := `SELECT id, name, short_name AS "shortName" FROM wheels WHERE id = t.wheel_id`
 	q_merk := "SELECT id, name FROM merks WHERE id = t.merk_id"
 	q_type := fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId",
 		%s as wheel, %s as merk
@@ -960,7 +960,7 @@ func get_order_by_month(id *int) ([]order_all, error) {
 		nestQuerySingle(q_merk),
 	)
 	q_unit := fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber", 
-	u.machine_number AS "machineNumber", u.color, u.type_id AS "type_id", u.warehouse_id AS "warehouseId",
+	u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId",
 	%s as type
 	FROM units AS u WHERE u.order_id = o.id`,
 		nestQuerySingle(q_type))
