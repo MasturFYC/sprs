@@ -274,17 +274,39 @@ func UpdateOrder(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-func getOrder(id *int64) (models.Order, error) {
+func getOrder(id *int64) (order_all, error) {
 
-	var o models.Order
+	var o order_all
+	b := strings.Builder{}
 
-	var sqlStatement = `SELECT 
-		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, 
-		user_name, verified_by, finance_id, branch_id, is_stnk, stnk_price, matrix
-	FROM orders
-	WHERE id=$1`
+	q_wheel := `SELECT id, name, short_name AS "short_name" FROM wheels WHERE id = t.wheel_id`
+	q_merk := "SELECT id, name FROM merks WHERE id = t.merk_id"
+	q_type := fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId",
+		%s as wheel, %s as merk
+		FROM types t
+		WHERE t.id = u.type_id`,
+		nestQuerySingle(q_wheel),
+		nestQuerySingle(q_merk),
+	)
+	q_unit := fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber", 
+	u.machine_number AS "machineNumber", u.color, u.type_id AS "type_id", u.warehouse_id AS "warehouseId",
+	%s as type
+	FROM units AS u WHERE u.order_id = o.id`,
+		nestQuerySingle(q_type))
 
-	rs := Sql().QueryRow(sqlStatement, id)
+	b.WriteString("SELECT")
+	b.WriteString(" o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel,")
+	b.WriteString(" o.user_name, o.verified_by, o.finance_id, o.branch_id, o.is_stnk, o.stnk_price, o.matrix, ")
+	b.WriteString(nestQuerySingle(`SELECT id, name, short_name AS "shortName", street, city, phone, cell, zip, email, group_id AS "groupId" FROM finances WHERE id = o.finance_id`))
+	b.WriteString(" AS finance, ")
+	b.WriteString(nestQuerySingle(`SELECT id, name, head_branch AS "headBranch", street, city, phone, cell, zip, email FROM branchs WHERE id = o.branch_id`))
+	b.WriteString(" AS branch, ")
+	b.WriteString(nestQuerySingle(q_unit))
+	b.WriteString(" AS unit ")
+	b.WriteString(" FROM orders AS o")
+	b.WriteString(" WHERE o.id=$1")
+
+	rs := Sql().QueryRow(b.String(), id)
 
 	err := rs.Scan(
 		&o.ID,
@@ -305,6 +327,9 @@ func getOrder(id *int64) (models.Order, error) {
 		&o.IsStnk,
 		&o.StnkPrice,
 		&o.Matrix,
+		&o.Finance,
+		&o.Branch,
+		&o.Unit,
 	)
 
 	switch err {
@@ -313,7 +338,7 @@ func getOrder(id *int64) (models.Order, error) {
 		return o, nil
 	case nil:
 
-		set_child(&o)
+		//set_child(&o)
 
 		return o, nil
 	default:
@@ -324,17 +349,69 @@ func getOrder(id *int64) (models.Order, error) {
 	return o, err
 }
 
-func getAllOrders() ([]models.Order, error) {
+type order_all struct {
+	models.Order
+	Finance json.RawMessage `json:"finance,omitempty"`
+	Branch  json.RawMessage `json:"branch,omitempty"`
+	//	Customer      json.RawMessage `json:"customer,omitempty"`
+	Unit json.RawMessage `json:"unit,omitempty"`
+	//	Task          json.RawMessage `json:"task,omitempty"`
+	//	HomeAddress   json.RawMessage `json:"home,omitempty"`
+	//	OfficeAddress json.RawMessage `json:"officeAddress,omitempty"`
+	//	PostAddress   json.RawMessage `json:"postAddress,omitempty"`
+	//	KtpAddress    json.RawMessage `json:"ktpAddress,omitempty"`
+}
 
-	var orders []models.Order
+func getAllOrders() ([]order_all, error) {
 
-	var sqlStatement = `SELECT
-		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, 
-		user_name, verified_by, finance_id, branch_id, is_stnk, stnk_price, matrix
-	FROM orders
-	ORDER BY id DESC`
+	var orders []order_all
 
-	rs, err := Sql().Query(sqlStatement)
+	b := strings.Builder{}
+
+	q_wheel := `SELECT id, name, short_name AS "short_name" FROM wheels WHERE id = t.wheel_id`
+	q_merk := "SELECT id, name FROM merks WHERE id = t.merk_id"
+	q_type := fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId",
+		%s as wheel, %s as merk
+		FROM types t
+		WHERE t.id = u.type_id`,
+		nestQuerySingle(q_wheel),
+		nestQuerySingle(q_merk),
+	)
+	q_unit := fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber", 
+	u.machine_number AS "machineNumber", u.color, u.type_id AS "type_id", u.warehouse_id AS "warehouseId",
+	%s as type
+	FROM units AS u WHERE u.order_id = o.id`,
+		nestQuerySingle(q_type))
+
+	b.WriteString("SELECT")
+	b.WriteString(" o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel,")
+	b.WriteString(" o.user_name, o.verified_by, o.finance_id, o.branch_id, o.is_stnk, o.stnk_price, o.matrix, ")
+	b.WriteString(nestQuerySingle(`SELECT id, name, short_name AS "shortName", street, city, phone, cell, zip, email, group_id AS "groupId" FROM finances WHERE id = o.finance_id`))
+	b.WriteString(" AS finance, ")
+	b.WriteString(nestQuerySingle(`SELECT id, name, head_branch AS "headBranch", street, city, phone, cell, zip, email FROM branchs WHERE id = o.branch_id`))
+	b.WriteString(" AS branch, ")
+	// b.WriteString(nestQuerySingle("SELECT order_id, name, agreement_number, payment_type FROM customers WHERE order_id = o.id)"))
+	// b.WriteString(" AS customer, ")
+	b.WriteString(nestQuerySingle(q_unit))
+	b.WriteString(" AS unit ")
+	// b.WriteString(nestQuerySingle("SELECT order_id, descriptions, period_from, period_to,	recipient_name, recipient_position,	giver_name, giver_position FROM tasks	WHERE order_id = o.id)"))
+	// b.WriteString(" AS task, ")
+	// b.WriteString(nestQuerySingle("SELECT order_id, street, region, city, phone, zip FROM home_addresses	WHERE order_id = o.id)"))
+	// b.WriteString(" AS homeAddress, ")
+	// b.WriteString(nestQuerySingle("SELECT order_id, street, region, city, phone, zip FROM office_addresses WHERE order_id = o.id)"))
+	// b.WriteString(" AS officeAddress, ")
+	// b.WriteString(nestQuerySingle("SELECT order_id, street, region, city, phone, zip FROM post_addresses WHERE order_id = o.id)"))
+	// b.WriteString(" AS postAddress, ")
+	// b.WriteString(nestQuerySingle("SELECT order_id, street, region, city, phone, zip FROM ktp_addresses WHERE order_id = o.id)"))
+	// b.WriteString(" AS ktpAddress, ")
+	// b.WriteString(nestQuery("SELECT id, action_at, pic, descriptions, order_id, file_name FROM actions WHERE order_id = o.id)"))
+	// b.WriteString(" AS actions ")
+	b.WriteString(" FROM orders AS o")
+	b.WriteString(" ORDER BY o.id DESC")
+
+	//log.Println(b.String())
+
+	rs, err := Sql().Query(b.String())
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)
@@ -344,7 +421,7 @@ func getAllOrders() ([]models.Order, error) {
 	defer rs.Close()
 
 	for rs.Next() {
-		var o models.Order
+		var o order_all
 
 		err := rs.Scan(
 			&o.ID,
@@ -365,13 +442,16 @@ func getAllOrders() ([]models.Order, error) {
 			&o.IsStnk,
 			&o.StnkPrice,
 			&o.Matrix,
+			&o.Finance,
+			&o.Branch,
+			&o.Unit,
 		)
 
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
 		}
 
-		set_child(&o)
+		//	set_child(&o)
 
 		orders = append(orders, o)
 	}
@@ -428,7 +508,7 @@ func createOrder(p *models.Order) (int64, error) {
 
 	var id int64
 
-	token := strings.Join(create_token(p), " ")
+	token := create_token(p)
 
 	err := Sql().QueryRow(sqlStatement,
 		p.Name,
@@ -458,43 +538,57 @@ func createOrder(p *models.Order) (int64, error) {
 	return id, err
 }
 
-func create_token(p *models.Order) []string {
-	var s []string
+func create_token(p *models.Order) string {
+	builder := strings.Builder{}
 
-	s = append(s, p.Name,
-		p.OrderAt,
-		p.Finance.Name,
-		p.Finance.ShortName,
-		p.Branch.Name,
-		p.Branch.HeadBranch,
-	)
+	builder.WriteString(p.Name)
+	builder.WriteString(" ")
+	builder.WriteString(p.OrderAt)
+	builder.WriteString(" ")
+	builder.WriteString(p.Finance.Name)
+	builder.WriteString(" ")
+	builder.WriteString(p.Finance.ShortName)
+	builder.WriteString(" ")
+	builder.WriteString(p.Branch.Name)
+	builder.WriteString(" ")
+	builder.WriteString(p.Branch.HeadBranch)
+	builder.WriteString(" ")
+
 	if p.IsStnk {
-		s = append(s, "stnk-ada")
+		builder.WriteString(" stnk-ada")
 	} else {
-		s = append(s, "stnk-tidak-ada")
+		builder.WriteString(" stnk-tidak-ada")
 	}
 
 	if p.Unit.TypeID > 0 {
 
-		s = append(s, p.Unit.Nopol, p.Unit.Type.Name)
+		builder.WriteString(" ")
+		builder.WriteString(p.Unit.Nopol)
+		builder.WriteString(" ")
+		builder.WriteString(p.Unit.Type.Name)
 
 		if p.Unit.WarehouseID > 0 {
-			s = append(s, p.Unit.Warehouse.Name)
+			builder.WriteString(" ")
+			builder.WriteString(p.Unit.Warehouse.Name)
 		}
 
 		if p.Unit.FrameNumber != "" {
-			s = append(s, string(p.Unit.FrameNumber))
+			builder.WriteString(" ")
+			builder.WriteString(string(p.Unit.FrameNumber))
 		}
 
 		if p.Unit.MachineNumber != "" {
-			s = append(s, string(p.Unit.MachineNumber))
+			builder.WriteString(" ")
+			builder.WriteString(string(p.Unit.MachineNumber))
 		}
 		if p.Unit.Color != "" {
-			s = append(s, string(p.Unit.Color))
+			builder.WriteString(" ")
+			builder.WriteString(string(p.Unit.Color))
 		}
 
 		if p.Unit.Year != 0 {
-			s = append(s, strconv.FormatInt(p.Unit.Year, 10))
+			builder.WriteString(" ")
+			builder.WriteString(strconv.FormatInt(p.Unit.Year, 10))
 		}
 
 		// if p.Unit.Dealer != "" {
@@ -510,15 +604,18 @@ func create_token(p *models.Order) []string {
 		// }
 
 		if p.Unit.Type.MerkID > 0 {
-			s = append(s, p.Unit.Type.Merk.Name)
+			builder.WriteString(" ")
+			builder.WriteString(p.Unit.Type.Merk.Name)
 		}
 		if p.Unit.Type.WheelID > 0 {
-			s = append(s, p.Unit.Type.Wheel.Name)
-			s = append(s, p.Unit.Type.Wheel.ShortName)
+			builder.WriteString(" ")
+			builder.WriteString(p.Unit.Type.Wheel.Name)
+			builder.WriteString(" ")
+			builder.WriteString(p.Unit.Type.Wheel.ShortName)
 		}
 	}
 
-	return s
+	return builder.String()
 
 }
 
@@ -530,7 +627,7 @@ func updateOrder(id *int64, p *models.Order) (int64, error) {
 		is_stnk=$12, stnk_price=$13, matrix=$14, token=to_tsvector('indonesian', $15)
 	WHERE id=$1`
 
-	token := strings.Join(create_token(p), " ")
+	token := create_token(p)
 
 	res, err := Sql().Exec(sqlStatement,
 		id,
@@ -569,19 +666,41 @@ func updateOrder(id *int64, p *models.Order) (int64, error) {
 	return rowsAffected, err
 }
 
-func searchOrders(txt *string) ([]models.Order, error) {
+func searchOrders(txt *string) ([]order_all, error) {
 
-	var orders []models.Order
+	var orders []order_all
 
-	var sqlStatement = `SELECT
-		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel,
-		user_name, verified_by, finance_id, branch_id,
-		is_stnk, stnk_price, matrix
-	FROM orders
-	WHERE token @@ to_tsquery('indonesian', $1)
-	ORDER BY id DESC`
+	b := strings.Builder{}
 
-	rs, err := Sql().Query(sqlStatement, txt)
+	q_wheel := `SELECT id, name, short_name AS "short_name" FROM wheels WHERE id = t.wheel_id`
+	q_merk := "SELECT id, name FROM merks WHERE id = t.merk_id"
+	q_type := fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId",
+		%s as wheel, %s as merk
+		FROM types t
+		WHERE t.id = u.type_id`,
+		nestQuerySingle(q_wheel),
+		nestQuerySingle(q_merk),
+	)
+	q_unit := fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber", 
+	u.machine_number AS "machineNumber", u.color, u.type_id AS "type_id", u.warehouse_id AS "warehouseId",
+	%s as type
+	FROM units AS u WHERE u.order_id = o.id`,
+		nestQuerySingle(q_type))
+
+	b.WriteString("SELECT")
+	b.WriteString(" o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel,")
+	b.WriteString(" o.user_name, o.verified_by, o.finance_id, o.branch_id, o.is_stnk, o.stnk_price, o.matrix, ")
+	b.WriteString(nestQuerySingle(`SELECT id, name, short_name AS "shortName", street, city, phone, cell, zip, email, group_id AS "groupId" FROM finances WHERE id = o.finance_id`))
+	b.WriteString(" AS finance, ")
+	b.WriteString(nestQuerySingle(`SELECT id, name, head_branch AS "headBranch", street, city, phone, cell, zip, email FROM branchs WHERE id = o.branch_id`))
+	b.WriteString(" AS branch, ")
+	b.WriteString(nestQuerySingle(q_unit))
+	b.WriteString(" AS unit ")
+	b.WriteString(" FROM orders AS o")
+	b.WriteString(" WHERE token @@ to_tsquery('indonesian', $1)")
+	b.WriteString(" ORDER BY o.id DESC")
+
+	rs, err := Sql().Query(b.String(), txt)
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)
@@ -591,7 +710,7 @@ func searchOrders(txt *string) ([]models.Order, error) {
 	defer rs.Close()
 
 	for rs.Next() {
-		var o models.Order
+		var o order_all
 
 		err := rs.Scan(
 			&o.ID,
@@ -612,13 +731,16 @@ func searchOrders(txt *string) ([]models.Order, error) {
 			&o.IsStnk,
 			&o.StnkPrice,
 			&o.Matrix,
+			&o.Finance,
+			&o.Branch,
+			&o.Unit,
 		)
 
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
 		}
 
-		set_child(&o)
+		//	set_child(&o)
 
 		orders = append(orders, o)
 	}
@@ -626,19 +748,40 @@ func searchOrders(txt *string) ([]models.Order, error) {
 	return orders, err
 }
 
-func get_order_by_finance(id *int) ([]models.Order, error) {
+func get_order_by_finance(id *int) ([]order_all, error) {
 
-	var orders []models.Order
+	var orders []order_all
+	b := strings.Builder{}
 
-	var sqlStatement = `SELECT
-		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, 
-		user_name, verified_by, finance_id, branch_id,
-		is_stnk, stnk_price, matrix
-	FROM orders
-	WHERE finance_id=$1
-	ORDER BY finance_id, id DESC`
+	q_wheel := `SELECT id, name, short_name AS "short_name" FROM wheels WHERE id = t.wheel_id`
+	q_merk := "SELECT id, name FROM merks WHERE id = t.merk_id"
+	q_type := fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId",
+		%s as wheel, %s as merk
+		FROM types t
+		WHERE t.id = u.type_id`,
+		nestQuerySingle(q_wheel),
+		nestQuerySingle(q_merk),
+	)
+	q_unit := fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber", 
+	u.machine_number AS "machineNumber", u.color, u.type_id AS "type_id", u.warehouse_id AS "warehouseId",
+	%s as type
+	FROM units AS u WHERE u.order_id = o.id`,
+		nestQuerySingle(q_type))
 
-	rs, err := Sql().Query(sqlStatement, id)
+	b.WriteString("SELECT")
+	b.WriteString(" o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel,")
+	b.WriteString(" o.user_name, o.verified_by, o.finance_id, o.branch_id, o.is_stnk, o.stnk_price, o.matrix, ")
+	b.WriteString(nestQuerySingle(`SELECT id, name, short_name AS "shortName", street, city, phone, cell, zip, email, group_id AS "groupId" FROM finances WHERE id = o.finance_id`))
+	b.WriteString(" AS finance, ")
+	b.WriteString(nestQuerySingle(`SELECT id, name, head_branch AS "headBranch", street, city, phone, cell, zip, email FROM branchs WHERE id = o.branch_id`))
+	b.WriteString(" AS branch, ")
+	b.WriteString(nestQuerySingle(q_unit))
+	b.WriteString(" AS unit ")
+	b.WriteString(" FROM orders AS o")
+	b.WriteString(" WHERE o.finance_id=$1 OR 0=$1")
+	b.WriteString(" ORDER BY o.id DESC")
+
+	rs, err := Sql().Query(b.String(), id)
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)
@@ -648,7 +791,7 @@ func get_order_by_finance(id *int) ([]models.Order, error) {
 	defer rs.Close()
 
 	for rs.Next() {
-		var o models.Order
+		var o order_all
 
 		err := rs.Scan(
 			&o.ID,
@@ -669,13 +812,16 @@ func get_order_by_finance(id *int) ([]models.Order, error) {
 			&o.IsStnk,
 			&o.StnkPrice,
 			&o.Matrix,
+			&o.Finance,
+			&o.Branch,
+			&o.Unit,
 		)
 
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
 		}
 
-		set_child(&o)
+		//set_child(&o)
 
 		orders = append(orders, o)
 	}
@@ -683,19 +829,40 @@ func get_order_by_finance(id *int) ([]models.Order, error) {
 	return orders, err
 }
 
-func get_order_by_branch(id *int) ([]models.Order, error) {
+func get_order_by_branch(id *int) ([]order_all, error) {
 
-	var orders []models.Order
+	var orders []order_all
+	b := strings.Builder{}
 
-	var sqlStatement = `SELECT
-		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel,
-		user_name, verified_by, finance_id, branch_id,
-		is_stnk, stnk_price, matrix
-	FROM orders
-	WHERE branch_id=$1
-	ORDER BY branch_id, id DESC`
+	q_wheel := `SELECT id, name, short_name AS "short_name" FROM wheels WHERE id = t.wheel_id`
+	q_merk := "SELECT id, name FROM merks WHERE id = t.merk_id"
+	q_type := fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId",
+		%s as wheel, %s as merk
+		FROM types t
+		WHERE t.id = u.type_id`,
+		nestQuerySingle(q_wheel),
+		nestQuerySingle(q_merk),
+	)
+	q_unit := fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber", 
+	u.machine_number AS "machineNumber", u.color, u.type_id AS "type_id", u.warehouse_id AS "warehouseId",
+	%s as type
+	FROM units AS u WHERE u.order_id = o.id`,
+		nestQuerySingle(q_type))
 
-	rs, err := Sql().Query(sqlStatement, id)
+	b.WriteString("SELECT")
+	b.WriteString(" o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel,")
+	b.WriteString(" o.user_name, o.verified_by, o.finance_id, o.branch_id, o.is_stnk, o.stnk_price, o.matrix, ")
+	b.WriteString(nestQuerySingle(`SELECT id, name, short_name AS "shortName", street, city, phone, cell, zip, email, group_id AS "groupId" FROM finances WHERE id = o.finance_id`))
+	b.WriteString(" AS finance, ")
+	b.WriteString(nestQuerySingle(`SELECT id, name, head_branch AS "headBranch", street, city, phone, cell, zip, email FROM branchs WHERE id = o.branch_id`))
+	b.WriteString(" AS branch, ")
+	b.WriteString(nestQuerySingle(q_unit))
+	b.WriteString(" AS unit ")
+	b.WriteString(" FROM orders AS o")
+	b.WriteString(" WHERE o.branch_id=$1 OR 0=$1")
+	b.WriteString(" ORDER BY o.id DESC")
+
+	rs, err := Sql().Query(b.String(), id)
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)
@@ -705,7 +872,7 @@ func get_order_by_branch(id *int) ([]models.Order, error) {
 	defer rs.Close()
 
 	for rs.Next() {
-		var o models.Order
+		var o order_all
 
 		err := rs.Scan(
 			&o.ID,
@@ -726,13 +893,16 @@ func get_order_by_branch(id *int) ([]models.Order, error) {
 			&o.IsStnk,
 			&o.StnkPrice,
 			&o.Matrix,
+			&o.Finance,
+			&o.Branch,
+			&o.Unit,
 		)
 
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
 		}
 
-		set_child(&o)
+		// set_child(&o)
 
 		orders = append(orders, o)
 	}
@@ -740,54 +910,75 @@ func get_order_by_branch(id *int) ([]models.Order, error) {
 	return orders, err
 }
 
-func set_child(o *models.Order) {
-	finance, _ := getFinance(&o.FinanceID)
-	o.Finance = finance
+// func set_child(o *models.Order) {
+// 	finance, _ := getFinance(&o.FinanceID)
+// 	o.Finance = finance
 
-	branch, _ := getBranch(&o.BranchID)
-	o.Branch = branch
+// 	branch, _ := getBranch(&o.BranchID)
+// 	o.Branch = branch
 
-	cust, _ := getCustomer(&o.ID)
-	o.Customer = cust
+// 	cust, _ := getCustomer(&o.ID)
+// 	o.Customer = cust
 
-	// receivable, _ := getReceivable(&o.ID)
-	// o.Receivable = receivable
+// 	// receivable, _ := getReceivable(&o.ID)
+// 	// o.Receivable = receivable
 
-	unit, _ := getUnit(&o.ID)
-	o.Unit = unit
+// 	unit, _ := getUnit(&o.ID)
+// 	o.Unit = unit
 
-	actions, _ := getAllActions(&o.ID)
-	o.Actions = actions
+// 	actions, _ := getAllActions(&o.ID)
+// 	o.Actions = actions
 
-	task, _ := getTask(&o.ID)
-	o.Task = task
+// 	task, _ := getTask(&o.ID)
+// 	o.Task = task
 
-	home, _ := getHomeAddress(&o.ID)
-	o.HomeAddress = home
+// 	home, _ := getHomeAddress(&o.ID)
+// 	o.HomeAddress = home
 
-	office, _ := getOfficeAddress(&o.ID)
-	o.OfficeAddress = office
+// 	office, _ := getOfficeAddress(&o.ID)
+// 	o.OfficeAddress = office
 
-	post, _ := getPostAddress(&o.ID)
-	o.PostAddress = post
+// 	post, _ := getPostAddress(&o.ID)
+// 	o.PostAddress = post
 
-	ktp, _ := getKTPAddress(&o.ID)
-	o.KtpAddress = ktp
-}
+// 	ktp, _ := getKTPAddress(&o.ID)
+// 	o.KtpAddress = ktp
+// }
 
-func get_order_by_month(id *int) ([]models.Order, error) {
+func get_order_by_month(id *int) ([]order_all, error) {
 
-	var orders []models.Order
+	var orders []order_all
+	b := strings.Builder{}
 
-	var sqlStatement = `SELECT
-		id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, 
-		user_name, verified_by, finance_id, branch_id,
-		is_stnk, stnk_price, matrix
-	FROM orders
-	WHERE EXTRACT(MONTH from order_at)=$1
-	ORDER BY branch_id, id DESC`
+	q_wheel := `SELECT id, name, short_name AS "short_name" FROM wheels WHERE id = t.wheel_id`
+	q_merk := "SELECT id, name FROM merks WHERE id = t.merk_id"
+	q_type := fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId",
+		%s as wheel, %s as merk
+		FROM types t
+		WHERE t.id = u.type_id`,
+		nestQuerySingle(q_wheel),
+		nestQuerySingle(q_merk),
+	)
+	q_unit := fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber", 
+	u.machine_number AS "machineNumber", u.color, u.type_id AS "type_id", u.warehouse_id AS "warehouseId",
+	%s as type
+	FROM units AS u WHERE u.order_id = o.id`,
+		nestQuerySingle(q_type))
 
-	rs, err := Sql().Query(sqlStatement, id)
+	b.WriteString("SELECT")
+	b.WriteString(" o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel,")
+	b.WriteString(" o.user_name, o.verified_by, o.finance_id, o.branch_id, o.is_stnk, o.stnk_price, o.matrix, ")
+	b.WriteString(nestQuerySingle(`SELECT id, name, short_name AS "shortName", street, city, phone, cell, zip, email, group_id AS "groupId" FROM finances WHERE id = o.finance_id`))
+	b.WriteString(" AS finance, ")
+	b.WriteString(nestQuerySingle(`SELECT id, name, head_branch AS "headBranch", street, city, phone, cell, zip, email FROM branchs WHERE id = o.branch_id`))
+	b.WriteString(" AS branch, ")
+	b.WriteString(nestQuerySingle(q_unit))
+	b.WriteString(" AS unit ")
+	b.WriteString(" FROM orders AS o")
+	b.WriteString(" WHERE EXTRACT(MONTH from o.order_at)=$1")
+	b.WriteString(" ORDER BY o.id DESC")
+
+	rs, err := Sql().Query(b.String(), id)
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)
@@ -797,7 +988,7 @@ func get_order_by_month(id *int) ([]models.Order, error) {
 	defer rs.Close()
 
 	for rs.Next() {
-		var o models.Order
+		var o order_all
 
 		err := rs.Scan(
 			&o.ID,
@@ -818,13 +1009,16 @@ func get_order_by_month(id *int) ([]models.Order, error) {
 			&o.IsStnk,
 			&o.StnkPrice,
 			&o.Matrix,
+			&o.Finance,
+			&o.Branch,
+			&o.Unit,
 		)
 
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
 		}
 
-		set_child(&o)
+		//set_child(&o)
 
 		orders = append(orders, o)
 	}

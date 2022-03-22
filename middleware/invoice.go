@@ -389,10 +389,10 @@ type invoice_item struct {
 
 func invoice_get_item(id *int64) (invoice_item, error) {
 	var item invoice_item
-	var queryWheel = `SELECT w.id, w.name, w.short_name as "shortName" FROM wheels w WHERE w.id = t.wheel_id`
-	var queryMerk = `SELECT m.id, m.name FROM merks m WHERE m.id = t.merk_id`
+	var queryWheel = `SELECT id, name, short_name as "shortName" FROM wheels WHERE id = t.wheel_id`
+	var queryMerk = `SELECT id, name FROM merks WHERE id = t.merk_id`
 
-	var queryTye = fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId", %s AS wheel, %s AS merk FROM types t WHERE t.id = u.type_id`,
+	var queryType = fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId", %s AS wheel, %s AS merk FROM types t WHERE t.id = u.type_id`,
 		nestQuerySingle(queryWheel),
 		nestQuerySingle(queryMerk))
 
@@ -400,7 +400,7 @@ func invoice_get_item(id *int64) (invoice_item, error) {
 		u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId", %s AS type
 		FROM units u
 		WHERE u.order_id = o.id`,
-		nestQuerySingle(queryTye))
+		nestQuerySingle(queryType))
 
 	var queryDetails = fmt.Sprintf(`SELECT o.id, o.name, o.order_at as "orderAt", o.printed_at AS "printedAt",
 	o.bt_finance as "btFinance", o.bt_percent AS "btPercent", o.bt_matel AS "btMatel",
@@ -411,14 +411,14 @@ func invoice_get_item(id *int64) (invoice_item, error) {
 	INNER JOIN invoice_details d ON d.order_id = o.id
 	WHERE d.invoice_id = v.id`, nestQuerySingle(queryUnit))
 
-	var querFinance = `SELECT f.id, f.name, f.short_name AS "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email FROM finances f WHERE f.id = v.finance_id`
+	var querFinance = `SELECT f.id, f.name, f.short_name AS "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email, f.group_id AS "groupId" FROM finances f WHERE f.id = v.finance_id`
 	var queryAccount = `SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`
 
 	var queryTansactionDetails = `SELECT id, code_id AS "codeId", trx_id AS "trxId", debt, cred FROM trx_detail WHERE trx_id = x.id`
 
 	var queryTansaction = fmt.Sprintf(`SELECT x.id, x.ref_id AS "refId", x.division, x.descriptions,
 	x.trx_date AS "trxDate", x.memo, %s AS details
-	FROM trx x WHERE x.ref_id = v.id`, nestQuery(queryTansactionDetails))
+	FROM trx x WHERE x.ref_id = v.id AND x.division = 'trx-invoice'`, nestQuery(queryTansactionDetails))
 
 	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at,
 	v.salesman, v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo,
@@ -512,15 +512,16 @@ func invoice_delete(id *int64) int64 {
 
 func invoice_create(inv *models.Invoice, token *string) (int64, error) {
 
-	sqlStatement := `INSERT INTO invoices 
-	(invoice_at, payment_term, due_at, salesman, finance_id, subtotal, ppn, tax, total, account_id, memo, token) 
-	VALUES 
-	($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, to_tsvector('indonesian', $12))
-	RETURNING id`
+	builder := strings.Builder{}
+	builder.WriteString("INSERT INTO invoices")
+	builder.WriteString(" (invoice_at, payment_term, due_at, salesman, finance_id, subtotal, ppn, tax, total, account_id, memo, token)")
+	builder.WriteString(" VALUES")
+	builder.WriteString(" ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, to_tsvector('indonesian', $12))")
+	builder.WriteString(" RETURNING id")
 
 	var id int64
 
-	err := Sql().QueryRow(sqlStatement,
+	err := Sql().QueryRow(builder.String(),
 		inv.InvoiceAt,
 		inv.PaymentTerm,
 		inv.DueAt,
@@ -544,22 +545,24 @@ func invoice_create(inv *models.Invoice, token *string) (int64, error) {
 
 func invoice_update(id *int64, inv *models.Invoice, token *string) (int64, error) {
 
-	sqlStatement := `UPDATE invoices SET
-	invoice_at=$2,
-	payment_term=$3,
-	due_at=$4,
-	salesman=$5,
-	finance_id=$6,
-	subtotal=$7,
-	ppn=$8,
-	tax=$9,
-	total=$10,
-	account_id=$11,
-	memo=$12,
-	token=to_tsvector('indonesian', $13)
-	WHERE id=$1`
+	builder := strings.Builder{}
+	builder.WriteString("UPDATE invoices SET")
 
-	res, err := Sql().Exec(sqlStatement,
+	builder.WriteString(" invoice_at=$2")
+	builder.WriteString(", payment_term=$3")
+	builder.WriteString(", due_at=$4")
+	builder.WriteString(", salesman=$5")
+	builder.WriteString(", finance_id=$6")
+	builder.WriteString(", subtotal=$7")
+	builder.WriteString(", ppn=$8")
+	builder.WriteString(", tax=$9")
+	builder.WriteString(", total=$10")
+	builder.WriteString(", account_id=$11")
+	builder.WriteString(", memo=$12")
+	builder.WriteString(", token=to_tsvector('indonesian', $13)")
+	builder.WriteString(" WHERE id=$1")
+
+	res, err := Sql().Exec(builder.String(),
 		id,
 		inv.InvoiceAt,
 		inv.PaymentTerm,
@@ -598,15 +601,27 @@ type invoice_all struct {
 
 func invoice_get_all() ([]invoice_all, error) {
 	var invoices []invoice_all
-	var querFinance = `SELECT f.id, f.name, f.short_name "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email FROM finances f WHERE f.id = v.finance_id`
+
+	builder := strings.Builder{}
+
+	var querFinance = `SELECT f.id, f.name, f.short_name "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email, f.group_id AS "groupId" FROM finances f WHERE f.id = v.finance_id`
 	var queryAccount = `SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`
 
-	var sqlStatement = fmt.Sprintf("SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo, %s AS finance, %s AS account FROM invoices AS v ORDER BY v.id DESC",
-		nestQuerySingle(querFinance),
-		nestQuerySingle(queryAccount),
-	)
+	builder.WriteString("SELECT")
+	builder.WriteString(" v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo, ")
+	builder.WriteString(nestQuerySingle(querFinance))
+	builder.WriteString(" AS finance,")
+	builder.WriteString(nestQuerySingle(queryAccount))
+	builder.WriteString(" AS account")
+	builder.WriteString(" FROM invoices AS v")
+	builder.WriteString(" ORDER BY v.id DESC")
 
-	rs, err := Sql().Query(sqlStatement)
+	// var sqlStatement = fmt.Sprintf("SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo, %s AS finance, %s AS account FROM invoices AS v ORDER BY v.id DESC",
+	// 	nestQuerySingle(querFinance),
+	// 	nestQuerySingle(queryAccount),
+	// )
+
+	rs, err := Sql().Query(builder.String())
 
 	if err != nil {
 		log.Fatalf("Unable to execute merks query %v", err)
@@ -760,7 +775,7 @@ func invoice_get_orders(finance_id *int, invoice_id *int64) ([]invoice_order, er
 
 func invoices_search(txt *string) ([]invoice_all, error) {
 	var invoices []invoice_all
-	var querFinance = `SELECT f.id, f.name, f.short_name "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email FROM finances f WHERE f.id = v.finance_id`
+	var querFinance = `SELECT f.id, f.name, f.short_name "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email, f.group_id AS "groupId" FROM finances f WHERE f.id = v.finance_id`
 	var queryAccount = `SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`
 
 	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo,
@@ -812,7 +827,7 @@ func invoices_search(txt *string) ([]invoice_all, error) {
 
 func invoices_by_month(month *int, year *int) ([]invoice_all, error) {
 	var invoices []invoice_all
-	var querFinance = `SELECT f.id, f.name, f.short_name "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email FROM finances f WHERE f.id = v.finance_id`
+	var querFinance = `SELECT f.id, f.name, f.short_name "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email, f.group_id AS "groupId" FROM finances f WHERE f.id = v.finance_id`
 	var queryAccount = `SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`
 
 	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo,
@@ -864,10 +879,11 @@ func invoices_by_month(month *int, year *int) ([]invoice_all, error) {
 
 func invoices_by_finance(finance_id *int) ([]invoice_all, error) {
 	var invoices []invoice_all
-	var querFinance = `SELECT f.id, f.name, f.short_name "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email FROM finances f WHERE f.id = v.finance_id`
+	var querFinance = `SELECT f.id, f.name, f.short_name "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email, f.group_id AS "groupId" FROM finances f WHERE f.id = v.finance_id`
 	var queryAccount = `SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`
 
-	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo,
+	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, 
+		v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo,
 		%s AS finance, %s AS account 
 		FROM invoices AS v
 		WHERE v.finance_id=$1 OR 0=$1
@@ -894,10 +910,12 @@ func invoices_by_finance(finance_id *int) ([]invoice_all, error) {
 			&item.DueAt,
 			&item.Salesman,
 			&item.FinanceID,
-			&item.Memo,
-			&item.Total,
+			&item.Subtotal,
+			&item.Ppn,
 			&item.Tax,
+			&item.Total,
 			&item.AccountId,
+			&item.Memo,
 			&item.Finance,
 			&item.Account,
 		)

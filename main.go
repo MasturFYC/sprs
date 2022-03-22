@@ -24,8 +24,8 @@ func createRouter() {
 }
 
 func loadEnvirontment() {
-	//err := godotenv.Load("/home/mastur/.env")
-	err := godotenv.Load(".env")
+	err := godotenv.Load("/home/mastur/.env")
+	//err := godotenv.Load(".env")
 
 	if err != nil {
 		log.Fatalf("Error loading .env file")
@@ -42,6 +42,7 @@ func loadRouter() {
 	routers.ActionRouter(mainRouter.PathPrefix("/api/actions/").Subrouter())
 	routers.BranchRouter(mainRouter.PathPrefix("/api/branchs/").Subrouter())
 	routers.CustomerRouter(mainRouter.PathPrefix("/api/customers/").Subrouter())
+	routers.FinanceGroupRouter(mainRouter.PathPrefix("/api/finance-group").Subrouter())
 	routers.FinanceRouter(mainRouter.PathPrefix("/api/finances/").Subrouter())
 	routers.HomeAddressRouter(mainRouter.PathPrefix("/api/home-address/").Subrouter())
 	routers.KtpAddressRouter(mainRouter.PathPrefix("/api/ktp-address/").Subrouter())

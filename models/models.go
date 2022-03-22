@@ -73,6 +73,7 @@ type Finance struct {
 	Cell      NullString `json:"cell"`
 	Zip       NullString `json:"zip"`
 	Email     NullString `json:"email"`
+	GroupID   int        `json:"groupId"`
 	Orders    []Order    `json:"orders,omitempty"`
 }
 
@@ -157,4 +158,9 @@ type Property struct {
 
 type SearchGroup struct {
 	Txt string `json:"txt"`
+}
+
+type FinanceGroup struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }

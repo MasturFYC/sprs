@@ -162,30 +162,40 @@ func UpdateFinance(w http.ResponseWriter, r *http.Request) {
 
 func getFinance(id *int) (models.Finance, error) {
 
-	var finance models.Finance
+	var p models.Finance
 
 	var sqlStatement = `SELECT 
-		id, name, short_name, street, city, phone, cell, zip, email
+		id, name, short_name, street, city, phone, cell, zip, email, group_id
 	FROM finances
 	WHERE id=$1`
 
 	rs := Sql().QueryRow(sqlStatement, id)
 
-	err := rs.Scan(&finance.ID, &finance.Name, &finance.ShortName, &finance.Street,
-		&finance.City, &finance.Phone, &finance.Cell, &finance.Zip, &finance.Email)
+	err := rs.Scan(
+		&p.ID,
+		&p.Name,
+		&p.ShortName,
+		&p.Street,
+		&p.City,
+		&p.Phone,
+		&p.Cell,
+		&p.Zip,
+		&p.Email,
+		&p.GroupID,
+	)
 
 	switch err {
 	case sql.ErrNoRows:
 		fmt.Println("No rows were returned!")
-		return finance, nil
+		return p, nil
 	case nil:
-		return finance, nil
+		return p, nil
 	default:
 		log.Fatalf("Unable to scan the row. %v", err)
 	}
 
 	// return empty user on error
-	return finance, err
+	return p, err
 }
 
 func getAllFinances() ([]models.Finance, error) {
@@ -193,7 +203,7 @@ func getAllFinances() ([]models.Finance, error) {
 	var finances []models.Finance
 
 	var sqlStatement = `SELECT 
-		id, name, short_name, street, city, phone, cell, zip, email
+		id, name, short_name, street, city, phone, cell, zip, email, group_id
 	FROM finances
 	ORDER BY name`
 
@@ -207,16 +217,25 @@ func getAllFinances() ([]models.Finance, error) {
 	defer rs.Close()
 
 	for rs.Next() {
-		var finance models.Finance
+		var p models.Finance
 
-		err := rs.Scan(&finance.ID, &finance.Name, &finance.ShortName, &finance.Street,
-			&finance.City, &finance.Phone, &finance.Cell, &finance.Zip, &finance.Email)
+		err := rs.Scan(
+			&p.ID,
+			&p.Name,
+			&p.ShortName,
+			&p.Street,
+			&p.City,
+			&p.Phone,
+			&p.Cell,
+			&p.Zip,
+			&p.Email,
+			&p.GroupID)
 
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
 		}
 
-		finances = append(finances, finance)
+		finances = append(finances, p)
 	}
 
 	return finances, err
@@ -247,9 +266,9 @@ func deleteFinance(id *int) (int64, error) {
 func createFinance(finance *models.Finance) (int, error) {
 
 	sqlStatement := `INSERT INTO finances 
-	(name, short_name, street, city, phone, cell, zip, email) 
+	(name, short_name, street, city, phone, cell, zip, email, group_id) 
 	VALUES 
-	($1, $2, $3, $4, $5, $6, $7, $8)
+	($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	RETURNING id`
 
 	var id int
@@ -263,6 +282,7 @@ func createFinance(finance *models.Finance) (int, error) {
 		finance.Cell,
 		finance.Zip,
 		finance.Email,
+		finance.GroupID,
 	).Scan(&id)
 
 	// if err != nil {
@@ -275,7 +295,7 @@ func createFinance(finance *models.Finance) (int, error) {
 func updateFinance(id *int, finance *models.Finance) (int64, error) {
 
 	sqlStatement := `UPDATE finances SET
-		name=$2, short_name=$3, street=$4, city=$5, phone=$6, cell=$7, zip=$8, email=$9
+		name=$2, short_name=$3, street=$4, city=$5, phone=$6, cell=$7, zip=$8, email=$9, group_id=$10
 	WHERE id=$1`
 
 	res, err := Sql().Exec(sqlStatement,
@@ -288,6 +308,7 @@ func updateFinance(id *int, finance *models.Finance) (int64, error) {
 		finance.Cell,
 		finance.Zip,
 		finance.Email,
+		finance.GroupID,
 	)
 
 	if err != nil {

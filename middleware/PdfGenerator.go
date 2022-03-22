@@ -43,8 +43,6 @@ func Pdf_GenInvoice(w http.ResponseWriter, r *http.Request) {
 	source = (*json.RawMessage)(&invoice.Details)
 	err = json.Unmarshal(*source, &orders)
 
-	//log.Println(orders)
-
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
