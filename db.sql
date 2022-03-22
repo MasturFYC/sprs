@@ -2,13 +2,13 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 13.5 (Debian 13.5-0+deb11u1)
--- Dumped by pg_dump version 13.5 (Debian 13.5-0+deb11u1)
+-- Dumped from database version 12.10 (Ubuntu 12.10-1.pgdg20.04+1)
+-- Dumped by pg_dump version 14.2 (Ubuntu 14.2-1.pgdg20.04+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'SQL_ASCII';
+SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
@@ -338,7 +338,7 @@ ALTER TABLE public.order_id_seq OWNER TO postgres;
 
 CREATE SEQUENCE public.order_name_seq
     AS integer
-    START WITH 1
+    START WITH 100
     INCREMENT BY 1
     NO MINVALUE
     NO MAXVALUE
@@ -736,8 +736,6 @@ COPY public.acc_type (id, name, descriptions, group_id) FROM stdin;
 --
 
 COPY public.actions (id, action_at, pic, descriptions, order_id, file_name) FROM stdin;
-1	2022-03-19	qweqwe	qweqweqwe	10	OIP.jpg
-2	2022-03-19	qrqeqwe	qweqweqwe	10	my-upload_vX_hnp3M6j.jpg
 \.
 
 
@@ -747,6 +745,8 @@ COPY public.actions (id, action_at, pic, descriptions, order_id, file_name) FROM
 
 COPY public.branchs (id, name, street, city, phone, cell, zip, head_branch, email) FROM stdin;
 1	Jatibarang	Jl. Pasar Sepur	Jatibarang	08596522323	012454787	45616	Mastur	mastur.st12@gmail.com
+3	Pusat Indramayu	\N	\N	\N	\N	\N	Deddy Pranoto	\N
+4	Karawang	\N	\N	\N	\N	\N	Gugur Junaedi	\N
 \.
 
 
@@ -766,6 +766,21 @@ COPY public.finances (id, name, short_name, street, city, phone, cell, zip, emai
 1	Bussan Auto Finance	BAF	Jl. Jend. Sudirman	Indramayu	2569874545	65979	2598987	busan.123@gmail.com
 2	Auto Discret Finance	Adira	Jl. Jend. Sudirman	Indramayu	2569874545	65979	2598987	adira.finance@gmail.com
 3	Mandiri Tunas Finance	MTF	\N	Cirebon	\N	\N	\N	\N
+4	Clipan Bekasi	CLIP B	\N	\N	\N	\N	\N	\N
+5	OTO Kredit Motor	OTTO	\N	\N	\N	\N	\N	\N
+6	COLLECTIUS	COL	\N	\N	\N	\N	\N	\N
+7	Mandiri Utama Finance	MUF	\N	\N	\N	\N	\N	\N
+8	FIF Group	FIF	\N	\N	\N	\N	\N	\N
+9	Mitra Pinasthika Mustika Finance	MPMF	\N	\N	\N	\N	\N	\N
+10	Top Finance Company	TFC	\N	\N	\N	\N	\N	\N
+11	Kredit Plus	KP+	\N	\N	\N	\N	\N	\N
+12	WOM Finance	WOMF	\N	\N	\N	\N	\N	\N
+13	MEGAPARA	MPR	\N	\N	\N	\N	\N	\N
+14	Clipan Karawang\n	CLIP K	\N	\N	\N	\N	\N	\N
+15	Clipan Palembang	CLIP P	\N	\N	\N	\N	\N	\N
+16	Safron Finance Karawang	SFI K	\N	\N	\N	\N	\N	\N
+17	BFI Finance	BFI	\N	\N	\N	\N	\N	\N
+18	Mandiri Tunas Finance Semarang	MTF S	\N	\N	\N	\N	\N	\N
 \.
 
 
@@ -782,8 +797,6 @@ COPY public.home_addresses (order_id, street, region, city, phone, zip) FROM std
 --
 
 COPY public.invoice_details (invoice_id, order_id) FROM stdin;
-104	11
-104	10
 \.
 
 
@@ -792,7 +805,6 @@ COPY public.invoice_details (invoice_id, order_id) FROM stdin;
 --
 
 COPY public.invoices (id, invoice_at, payment_term, due_at, salesman, finance_id, subtotal, ppn, tax, total, account_id, memo, token) FROM stdin;
-104	2022-03-22	2	2022-03-22	Wakid	1	2700000.00	10.00	270000.00	2430000.00	1112	\N	'/id-0':2 '125':9,12 'auto':4 'baf':6 'bussan':3 'e25632ff':10 'e56985698':7 'finance':5 'fino':11 'vario':8 'wakid':1
 \.
 
 
@@ -814,6 +826,7 @@ COPY public.merks (id, name) FROM stdin;
 13	Honda
 1	Mitsubishi
 14	Hyundai
+15	Toyota
 \.
 
 
@@ -830,10 +843,54 @@ COPY public.office_addresses (order_id, street, region, city, phone, zip) FROM s
 --
 
 COPY public.orders (id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, user_name, verified_by, finance_id, branch_id, is_stnk, stnk_price, matrix, token) FROM stdin;
-8	88258-Ed	2022-03-01	2022-03-04	1300000.00	20.00	1040000.00	Opick	\N	1	1	f	200000.00	1500000.00	'-01':5 '-03':4 '00':7 '00z':8 '1000':23 '2015':27 '2022':3 '2581':20 '4':30 '88258':1 'ada':18 'auto':10 'baf':12 'biru':26 'brio':22 'bussan':9 'e':19 'ed':2 'finance':11 'gudang':24 'honda':28 'jatibarang':13 'mastur':14 'patrol':25 'pbf':21 'r4':31 'roda':29 'stnk':16 'stnk-tidak-ada':15 't00':6 'tidak':17
-11	x-001254	2022-03-16	2022-03-16	1200000.00	20.00	960000.00	Opick	test	1	1	t	0.00	1200000.00	'-001254':2 '-03':4 '-16':5 '00':7 '00z':8 '125':20 '2':26 '2022':3,23 'ada':17 'auto':10 'baf':12 'bussan':9 'e56985698':18 'finance':11 'gudang':21 'honda':24 'jatibarang':13 'mastur':14 'pusat':22 'r2':27 'roda':25 'stnk':16 'stnk-ada':15 't00':6 'vario':19 'x':1
-10	qweqwe qweqwe	2022-03-16	2022-03-16	1500000.00	20.00	1200000.00	Opick	test	1	1	t	0.00	1500000.00	'-03':4 '-16':5 '00':7 '00z':8 '125':20 '2':26 '2022':3,23 'ada':17 'auto':10 'baf':12 'bussan':9 'e25632ff':18 'finance':11 'fino':19 'gudang':21 'jatibarang':13 'mastur':14 'pusat':22 'qweqwe':1,2 'r2':27 'roda':25 'stnk':16 'stnk-ada':15 't00':6 'yamaha':24
-9	X-256/BAF/VII/2002	2022-01-07	2022-01-07	1500000.00	20.00	1200000.00	Opick	\N	3	1	f	200000.00	1700000.00	'-01':5 '-07':6 '-256':2 '/baf/vii/2002':3 '00':8 '00z':9 '125':22 '2':29 '2022':4,26 'ada':19 'e5968ghj':20 'finance':12 'fino':21 'gudang':23 'hitam':25 'jatibarang':14 'mandir':10 'mastur':15 'mtf':13 'pusat':24 'r2':30 'roda':28 'stnk':17 'stnk-tidak-ada':16 't00':7 'tidak':18 'tunas':11 'x':1 'yamaha':27
+47	000000047	2022-03-16	2022-03-16	9000000.00	11.11	8000000.00	Mastur	\N	15	3	t	0.00	9000000.00	'1623':7 '2006':1 'bg':6 'clip':4 'honda':2 'jazz':3 'p':5 'pf':8 'r4':9
+46	000000046	2022-03-14	2022-03-14	23500000.00	10.64	21000000.00	Mastur	\N	16	3	t	0.00	23500000.00	'-7':4 '1052':8 '2020':1 'k':6 'r4':10 'sfi':5 'suzuk':2 't':7 'ul':9 'xl':3
+45	000000045	2022-03-14	2022-03-14	8000000.00	20.00	6400000.00	Mastur	\N	2	3	t	0.00	8000000.00	'2017':1 '8013':6 'adira':4 'e':5 'mitsubish':2 'pickup':3 'qa':7 'r4':8
+44	000000044	2022-03-12	2022-03-12	8000000.00	20.00	6400000.00	Mastur	\N	17	3	t	0.00	8000000.00	'2014':1 '8903':6 'bfi':4 'carry':3 'e':5 'pp':7 'r4':8 'suzuk':2
+43	000000043	2022-03-09	2022-03-09	21000000.00	9.52	19000000.00	Mastur	\N	16	3	t	0.00	21000000.00	'2020':1 '8060':7 'carry':3 'eg':8 'k':5 'r4':9 'sfi':4 'suzuk':2 't':6
+42	000000042	2022-02-16	2022-02-16	15000000.00	12.00	13200000.00	Mastur	\N	18	3	t	0.00	15000000.00	'1000':4 '2020':1 '9049':8 'brio':3 'h':7 'honda':2 'mtf':5 'r4':10 's':6 'se':9
+41	000000041	2022-01-25	2022-01-25	26620000.00	9.09	24200000.00	Mastur	\N	14	3	t	0.00	26620000.00	'1788':7 '2017':1 'bc':8 'clip':4 'honda':2 'k':5 'mobilio':3 'r4':9 't':6
+39	000000039	2022-01-14	2022-01-14	26000000.00	6.92	24200000.00	Mastur	\N	18	3	t	0.00	26000000.00	'1000':4 '2016':1 '8715':8 'brio':3 'gp':9 'h':7 'honda':2 'mtf':5 'r4':10 's':6
+38	000000038	2021-12-29	2021-12-29	13000000.00	7.69	12000000.00	Mastur	\N	14	3	t	0.00	13000000.00	'1412':7 '2004':1 'carry':3 'clip':4 'k':5 'km':8 'r4':9 'suzuk':2 't':6
+37	000000037	2021-12-02	2021-12-02	20000000.00	15.00	17000000.00	Mastur	\N	14	3	t	0.00	20000000.00	'2006':1 '8936':7 'b':6 'clip':4 'honda':2 'jazz':3 'k':5 'no':8 'r4':9
+36	000000036	2022-03-18	2022-03-18	1500000.00	20.00	1200000.00	Mastur	\N	1	1	t	0.00	1500000.00	'2018':1 '5713':7 'baf':5 'e':6 'm3':4 'mio':3 'pav':8 'r2':9 'yamaha':2
+35	000000035	2022-03-18	2022-03-18	1800000.00	20.00	1440000.00	Mastur	\N	2	1	t	0.00	1800000.00	'-15':4 '2017':1 '2110':7 'adira':5 'r':3 'r2':9 't':6 'yamaha':2 'yv':8
+34	000000034	2022-03-17	2022-03-17	900000.00	20.00	720000.00	Mastur	\N	2	1	t	0.00	900000.00	'2012':1 '4593':6 'adira':4 'e':5 'jupiter':3 'r2':8 'tq':7 'yamaha':2
+33	000000033	2022-03-16	2022-03-16	1500000.00	20.00	1200000.00	Mastur	\N	2	1	t	0.00	1500000.00	'2019':1 '5856':6 'adira':4 'genio':3 'honda':2 'r2':8 't':5 'zt':7
+32	000000032	2022-03-14	2022-03-14	1200000.00	20.00	960000.00	Mastur	\N	2	1	t	0.00	1200000.00	'2017':1 '2191':6 'adira':4 'beat':3 'honda':2 'r2':8 't':5 'ys':7
+31	000000031	2022-03-12	2022-03-12	1800000.00	20.00	1440000.00	Mastur	\N	2	1	t	0.00	1800000.00	'-15':4 '2017':1 '2391':7 'adira':5 'e':6 'jm':8 'r':3 'r2':9 'yamaha':2
+30	000000030	2022-03-12	2022-03-12	1450000.00	20.00	1160000.00	Mastur	\N	2	1	t	0.00	1450000.00	'2018':1 '3615':6 'adira':4 'honda':2 'r2':8 't':5 'verza':3 'zd':7
+29	000000029	2022-03-09	2022-03-09	1450000.00	20.00	1160000.00	Mastur	\N	13	1	t	0.00	1450000.00	'2015':1 '4544':6 'e':5 'jd':7 'mio':3 'mpr':4 'r2':8 'yamaha':2
+28	000000028	2022-03-09	2022-03-09	1300000.00	20.00	1040000.00	Mastur	\N	2	1	t	0.00	1300000.00	'2017':1 '4487':7 'adira':5 'mio':3 'pj':8 'r2':9 't':6 'yamaha':2 'z':4
+27	000000027	2022-03-09	2022-03-09	700000.00	20.00	560000.00	Mastur	\N	2	1	t	0.00	700000.00	'2014':1 '6819':6 'adira':4 'b':5 'pzi':7 'r2':8 'xeon':3 'yamaha':2
+26	000000026	2022-03-07	2022-03-07	850000.00	20.00	680000.00	Mastur	\N	11	1	t	0.00	850000.00	'150':4 '2014':1 '2891':7 'honda':2 'kp':5 'r2':9 't':6 'vario':3 'wp':8
+25	000000025	2022-03-02	2022-03-02	1000000.00	20.00	800000.00	Mastur	\N	2	1	t	0.00	1000000.00	'150':4 '2015':1 '3812':7 'adira':5 'b':6 'honda':2 'r2':9 'ujy':8 'vario':3
+24	000000024	2022-02-25	2022-02-25	1500000.00	20.00	1200000.00	Mastur	\N	1	1	t	0.00	1500000.00	'2018':1 '2146':7 'baf':5 'e':6 'mio':3 'qaf':8 'r2':9 's':4 'yamaha':2
+23	000000023	2022-02-23	2022-02-23	0.00	20.00	40000.00	Mastur	\N	12	1	t	0.00	0.00	'2021':1 '2815':6 'e':5 'gear':3 'pbx':7 'r2':8 'womf':4 'yamaha':2
+22	000000022	2022-02-23	2022-02-23	950000.00	20.00	760000.00	Mastur	\N	1	1	t	0.00	950000.00	'2015':1 '2830':7 'baf':5 'e':6 'm3':4 'mio':3 'qr':8 'r2':9 'yamaha':2
+21	000000021	2022-02-21	2022-02-21	950000.00	20.00	760000.00	Mastur	\N	1	1	t	0.00	950000.00	'2015':1 '6262':7 'b':6 'baf':5 'm3':4 'mio':3 'r2':9 'vky':8 'yamaha':2
+19	000000019	2022-01-26	2022-01-26	1000000.00	20.00	800000.00	Mastur	\N	2	1	t	0.00	1000000.00	'2018':1 '5638':6 'adira':4 'e':5 'honda':2 'pav':7 'r2':8 'revo':3
+15	000000015	2022-01-06	2022-01-06	900000.00	20.00	900000.00	Mastur	\N	5	1	t	0.00	900000.00	'2012':1 '4146':7 'jupiter':3 'ko':8 'mx':4 'otto':5 'r2':9 't':6 'yamaha':2
+13	000000013	2021-12-06	2021-12-06	1000000.00	20.00	800000.00	Mastur	\N	6	1	t	0.00	1000000.00	'2017':1 '2417':7 'col':5 'e':6 'm3':4 'mio':3 'pao':8 'r2':9 'yamaha':2
+11	000000011	2021-09-27	2021-09-27	900000.00	20.00	720000.00	Mastur	\N	8	1	t	0.00	900000.00	'2012':1 '4892':6 'e':5 'fif':4 'jupiter':3 'r2':8 'tk':7 'yamaha':2
+9	000000009	2022-03-18	2022-03-18	1300000.00	20.00	1040000.00	Mastur	\N	2	3	t	0.00	1300000.00	'2017':1 '6053':6 'adira':4 'beat':3 'e':5 'honda':2 'pam':7 'r2':8
+8	000000008	2022-03-17	2022-03-17	1700000.00	20.00	1360000.00	Mastur	\N	2	3	t	0.00	1700000.00	'-15':4 '2018':1 '6277':7 'adira':5 'e':6 'paz':8 'r':3 'r2':9 'yamaha':2
+7	000000007	2022-03-15	2022-03-15	1700000.00	20.00	1360000.00	Mastur	\N	1	3	t	0.00	1700000.00	'125':4 '2019':1 '2033':7 'baf':5 'e':6 'fino':3 'pbj':8 'r2':9 'yamaha':2
+6	000000006	2022-03-02	2022-03-02	1200000.00	20.00	960000.00	Mastur	\N	2	3	t	0.00	1200000.00	'2016':1 '2633':6 'adira':4 'beat':3 'e':5 'honda':2 'pac':7 'r2':8
+5	000000005	2022-02-24	2022-02-24	1500000.00	20.00	1200000.00	Mastur	\N	7	3	t	0.00	1500000.00	'125':4 '2017':1 '4096':7 'e':6 'fino':3 'muf':5 'paq':8 'r2':9 'yamaha':2
+3	000000003	2022-02-07	2022-02-07	1300000.00	20.00	1040000.00	Mastur	\N	1	3	t	0.00	1300000.00	'2018':1 '5125':7 'baf':5 'e':6 'm3':4 'mio':3 'pbc':8 'r2':9 'yamaha':2
+1	000000001	2021-12-15	2021-12-15	1300000.00	20.00	1040000.00	Mastur	\N	5	3	t	0.00	1300000.00	'2017':1 '5605':7 'e':6 'mio':3 'otto':5 'pas':8 'r2':9 'yamaha':2 'z':4
+48	000000048	2022-03-18	2022-03-18	8000000.00	18.75	6500000.00	Mastur	\N	2	3	t	0.00	8000000.00	'2018':1 '938':6 'adira':4 'e':5 'expander':3 'mitsubish':2 'r4':8 'xy':7
+40	000000040	2022-01-17	2022-01-17	26000000.00	7.69	24000000.00	Mastur	\N	14	3	t	0.00	26000000.00	'-3':4 '1164':8 '2017':1 'clip':5 'er':3 'fq':9 'k':6 'r4':10 'suzuk':2 't':7
+20	000000020	2022-01-21	2022-01-21	900000.00	20.00	720000.00	Mastur	\N	11	1	t	0.00	900000.00	'125':4 '2013':1 '5253':7 'e':6 'honda':2 'kp':5 'r2':9 'ty':8 'vario':3
+18	000000018	2022-01-18	2022-01-18	1000000.00	20.00	800000.00	Mastur	\N	5	1	t	0.00	1000000.00	'2015':1 '6716':7 'e':6 'ix':8 'm3':4 'mio':3 'otto':5 'r2':9 'yamaha':2
+17	000000017	2022-01-14	2022-01-14	750000.00	20.00	600000.00	Mastur	\N	10	1	t	0.00	750000.00	'-125':5 '2008':1 '3828':8 'fw':9 'honda':2 'r2':10 'supra':3 't':7 'tfc':6 'x':4
+16	000000016	2022-01-14	2022-01-14	1100000.00	20.00	880000.00	Mastur	\N	5	1	t	0.00	1100000.00	'2016':1 '3848':6 'beat':3 'e':5 'honda':2 'otto':4 'r2':8 'ub':7
+14	000000014	2021-12-07	2021-12-07	1500000.00	20.00	1200000.00	Mastur	\N	9	1	t	0.00	1500000.00	'2012':1 '3521':7 'fu':4 'kl':8 'mpmf':5 'r2':9 'satria':3 'suzuk':2 't':6
+12	000000012	2021-11-04	2021-11-04	1000000.00	20.00	800000.00	Mastur	\N	6	1	t	0.00	1000000.00	'2016':1 '3479':7 'b':6 'col':5 'm3':4 'mio':3 'r2':9 'uju':8 'yamaha':2
+10	000000010	2022-03-19	2022-03-19	850000.00	20.00	680000.00	Mastur	\N	2	3	t	0.00	850000.00	'2013':1 '5474':6 'adira':4 'beat':3 'e':5 'honda':2 'q':7 'r2':8
+4	000000004	2022-02-18	2022-02-18	1200000.00	20.00	960000.00	Mastur	\N	2	3	t	0.00	1200000.00	'2015':1 '5080':6 'adira':4 'br':5 'py':7 'r2':8 'vixion':3 'yamaha':2
+2	000000002	2022-01-10	2022-01-10	1300000.00	20.00	1040000.00	Mastur	\N	6	3	t	0.00	1300000.00	'2016':1 '3977':6 'col':4 'e':5 'mio':3 'pac':7 'r2':8 'yamaha':2
 \.
 
 
@@ -904,7 +961,32 @@ COPY public.trx_type (id, name, descriptions) FROM stdin;
 COPY public.types (id, name, wheel_id, merk_id) FROM stdin;
 2	Vario 125	2	13
 3	Brio 1000	3	13
-1	Fino 125	2	2
+1	Fino 125 	2	2
+4	Avanza	3	15
+5	GENIO	2	13
+6	BEAT	2	13
+7	Mio Z	2	2
+8	Mio	2	2
+9	Mio M3	2	2
+10	Vixion	2	2
+11	R-15	2	2
+12	Jupiter	2	2
+13	Satria FU	2	12
+14	Jupiter MX	2	2
+15	Supra X-125	2	13
+16	Revo	2	13
+17	Gear	2	2
+18	Mio S	2	2
+19	Vario 150	2	13
+20	Xeon	2	2
+21	Verza	2	13
+22	Jazz	3	13
+23	Carry	3	12
+24	ER-3	3	12
+25	Mobilio	3	13
+26	Pickup	3	1
+27	XL-7	3	12
+28	Expander	3	1
 \.
 
 
@@ -913,10 +995,54 @@ COPY public.types (id, name, wheel_id, merk_id) FROM stdin;
 --
 
 COPY public.units (order_id, nopol, year, frame_number, machine_number, color, type_id, warehouse_id) FROM stdin;
-8	E 2581 PBF	2015			Biru	3	2
-10	E25632FF	2022				1	1
-11	E56985698	2022				2	1
-9	E5968GHJ	2022			Hitam	1	1
+1	E 5605 PAS	2017	\N	\N	\N	7	1
+2	E 3977 PAC	2016	\N	\N	\N	8	1
+3	E 5125 PBC	2018	\N	\N	\N	9	1
+4	BR 5080 PY	2015	\N	\N	\N	10	1
+5	E 4096 PAQ	2017	\N	\N	\N	1	1
+6	E 2633 PAC	2016	\N	\N	\N	6	1
+7	E 2033 PBJ	2019	\N	\N	\N	1	1
+8	E 6277 PAZ	2018	\N	\N	\N	11	2
+9	E 6053 PAM	2017	\N	\N	\N	6	1
+10	E 5474 Q	2013	\N	\N	\N	6	1
+11	E 4892 TK	2012	\N	\N	\N	12	3
+12	B 3479 UJU	2016	\N	\N	\N	9	3
+13	E 2417 PAO	2017	\N	\N	\N	9	3
+14	T 3521 KL	2012	\N	\N	\N	13	3
+15	T 4146 KO	2012	\N	\N	\N	14	3
+16	E 3848 UB	2016	\N	\N	\N	6	3
+17	T 3828 FW	2008	\N	\N	\N	15	1
+18	E 6716 IX	2015	\N	\N	\N	9	3
+19	E 5638 PAV	2018	\N	\N	\N	16	2
+20	E 5253 TY	2013	\N	\N	\N	2	3
+21	B 6262 VKY	2015	\N	\N	\N	9	3
+22	E 2830 QR	2015	\N	\N	\N	9	3
+23	E 2815 PBX	2021	\N	\N	\N	17	4
+24	E 2146 QAF	2018	\N	\N	\N	18	3
+25	B 3812 UJY	2015	\N	\N	\N	19	2
+26	T 2891 WP	2014	\N	\N	\N	19	2
+27	B 6819 PZI	2014	\N	\N	\N	20	2
+28	T 4487 PJ	2017	\N	\N	\N	7	2
+29	E 4544 JD	2015	\N	\N	\N	8	3
+30	T 3615 ZD	2018	\N	\N	\N	21	2
+31	E 2391 JM	2017	\N	\N	\N	11	2
+32	T 2191 YS	2017	\N	\N	\N	6	2
+33	T 5856 ZT	2019	\N	\N	\N	5	2
+34	E 4593 TQ	2012	\N	\N	\N	12	2
+35	T 2110 YV	2017	\N	\N	\N	11	2
+36	E 5713 PAV	2018	\N	\N	\N	9	2
+37	B 8936 NO	2006	\N	\N	\N	22	1
+38	T 1412 KM	2004	\N	\N	\N	23	1
+39	H 8715 GP	2016	\N	\N	\N	3	1
+40	T 1164 FQ	2017	\N	\N	\N	24	1
+41	T 1788 BC	2017	\N	\N	\N	25	1
+42	H 9049 SE	2020	\N	\N	\N	3	1
+43	T 8060 EG	2020	\N	\N	\N	23	1
+44	E 8903 PP	2014	\N	\N	\N	23	1
+45	E 8013 QA	2017	\N	\N	\N	26	1
+46	T 1052 UL	2020	\N	\N	\N	27	1
+47	BG 1623 PF	2006	\N	\N	\N	22	1
+48	E 938 XY	2018	\N	\N	\N	28	1
 \.
 
 
@@ -933,8 +1059,10 @@ COPY public.users (id, name, email, password, role) FROM stdin;
 --
 
 COPY public.warehouses (id, name, descriptions) FROM stdin;
-1	Gudang Pusat	Indramayu
-2	Gudang Patrol	Patrol
+2	Jatibarang	Jatibarang
+1	Pusat	Indramayu
+3	GUDANG	---
+4	KURANG 300	---
 \.
 
 
@@ -995,7 +1123,7 @@ SELECT pg_catalog.setval('public.order_id_seq', 13, true);
 -- Name: order_name_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.order_name_seq', 22, true);
+SELECT pg_catalog.setval('public.order_name_seq', 24, true);
 
 
 --
@@ -1016,7 +1144,7 @@ SELECT pg_catalog.setval('public.trx_seq', 170, true);
 -- Name: type_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.type_id_seq', 3, true);
+SELECT pg_catalog.setval('public.type_id_seq', 28, true);
 
 
 --

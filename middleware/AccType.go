@@ -38,7 +38,7 @@ func GetAccountType(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(params["id"])
 
 	if err != nil {
-		log.Printf("Unable to convert the string into int.  %v", err)
+		//log.Printf("Unable to convert the string into int.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -46,8 +46,9 @@ func GetAccountType(w http.ResponseWriter, r *http.Request) {
 	acc_type, err := getAccType(&id)
 
 	if err != nil {
-		log.Printf("Unable to get account type. %v", err)
+		//log.Printf("Unable to get account type. %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
 	}
 
 	json.NewEncoder(w).Encode(&acc_type)
@@ -63,8 +64,9 @@ func CreateAccountType(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&acc_type)
 
 	if err != nil {
-		log.Printf("Unable to decode the request body to account type.  %v", err)
+		//log.Printf("Unable to decode the request body to account type.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	rowsAffected, err := createAccType(&acc_type)
@@ -100,7 +102,7 @@ func UpdateAccountType(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&acc_type)
 
 	if err != nil {
-		log.Printf("Unable to decode the request body to account type.  %v", err)
+		//log.Printf("Unable to decode the request body to account type.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -108,7 +110,7 @@ func UpdateAccountType(w http.ResponseWriter, r *http.Request) {
 	updatedRows, err := updateAccType(&id, &acc_type)
 
 	if err != nil {
-		log.Printf("Unable to update account type.  %v", err)
+		//log.Printf("Unable to update account type.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -135,7 +137,7 @@ func DeleteAccountType(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(params["id"])
 
 	if err != nil {
-		log.Printf("Unable to convert the string into int.  %v", err)
+		//log.Printf("Unable to convert the string into int.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -143,7 +145,7 @@ func DeleteAccountType(w http.ResponseWriter, r *http.Request) {
 	deletedRows, err := deleteAccType(&id)
 
 	if err != nil {
-		log.Printf("Unable to delete account.  %v", err)
+		//log.Printf("Unable to delete account.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}

@@ -32,8 +32,9 @@ func Invoice_GetSearch(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&t)
 
 	if err != nil {
-		log.Printf("Unable to decode the request body to transaction.  %v", err)
+		//log.Printf("Unable to decode the request body to transaction.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	invoices, err := invoices_search(&t.Txt)
@@ -137,7 +138,7 @@ func Invoice_GetItem(w http.ResponseWriter, r *http.Request) {
 	invoice, err := invoice_get_item(&id)
 
 	if err != nil {
-		log.Printf("Unable to get all account groups. %v", err)
+		//log.Printf("Unable to get all account groups. %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
@@ -154,14 +155,15 @@ func Invoice_Create(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&param)
 
 	if err != nil {
-		log.Printf("Unable to decode the request body to transaction.  %v", err)
+		//log.Printf("Unable to decode the request body to transaction.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	id, err := invoice_create(&param.Invoice, &param.Token)
 
 	if err != nil {
-		log.Printf("(API) Unable to create transaction.  %v", err)
+		//log.Printf("(API) Unable to create transaction.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -171,7 +173,7 @@ func Invoice_Create(w http.ResponseWriter, r *http.Request) {
 		err = invoice_insert_details(param.DetailIDs, &id)
 
 		if err != nil {
-			log.Printf("Unable to insert invoice details.  %v", err)
+			//log.Printf("Unable to insert invoice details.  %v", err)
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return
 		}
@@ -184,7 +186,7 @@ func Invoice_Create(w http.ResponseWriter, r *http.Request) {
 	trxId, err := createTransaction(&param.Trx, stoken)
 
 	if err != nil {
-		log.Printf("(API) Unable to create transaction.  %v", err)
+		//log.Printf("(API) Unable to create transaction.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -194,7 +196,7 @@ func Invoice_Create(w http.ResponseWriter, r *http.Request) {
 		err = bulkInsertDetails(param.Trx.Details, &trxId)
 
 		if err != nil {
-			log.Printf("Unable to insert transaction details.  %v", err)
+			//log.Printf("Unable to insert transaction details.  %v", err)
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return
 		}
@@ -217,7 +219,7 @@ func Invoice_Delete(w http.ResponseWriter, r *http.Request) {
 	invoice_id, err := strconv.ParseInt(params["id"], 10, 64)
 
 	if err != nil {
-		log.Printf("Unable to convert the string into int.  %v", err)
+		//log.Printf("Unable to convert the string into int.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -245,7 +247,7 @@ func Invoice_Update(w http.ResponseWriter, r *http.Request) {
 	invoice_id, err := strconv.ParseInt(params["id"], 10, 64)
 
 	if err != nil {
-		log.Printf("Unable to convert the string into int.  %v", err)
+		//log.Printf("Unable to convert the string into int.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -255,14 +257,15 @@ func Invoice_Update(w http.ResponseWriter, r *http.Request) {
 	err = json.NewDecoder(r.Body).Decode(&param)
 
 	if err != nil {
-		log.Printf("Unable to decode the request body to transaction.  %v", err)
+		//log.Printf("Unable to decode the request body to transaction.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	id, err := invoice_update(&invoice_id, &param.Invoice, &param.Token)
 
 	if err != nil {
-		log.Printf("(API) Unable to update invoice.  %v", err)
+		//log.Printf("(API) Unable to update invoice.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -274,7 +277,7 @@ func Invoice_Update(w http.ResponseWriter, r *http.Request) {
 		err = invoice_insert_details(param.DetailIDs, &invoice_id)
 
 		if err != nil {
-			log.Printf("Unable to insert invoice --- details.  %v", err)
+			//log.Printf("Unable to insert invoice --- details.  %v", err)
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return
 		}
@@ -283,7 +286,7 @@ func Invoice_Update(w http.ResponseWriter, r *http.Request) {
 	_, err = invocie_update_transaction(&param.Trx.ID, &param.Trx, param.Token)
 
 	if err != nil {
-		log.Printf("(API) Unable to create transaction.  %v", err)
+		//log.Printf("(API) Unable to create transaction.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -293,7 +296,7 @@ func Invoice_Update(w http.ResponseWriter, r *http.Request) {
 		err = bulkInsertDetails(param.Trx.Details, &param.Trx.ID)
 
 		if err != nil {
-			log.Printf("Unable to insert transaction details from invoices.  %v", err)
+			//log.Printf("Unable to insert transaction details from invoices.  %v", err)
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return
 		}

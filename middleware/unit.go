@@ -87,7 +87,7 @@ func CreateUnit(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&unit)
 
 	if err != nil {
-		log.Printf("Unable to decode the request body.  %v", err)
+		//log.Printf("Unable to decode the request body.  %v", err)
 		http.Error(w, http.StatusText(http.StatusRequestedRangeNotSatisfiable), http.StatusRequestedRangeNotSatisfiable)
 		return
 	}
@@ -95,7 +95,7 @@ func CreateUnit(w http.ResponseWriter, r *http.Request) {
 	rowAffected, err := createUnit(&unit)
 
 	if err != nil {
-		log.Printf("Unable to decode the request body.  %v", err)
+		//log.Printf("Unable to decode the request body.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -127,7 +127,7 @@ func UpdateUnit(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&unit)
 
 	if err != nil {
-		log.Printf("Unable to decode the request body.  %v", err)
+		//log.Printf("Unable to decode the request body.  %v", err)
 		http.Error(w, http.StatusText(http.StatusRequestedRangeNotSatisfiable), http.StatusRequestedRangeNotSatisfiable)
 		return
 	}
@@ -135,7 +135,7 @@ func UpdateUnit(w http.ResponseWriter, r *http.Request) {
 	updatedRows, err := updateUnit(&id, &unit)
 
 	if err != nil {
-		log.Printf("Unable to decode the request body.  %v", err)
+		//	log.Printf("Unable to decode the request body.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}

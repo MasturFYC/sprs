@@ -21,7 +21,9 @@ func GetWarehouses(w http.ResponseWriter, r *http.Request) {
 	warehouses, err := getAllWarehouses()
 
 	if err != nil {
-		log.Fatalf("Unable to get all warehouses. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+		//log.Fatalf("Unable to get all warehouses. %v", err)
 	}
 
 	json.NewEncoder(w).Encode(&warehouses)
@@ -37,13 +39,17 @@ func GetWarehouse(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(params["id"])
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		//		log.Fatalf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	warehouses, err := getWarehouse(&id)
 
 	if err != nil {
-		log.Fatalf("Unable to get warehouse. %v", err)
+		//log.Fatalf("Unable to get warehouse. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
 	}
 
 	json.NewEncoder(w).Encode(&warehouses)
@@ -60,10 +66,18 @@ func DeleteWarehouse(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(params["id"])
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		//log.Fatalf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
-	deletedRows := deleteWarehouse(&id)
+	deletedRows, err := deleteWarehouse(&id)
+
+	if err != nil {
+		//log.Fatalf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
 
 	msg := fmt.Sprintf("Warehouse deleted successfully. Total rows/record affected %v", deletedRows)
 
@@ -87,13 +101,17 @@ func CreateWarehouse(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&warehouse)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		//log.Fatalf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	id, err := createWarehouse(&warehouse)
 
 	if err != nil {
-		log.Fatalf("Nama warehouse tidak boleh sama.  %v", err)
+		//log.Fatalf("Nama warehouse tidak boleh sama.  %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
 	}
 
 	warehouse.ID = id
@@ -118,10 +136,20 @@ func UpdateWarehouse(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&warehouse)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		//		log.Fatalf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+
 	}
 
-	updatedRows := updateWarehouse(&id, &warehouse)
+	updatedRows, err := updateWarehouse(&id, &warehouse)
+
+	if err != nil {
+		//		log.Fatalf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+
+	}
 
 	msg := fmt.Sprintf("Warehouse updated successfully. Total rows/record affected %v", updatedRows)
 
@@ -188,7 +216,7 @@ func getAllWarehouses() ([]models.Warehouse, error) {
 	return warehouses, err
 }
 
-func deleteWarehouse(id *int) int64 {
+func deleteWarehouse(id *int) (int64, error) {
 	// create the delete sql query
 	sqlStatement := `DELETE FROM warehouses WHERE id=$1`
 
@@ -196,17 +224,18 @@ func deleteWarehouse(id *int) int64 {
 	res, err := Sql().Exec(sqlStatement, id)
 
 	if err != nil {
-		log.Fatalf("Unable to delete warehouse. %v", err)
+		//log.Fatalf("Unable to delete warehouse. %v", err)
+		return 0, err
 	}
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Fatalf("Error while checking the affected rows. %v", err)
-	}
+	// if err != nil {
+	// 	log.Fatalf("Error while checking the affected rows. %v", err)
+	// }
 
-	return rowsAffected
+	return rowsAffected, err
 }
 
 func createWarehouse(warehouse *models.Warehouse) (int, error) {
@@ -221,15 +250,16 @@ func createWarehouse(warehouse *models.Warehouse) (int, error) {
 	).Scan(&id)
 
 	if err != nil {
-		log.Fatalf("Unable to create warehouse. %v", err)
+		//log.Fatalf("Unable to create warehouse. %v", err)
+		return 0, err
 	}
 
 	warehouse.ID = id
 
-	return id, err
+	return id, nil
 }
 
-func updateWarehouse(id *int, warehouse *models.Warehouse) int64 {
+func updateWarehouse(id *int, warehouse *models.Warehouse) (int64, error) {
 
 	sqlStatement := `UPDATE warehouses SET name=$2, descriptions=$3 WHERE id=$1`
 
@@ -240,15 +270,16 @@ func updateWarehouse(id *int, warehouse *models.Warehouse) int64 {
 	)
 
 	if err != nil {
-		log.Fatalf("Unable to update warehouse. %v", err)
+		//log.Fatalf("Unable to update warehouse. %v", err)
+		return 0, err
 	}
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Fatalf("Error while updating warehouse. %v", err)
-	}
+	// if err != nil {
+	// 	log.Fatalf("Error while updating warehouse. %v", err)
+	// }
 
-	return rowsAffected
+	return rowsAffected, err
 }

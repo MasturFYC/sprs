@@ -24,8 +24,9 @@ func SearchOrders(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&t)
 
 	if err != nil {
-		log.Printf("Unable to decode the request body to transaction.  %v", err)
+		//log.Printf("Unable to decode the request body to transaction.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	acc_codes, err := searchOrders(&t.Txt)
@@ -190,7 +191,7 @@ func Order_GetNameSeq(w http.ResponseWriter, r *http.Request) {
 	id, err := create_name_seq()
 
 	if err != nil {
-		log.Printf("Nama order tidak boleh sama.  %v", err)
+		//log.Printf("Nama order tidak boleh sama.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -214,7 +215,7 @@ func CreateOrder(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&order)
 
 	if err != nil {
-		log.Printf("Unable to decode the request body.  %v", err)
+		//log.Printf("Unable to decode the request body.  %v", err)
 		http.Error(w, http.StatusText(http.StatusRequestedRangeNotSatisfiable), http.StatusRequestedRangeNotSatisfiable)
 		return
 	}
@@ -222,7 +223,7 @@ func CreateOrder(w http.ResponseWriter, r *http.Request) {
 	id, err := createOrder(&order)
 
 	if err != nil {
-		log.Printf("Nomor order tidak boleh sama.  %v", err)
+		//log.Printf("Nomor order tidak boleh sama.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -249,7 +250,9 @@ func UpdateOrder(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&rv)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		//log.Fatalf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	updatedRows, err := updateOrder(&id, &rv)
@@ -480,14 +483,14 @@ func create_token(p *models.Order) []string {
 		}
 
 		if p.Unit.FrameNumber != "" {
-			s = append(s, p.Unit.FrameNumber)
+			s = append(s, string(p.Unit.FrameNumber))
 		}
 
 		if p.Unit.MachineNumber != "" {
-			s = append(s, p.Unit.MachineNumber)
+			s = append(s, string(p.Unit.MachineNumber))
 		}
 		if p.Unit.Color != "" {
-			s = append(s, p.Unit.Color)
+			s = append(s, string(p.Unit.Color))
 		}
 
 		if p.Unit.Year != 0 {

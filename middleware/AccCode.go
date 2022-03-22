@@ -129,8 +129,9 @@ func GetAccountCode(w http.ResponseWriter, r *http.Request) {
 	acc_code, err := getAccCode(&id)
 
 	if err != nil {
-		log.Printf("Unable to get account code. %v", err)
+		//log.Printf("Unable to get account code. %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
 	}
 
 	json.NewEncoder(w).Encode(&acc_code)
@@ -146,8 +147,9 @@ func CreateAccountCode(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&acc_code)
 
 	if err != nil {
-		log.Printf("Unable to decode the request body to account code.  %v", err)
+		//log.Printf("Unable to decode the request body to account code.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	rowsAffected, err := createAccCode(&acc_code)
@@ -183,7 +185,7 @@ func UpdateAccountCode(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&acc_code)
 
 	if err != nil {
-		log.Printf("Unable to decode the request body to account code.  %v", err)
+		//log.Printf("Unable to decode the request body to account code.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -191,7 +193,7 @@ func UpdateAccountCode(w http.ResponseWriter, r *http.Request) {
 	updatedRows, err := updateAccCode(&id, &acc_code)
 
 	if err != nil {
-		log.Printf("Unable to update account code.  %v", err)
+		//log.Printf("Unable to update account code.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -218,7 +220,7 @@ func DeleteAccountCode(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(params["id"])
 
 	if err != nil {
-		log.Printf("Unable to convert the string into int.  %v", err)
+		//log.Printf("Unable to convert the string into int.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -226,7 +228,7 @@ func DeleteAccountCode(w http.ResponseWriter, r *http.Request) {
 	deletedRows, err := deleteAccCode(&id)
 
 	if err != nil {
-		log.Printf("Unable to delete account.  %v", err)
+		//log.Printf("Unable to delete account.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}

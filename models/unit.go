@@ -10,16 +10,16 @@ type Unit struct {
 	Year int64 `json:"year"`
 
 	// nomor rangka
-	FrameNumber string `json:"frameNumber"`
+	FrameNumber NullString `json:"frameNumber"`
 
 	//nomor mesin
-	MachineNumber string `json:"machineNumber"`
+	MachineNumber NullString `json:"machineNumber"`
 
 	//bpkb atas nama
 	// BpkbName string `json:"bpkbName"`
 
 	//warna kendaraan
-	Color string `json:"color"`
+	Color NullString `json:"color"`
 	// Dealer   string `json:"dealer"`
 	// Surveyor string `json:"surveyor"`
 

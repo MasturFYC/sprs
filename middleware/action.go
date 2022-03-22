@@ -154,7 +154,9 @@ func CreateAction(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&act)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		//log.Fatalf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	id, err := createAction(&act)
@@ -184,10 +186,12 @@ func UpdateAction(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&act)
 
-	log.Print(act)
+	//log.Print(act)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		//log.Fatalf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	updatedRows, err := updateAction(&id, &act)

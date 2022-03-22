@@ -28,7 +28,7 @@ func Group_GetAllAccount(w http.ResponseWriter, r *http.Request) {
 	accounts, err := get_all_accounts()
 
 	if err != nil {
-		log.Printf("Unable to get all account groups. %v", err)
+		//log.Printf("Unable to get all account groups. %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
@@ -42,7 +42,7 @@ func GetAccGroups(w http.ResponseWriter, r *http.Request) {
 	groups, err := getAllAccGroups()
 
 	if err != nil {
-		log.Printf("Unable to get all account groups. %v", err)
+		//log.Printf("Unable to get all account groups. %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
@@ -58,7 +58,7 @@ func Group_GetTypes(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(params["id"])
 
 	if err != nil {
-		log.Printf("Unable to convert the string into int.  %v", err)
+		//log.Printf("Unable to convert the string into int.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -66,8 +66,9 @@ func Group_GetTypes(w http.ResponseWriter, r *http.Request) {
 	acc_group, err := group_get_types(&id)
 
 	if err != nil {
-		log.Printf("Unable to get account group. %v", err)
+		//log.Printf("Unable to get account group. %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
 	}
 
 	json.NewEncoder(w).Encode(&acc_group)
@@ -134,7 +135,7 @@ func GetAccGroup(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(params["id"])
 
 	if err != nil {
-		log.Printf("Unable to convert the string into int.  %v", err)
+		//log.Printf("Unable to convert the string into int.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -142,8 +143,9 @@ func GetAccGroup(w http.ResponseWriter, r *http.Request) {
 	acc_group, err := getAccGroup(&id)
 
 	if err != nil {
-		log.Printf("Unable to get account group. %v", err)
+		//log.Printf("Unable to get account group. %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
 	}
 
 	json.NewEncoder(w).Encode(&acc_group)
@@ -159,14 +161,15 @@ func CreateAccGroup(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&acc_group)
 
 	if err != nil {
-		log.Printf("Unable to decode the request body to account group.  %v", err)
+		//log.Printf("Unable to decode the request body to account group.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	rowsAffected, err := createAccGroup(&acc_group)
 
 	if err != nil {
-		log.Printf("(API) Unable to create account group.  %v", err)
+		//log.Printf("(API) Unable to create account group.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -196,7 +199,7 @@ func UpdateAccGroup(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&acc_group)
 
 	if err != nil {
-		log.Printf("Unable to decode the request body to account group.  %v", err)
+		//log.Printf("Unable to decode the request body to account group.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -204,7 +207,7 @@ func UpdateAccGroup(w http.ResponseWriter, r *http.Request) {
 	updatedRows, err := updateAccGroup(&id, &acc_group)
 
 	if err != nil {
-		log.Printf("Unable to update account group.  %v", err)
+		//log.Printf("Unable to update account group.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -231,7 +234,7 @@ func DeleteAccGroup(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(params["id"])
 
 	if err != nil {
-		log.Printf("Unable to convert the string into int.  %v", err)
+		//log.Printf("Unable to convert the string into int.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -239,7 +242,7 @@ func DeleteAccGroup(w http.ResponseWriter, r *http.Request) {
 	deletedRows, err := deleteAccGroup(&id)
 
 	if err != nil {
-		log.Printf("Unable to delete account group.  %v", err)
+		//log.Printf("Unable to delete account group.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}

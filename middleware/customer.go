@@ -21,7 +21,9 @@ func GetCustomers(w http.ResponseWriter, r *http.Request) {
 	customers, err := getAllCustomer()
 
 	if err != nil {
-		log.Fatalf("Unable to get all customers. %v", err)
+		//		log.Fatalf("Unable to get all customers. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
 	}
 
 	json.NewEncoder(w).Encode(&customers)
@@ -37,13 +39,17 @@ func GetCustomer(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(params["id"], 10, 64)
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		//log.Fatalf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	customers, err := getCustomer(&id)
 
 	if err != nil {
-		log.Fatalf("Unable to get category. %v", err)
+		//log.Fatalf("Unable to get category. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
 	}
 
 	json.NewEncoder(w).Encode(&customers)
@@ -60,10 +66,18 @@ func DeleteCustomer(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(params["id"], 10, 64)
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		//log.Fatalf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
-	deletedRows := deleteCustomer(&id)
+	deletedRows, err := deleteCustomer(&id)
+
+	if err != nil {
+		//log.Fatalf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
 
 	msg := fmt.Sprintf("Customer deleted successfully. Total rows/record affected %v", deletedRows)
 
@@ -87,15 +101,15 @@ func CreateCustomer(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&cust)
 
 	if err != nil {
-		log.Printf("Unable to decode the request body.  %v", err)
+		//log.Printf("Unable to decode the request body.  %v", err)
 		http.Error(w, http.StatusText(http.StatusCreated), http.StatusCreated)
 		return
 	}
 
-	err = createCustomer(&cust)
+	_, err = createCustomer(&cust)
 
 	if err != nil {
-		log.Printf("Nama customers tidak boleh sama.  %v", err)
+		//log.Printf("Nama customers tidak boleh sama.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -120,15 +134,15 @@ func UpdateCustomer(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&cust)
 
 	if err != nil {
-		log.Printf("Unable to decode the request body.  %v", err)
+		//log.Printf("Unable to decode the request body.  %v", err)
 		http.Error(w, http.StatusText(http.StatusCreated), http.StatusCreated)
 		return
 	}
 
-	err = updateCustomer(&id, &cust)
+	_, err = updateCustomer(&id, &cust)
 
 	if err != nil {
-		log.Printf("Unable to update customer.  %v", err)
+		//log.Printf("Unable to update customer.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -175,7 +189,8 @@ func getAllCustomer() ([]models.Customer, error) {
 	rs, err := Sql().Query(sqlStatement)
 
 	if err != nil {
-		log.Fatalf("Unable to execute customers query %v", err)
+		//log.Fatalf("Unable to execute customers query %v", err)
+		return customers, err
 	}
 
 	defer rs.Close()
@@ -195,7 +210,7 @@ func getAllCustomer() ([]models.Customer, error) {
 	return customers, err
 }
 
-func deleteCustomer(id *int64) int64 {
+func deleteCustomer(id *int64) (int64, error) {
 	// create the delete sql query
 	sqlStatement := `DELETE FROM customers WHERE order_id=$1`
 
@@ -203,20 +218,21 @@ func deleteCustomer(id *int64) int64 {
 	res, err := Sql().Exec(sqlStatement, id)
 
 	if err != nil {
-		log.Fatalf("Unable to delete customer. %v", err)
+		//log.Fatalf("Unable to delete customer. %v", err)
+		return 0, err
 	}
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Fatalf("Error while checking the affected rows. %v", err)
-	}
+	// if err != nil {
+	// 	log.Fatalf("Error while checking the affected rows. %v", err)
+	// }
 
-	return rowsAffected
+	return rowsAffected, err
 }
 
-func createCustomer(cust *models.Customer) error {
+func createCustomer(cust *models.Customer) (int64, error) {
 
 	sqlStatement := `INSERT INTO customers 
 	(order_id, name, agreement_number, payment_type) 
@@ -231,20 +247,20 @@ func createCustomer(cust *models.Customer) error {
 	)
 
 	if err != nil {
-		log.Printf("Unable to create customer. %v", err)
-		return err
+		//log.Printf("Unable to create customer. %v", err)
+		return 0, err
 	}
 
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil || rowsAffected == 0 {
-		log.Printf("Unable to create customer. %v", err)
-	}
+	// if err != nil || rowsAffected == 0 {
+	// 	log.Printf("Unable to create customer. %v", err)
+	// }
 
-	return err
+	return rowsAffected, err
 }
 
-func updateCustomer(id *int64, cust *models.Customer) error {
+func updateCustomer(id *int64, cust *models.Customer) (int64, error) {
 
 	sqlStatement := `UPDATE customers SET
 		name=$2, agreement_number=$3, payment_type=$4
@@ -258,16 +274,16 @@ func updateCustomer(id *int64, cust *models.Customer) error {
 	)
 
 	if err != nil {
-		log.Printf("Unable to update customer. %v", err)
-		return err
+		//log.Printf("Unable to update customer. %v", err)
+		return 0, err
 	}
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil || rowsAffected == 0 {
-		log.Printf("Error while updating customer. %v", err)
-	}
+	// if err != nil || rowsAffected == 0 {
+	// 	log.Printf("Error while updating customer. %v", err)
+	// }
 
-	return err
+	return rowsAffected, err
 }

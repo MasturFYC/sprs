@@ -37,7 +37,7 @@ func GetTransactionsByMonth(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(params["id"])
 
 	if err != nil {
-		log.Printf("Unable to convert the string into int.  %v", err)
+		//log.Printf("Unable to convert the string into int.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -45,7 +45,7 @@ func GetTransactionsByMonth(w http.ResponseWriter, r *http.Request) {
 	acc_codes, err := get_trx_by_month(&id)
 
 	if err != nil {
-		log.Printf("Unable to get all transactions. %v", err)
+		//log.Printf("Unable to get all transactions. %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
@@ -61,7 +61,7 @@ func GetTransactionsByGroup(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(params["id"], 10, 64)
 
 	if err != nil {
-		log.Printf("Unable to convert the string into int.  %v", err)
+		//log.Printf("Unable to convert the string into int.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -69,7 +69,7 @@ func GetTransactionsByGroup(w http.ResponseWriter, r *http.Request) {
 	acc_codes, err := getTransactionsByGroup(&id)
 
 	if err != nil {
-		log.Printf("Unable to get all transactions. %v", err)
+		//log.Printf("Unable to get all transactions. %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
@@ -85,14 +85,15 @@ func SearchTransactions(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&t)
 
 	if err != nil {
-		log.Printf("Unable to decode the request body to transaction.  %v", err)
+		//log.Printf("Unable to decode the request body to transaction.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	trxs, err := searchTransactions(&t.Txt)
 
 	if err != nil {
-		log.Printf("Unable to get all account codes. %v", err)
+		//log.Printf("Unable to get all account codes. %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
@@ -106,7 +107,7 @@ func GetTransactions(w http.ResponseWriter, r *http.Request) {
 	trxs, err := get_all_transactions()
 
 	if err != nil {
-		log.Printf("Unable to get all transaction. %v", err)
+		//log.Printf("Unable to get all transaction. %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
@@ -123,7 +124,7 @@ func GetTransaction(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(params["id"], 10, 64)
 
 	if err != nil {
-		log.Printf("Unable to convert the string into int.  %v", err)
+		//log.Printf("Unable to convert the string into int.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -131,8 +132,9 @@ func GetTransaction(w http.ResponseWriter, r *http.Request) {
 	trx, err := getTransaction(&id)
 
 	if err != nil {
-		log.Printf("Unable to get transaction. %v", err)
+		//log.Printf("Unable to get transaction. %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
 	}
 
 	json.NewEncoder(w).Encode(&trx)
@@ -148,14 +150,15 @@ func CreateTransaction(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&param)
 
 	if err != nil {
-		log.Printf("Unable to decode the request body to transaction.  %v", err)
+		//log.Printf("Unable to decode the request body to transaction.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	id, err := createTransaction(&param.Trx, param.Token)
 
 	if err != nil {
-		log.Printf("(API) Unable to create transaction.  %v", err)
+		//log.Printf("(API) Unable to create transaction.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -165,7 +168,7 @@ func CreateTransaction(w http.ResponseWriter, r *http.Request) {
 		err = bulkInsertDetails(param.Details, &id)
 
 		if err != nil {
-			log.Printf("Unable to insert transaction details.  %v", err)
+			//log.Printf("Unable to insert transaction details.  %v", err)
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return
 		}
@@ -196,7 +199,7 @@ func UpdateTransaction(w http.ResponseWriter, r *http.Request) {
 	err = json.NewDecoder(r.Body).Decode(&trx)
 
 	if err != nil {
-		log.Printf("Unable to decode the request body to transaction.  %v", err)
+		//log.Printf("Unable to decode the request body to transaction.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -204,7 +207,7 @@ func UpdateTransaction(w http.ResponseWriter, r *http.Request) {
 	updatedRows, err := updateTransaction(&id, &trx.Trx, trx.Token)
 
 	if err != nil {
-		log.Printf("Unable to update transaction.  %v", err)
+		//log.Printf("Unable to update transaction.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -223,7 +226,7 @@ func UpdateTransaction(w http.ResponseWriter, r *http.Request) {
 	err = bulkInsertDetails(trx.Details, &id)
 
 	if err != nil {
-		log.Printf("Unable to insert transaction details (message from command).  %v", err)
+		//log.Printf("Unable to insert transaction details (message from command).  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -247,16 +250,16 @@ func deleteDetailsByOrder(id *int64) (int64, error) {
 	res, err := Sql().Exec(sqlStatement, id)
 
 	if err != nil {
-		log.Printf("Unable to delete transaction. %v", err)
+		//log.Printf("Unable to delete transaction. %v", err)
 		return 0, err
 	}
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Fatalf("Error while checking the affected rows. %v", err)
-	}
+	// if err != nil {
+	// 	log.Fatalf("Error while checking the affected rows. %v", err)
+	// }
 
 	return rowsAffected, err
 

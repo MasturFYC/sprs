@@ -87,13 +87,17 @@ func CreateType(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&t)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		//log.Fatalf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	id, err := createType(&t)
 
 	if err != nil {
-		log.Fatalf("Nama type tidak boleh sama.  %v", err)
+		//log.Fatalf("Nama type tidak boleh sama.  %v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	t.ID = id
@@ -118,10 +122,18 @@ func UpdateType(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&t)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		//log.Fatalf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
-	updatedRows := updateType(&id, &t)
+	updatedRows, err := updateType(&id, &t)
+
+	if err != nil {
+		//log.Fatalf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
 
 	msg := fmt.Sprintf("Type updated successfully. Total rows/record affected %v", updatedRows)
 
@@ -236,7 +248,8 @@ func createType(t *models.Type) (int64, error) {
 	err := Sql().QueryRow(sqlStatement, t.Name, t.WheelID, t.MerkID).Scan(&id)
 
 	if err != nil {
-		log.Fatalf("Unable to create type. %v", err)
+		//log.Fatalf("Unable to create type. %v", err)
+		return 0, err
 	}
 
 	t.ID = id
@@ -244,22 +257,24 @@ func createType(t *models.Type) (int64, error) {
 	return id, err
 }
 
-func updateType(id *int64, t *models.Type) int64 {
+func updateType(id *int64, t *models.Type) (int64, error) {
 
 	sqlStatement := `UPDATE types SET name=$2, wheel_id=$3, merk_id=$4 WHERE id=$1`
 
 	res, err := Sql().Exec(sqlStatement, id, t.Name, t.WheelID, t.MerkID)
 
 	if err != nil {
-		log.Fatalf("Unable to update type. %v", err)
+		//log.Fatalf("Unable to update type. %v", err)
+		return 0, err
 	}
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Fatalf("Error while updating type. %v", err)
-	}
+	// if err != nil {
+	// 	//log.Fatalf("Error while updating type. %v", err)
+	// 	return 0, err
+	// }
 
-	return rowsAffected
+	return rowsAffected, err
 }

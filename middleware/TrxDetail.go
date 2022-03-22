@@ -48,14 +48,15 @@ func CreateTransactionDetail(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&trx)
 
 	if err != nil {
-		log.Printf("Unable to decode the request body to transaction detail.  %v", err)
+		//log.Printf("Unable to decode the request body to transaction detail.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	id, err := createTransactionDetail(&trx)
 
 	if err != nil {
-		log.Printf("(API) Unable to create transaction detail.  %v", err)
+		//log.Printf("(API) Unable to create transaction detail.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -82,7 +83,7 @@ func UpdateTransactionDetail(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&detail)
 
 	if err != nil {
-		log.Printf("Unable to decode the request body to transaction detail.  %v", err)
+		//log.Printf("Unable to decode the request body to transaction detail.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -90,7 +91,7 @@ func UpdateTransactionDetail(w http.ResponseWriter, r *http.Request) {
 	updatedRows, err := updateTransactionDetail(&id, &detail)
 
 	if err != nil {
-		log.Printf("Unable to update transaction detail.  %v", err)
+		//log.Printf("Unable to update transaction detail.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -117,7 +118,7 @@ func DeleteTransactionDetail(w http.ResponseWriter, r *http.Request) {
 	trxid, err := strconv.ParseInt(params["trxid"], 10, 64)
 
 	if err != nil {
-		log.Printf("Unable to convert the string into int.  %v", err)
+		//log.Printf("Unable to convert the string into int.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -125,7 +126,7 @@ func DeleteTransactionDetail(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(params["id"])
 
 	if err != nil {
-		log.Printf("Unable to convert the string into int.  %v", err)
+		//log.Printf("Unable to convert the string into int.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -133,7 +134,7 @@ func DeleteTransactionDetail(w http.ResponseWriter, r *http.Request) {
 	deletedRows, err := deleteTransactionDetail(&trxid, &id)
 
 	if err != nil {
-		log.Printf("Unable to delete transaction detail.  %v", err)
+		//log.Printf("Unable to delete transaction detail.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -163,7 +164,7 @@ func getTransactionDetails(trxID *int64) ([]models.TrxDetail, error) {
 	rs, err := Sql().Query(sqlStatement, trxID)
 
 	if err != nil {
-		log.Printf("Unable to execute transaction details query %v", err)
+		//log.Printf("Unable to execute transaction details query %v", err)
 		return nil, err
 	}
 

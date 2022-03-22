@@ -21,7 +21,9 @@ func GetFinances(w http.ResponseWriter, r *http.Request) {
 	finances, err := getAllFinances()
 
 	if err != nil {
-		log.Fatalf("Unable to get all finances. %v", err)
+		//		log.Fatalf("Unable to get all finances. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
 	}
 
 	json.NewEncoder(w).Encode(&finances)
@@ -37,13 +39,17 @@ func GetFinance(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(params["id"])
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		//log.Fatalf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	finances, err := getFinance(&id)
 
 	if err != nil {
-		log.Fatalf("Unable to get finance. %v", err)
+		//log.Fatalf("Unable to get finance. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
 	}
 
 	json.NewEncoder(w).Encode(&finances)
@@ -60,10 +66,18 @@ func DeleteFinance(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(params["id"])
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		//log.Fatalf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
-	deletedRows := deleteFinance(&id)
+	deletedRows, err := deleteFinance(&id)
+
+	if err != nil {
+		//log.Fatalf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
 
 	msg := fmt.Sprintf("Finance deleted successfully. Total rows/record affected %v", deletedRows)
 
@@ -87,13 +101,15 @@ func CreateFinance(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&finance)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		//log.Fatalf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	id, err := createFinance(&finance)
 
 	if err != nil {
-		log.Fatalf("Nama finance tidak boleh sama.  %v", err)
+		//log.Fatalf("Nama finance tidak boleh sama.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -120,7 +136,9 @@ func UpdateFinance(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&finance)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		//log.Fatalf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	updatedRows, err := updateFinance(&id, &finance)
@@ -182,7 +200,8 @@ func getAllFinances() ([]models.Finance, error) {
 	rs, err := Sql().Query(sqlStatement)
 
 	if err != nil {
-		log.Fatalf("Unable to execute finances query %v", err)
+		// log.Fatalf("Unable to execute finances query %v", err)
+		return finances, err
 	}
 
 	defer rs.Close()
@@ -203,7 +222,7 @@ func getAllFinances() ([]models.Finance, error) {
 	return finances, err
 }
 
-func deleteFinance(id *int) int64 {
+func deleteFinance(id *int) (int64, error) {
 	// create the delete sql query
 	sqlStatement := `DELETE FROM finances WHERE id=$1`
 
@@ -211,17 +230,18 @@ func deleteFinance(id *int) int64 {
 	res, err := Sql().Exec(sqlStatement, id)
 
 	if err != nil {
-		log.Fatalf("Unable to delete finance. %v", err)
+		//log.Fatalf("Unable to delete finance. %v", err)
+		return 0, err
 	}
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Fatalf("Error while checking the affected rows. %v", err)
-	}
+	// if err != nil {
+	// 	log.Fatalf("Error while checking the affected rows. %v", err)
+	// }
 
-	return rowsAffected
+	return rowsAffected, err
 }
 
 func createFinance(finance *models.Finance) (int, error) {
@@ -245,9 +265,9 @@ func createFinance(finance *models.Finance) (int, error) {
 		finance.Email,
 	).Scan(&id)
 
-	if err != nil {
-		log.Printf("Unable to create finance. %v", err)
-	}
+	// if err != nil {
+	// 	log.Printf("Unable to create finance. %v", err)
+	// }
 
 	return id, err
 }
@@ -271,16 +291,16 @@ func updateFinance(id *int, finance *models.Finance) (int64, error) {
 	)
 
 	if err != nil {
-		log.Printf("Unable to update finance. %v", err)
+		//log.Printf("Unable to update finance. %v", err)
 		return 0, err
 	}
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Printf("Error while updating finance. %v", err)
-	}
+	// if err != nil {
+	// 	log.Printf("Error while updating finance. %v", err)
+	// }
 
 	return rowsAffected, err
 }
