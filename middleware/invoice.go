@@ -317,7 +317,7 @@ func invocie_update_transaction(id *int64, p *models.Trx, token string) (int64, 
 		descriptions=$2,
 		memo=$3,
 		trx_token=to_tsvector('indonesian', $4)
-	WHERE ref_id=$1`
+	WHERE ref_id=$1 AND division='trx-invoice'`
 
 	res, err := Sql().Exec(sqlStatement,
 		p.RefID,
@@ -470,7 +470,7 @@ WHERE v.id=$1`,
 
 func invoice_delete_transaction(ref_id *int64) int64 {
 	// create the delete sql query
-	sqlStatement := `DELETE FROM trx WHERE ref_id=$1`
+	sqlStatement := `DELETE FROM trx WHERE ref_id=$1 AND division='trx-invoice'`
 
 	// execute the sql statement
 	res, err := Sql().Exec(sqlStatement, ref_id)
@@ -579,16 +579,16 @@ func invoice_update(id *int64, inv *models.Invoice, token *string) (int64, error
 	)
 
 	if err != nil {
-		log.Printf("Unable to update finance. %v", err)
+		//log.Printf("Unable to update finance. %v", err)
 		return 0, err
 	}
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Printf("Error while updating finance. %v", err)
-	}
+	// if err != nil {
+	// 	log.Printf("Error while updating finance. %v", err)
+	// }
 
 	return rowsAffected, err
 }
@@ -625,6 +625,7 @@ func invoice_get_all() ([]invoice_all, error) {
 
 	if err != nil {
 		log.Fatalf("Unable to execute merks query %v", err)
+		return invoices, err
 	}
 
 	defer rs.Close()
@@ -791,6 +792,7 @@ func invoices_search(txt *string) ([]invoice_all, error) {
 
 	if err != nil {
 		log.Fatalf("Unable to execute merks query %v", err)
+		return invoices, err
 	}
 
 	defer rs.Close()
@@ -827,22 +829,37 @@ func invoices_search(txt *string) ([]invoice_all, error) {
 
 func invoices_by_month(month *int, year *int) ([]invoice_all, error) {
 	var invoices []invoice_all
+
+	builder := strings.Builder{}
+
 	var querFinance = `SELECT f.id, f.name, f.short_name "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email, f.group_id AS "groupId" FROM finances f WHERE f.id = v.finance_id`
 	var queryAccount = `SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`
 
-	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo,
-		%s AS finance, %s AS account 
-		FROM invoices AS v
-		WHERE EXTRACT(MONTH FROM v.invoice_at)=$1 AND EXTRACT(YEAR FROM v.invoice_at)=$2 OR 0=$1
-		ORDER BY v.id DESC`,
-		nestQuerySingle(querFinance),
-		nestQuerySingle(queryAccount),
-	)
+	// var sqlStatement = fmt.Sprintf(`
+	// 	%s AS finance, %s AS account
+	// 	FROM invoices AS v
+	// 	WHERE EXTRACT(MONTH FROM v.invoice_at)=$1 AND EXTRACT(YEAR FROM v.invoice_at)=$2 OR 0=$1
+	// 	ORDER BY v.id DESC`,
+	// 	nestQuerySingle(querFinance),
+	// 	nestQuerySingle(queryAccount),
+	// )
 
-	rs, err := Sql().Query(sqlStatement, month, year)
+	builder.WriteString("SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo, ")
+	builder.WriteString(nestQuerySingle(querFinance))
+	builder.WriteString(" AS finance, ")
+	builder.WriteString(nestQuerySingle(queryAccount))
+	builder.WriteString(" AS account")
+	builder.WriteString(" FROM invoices AS v")
+	builder.WriteString(" WHERE EXTRACT(MONTH FROM v.invoice_at)=$1")
+	builder.WriteString(" AND EXTRACT(YEAR FROM v.invoice_at)=$2")
+	builder.WriteString(" OR 0=$1")
+	builder.WriteString(" ORDER BY v.id DESC")
+
+	rs, err := Sql().Query(builder.String(), month, year)
 
 	if err != nil {
 		log.Fatalf("Unable to execute merks query %v", err)
+		return invoices, err
 	}
 
 	defer rs.Close()
@@ -896,6 +913,7 @@ func invoices_by_finance(finance_id *int) ([]invoice_all, error) {
 
 	if err != nil {
 		log.Fatalf("Unable to execute merks query %v", err)
+		return invoices, err
 	}
 
 	defer rs.Close()

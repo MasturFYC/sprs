@@ -277,33 +277,7 @@ func UpdateOrder(w http.ResponseWriter, r *http.Request) {
 func getOrder(id *int64) (order_all, error) {
 
 	var o order_all
-	b := strings.Builder{}
-
-	q_wheel := `SELECT id, name, short_name AS "shortName" FROM wheels WHERE id = t.wheel_id`
-	q_merk := "SELECT id, name FROM merks WHERE id = t.merk_id"
-	q_type := fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId",
-		%s as wheel, %s as merk
-		FROM types t
-		WHERE t.id = u.type_id`,
-		nestQuerySingle(q_wheel),
-		nestQuerySingle(q_merk),
-	)
-	q_unit := fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber", 
-	u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId",
-	%s as type
-	FROM units AS u WHERE u.order_id = o.id`,
-		nestQuerySingle(q_type))
-
-	b.WriteString("SELECT")
-	b.WriteString(" o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel,")
-	b.WriteString(" o.user_name, o.verified_by, o.finance_id, o.branch_id, o.is_stnk, o.stnk_price, o.matrix, ")
-	b.WriteString(nestQuerySingle(`SELECT id, name, short_name AS "shortName", street, city, phone, cell, zip, email, group_id AS "groupId" FROM finances WHERE id = o.finance_id`))
-	b.WriteString(" AS finance, ")
-	b.WriteString(nestQuerySingle(`SELECT id, name, head_branch AS "headBranch", street, city, phone, cell, zip, email FROM branchs WHERE id = o.branch_id`))
-	b.WriteString(" AS branch, ")
-	b.WriteString(nestQuerySingle(q_unit))
-	b.WriteString(" AS unit ")
-	b.WriteString(" FROM orders AS o")
+	b := create_order_query()
 	b.WriteString(" WHERE o.id=$1")
 
 	rs := Sql().QueryRow(b.String(), id)
@@ -366,47 +340,7 @@ func getAllOrders() ([]order_all, error) {
 
 	var orders []order_all
 
-	b := strings.Builder{}
-
-	q_wheel := `SELECT id, name, short_name AS "shortName" FROM wheels WHERE id = t.wheel_id`
-	q_merk := "SELECT id, name FROM merks WHERE id = t.merk_id"
-	q_type := fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId",
-		%s as wheel, %s as merk
-		FROM types t
-		WHERE t.id = u.type_id`,
-		nestQuerySingle(q_wheel),
-		nestQuerySingle(q_merk),
-	)
-	q_unit := fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber", 
-	u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId",
-	%s as type
-	FROM units AS u WHERE u.order_id = o.id`,
-		nestQuerySingle(q_type))
-
-	b.WriteString("SELECT")
-	b.WriteString(" o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel,")
-	b.WriteString(" o.user_name, o.verified_by, o.finance_id, o.branch_id, o.is_stnk, o.stnk_price, o.matrix, ")
-	b.WriteString(nestQuerySingle(`SELECT id, name, short_name AS "shortName", street, city, phone, cell, zip, email, group_id AS "groupId" FROM finances WHERE id = o.finance_id`))
-	b.WriteString(" AS finance, ")
-	b.WriteString(nestQuerySingle(`SELECT id, name, head_branch AS "headBranch", street, city, phone, cell, zip, email FROM branchs WHERE id = o.branch_id`))
-	b.WriteString(" AS branch, ")
-	// b.WriteString(nestQuerySingle("SELECT order_id, name, agreement_number, payment_type FROM customers WHERE order_id = o.id)"))
-	// b.WriteString(" AS customer, ")
-	b.WriteString(nestQuerySingle(q_unit))
-	b.WriteString(" AS unit ")
-	// b.WriteString(nestQuerySingle("SELECT order_id, descriptions, period_from, period_to,	recipient_name, recipient_position,	giver_name, giver_position FROM tasks	WHERE order_id = o.id)"))
-	// b.WriteString(" AS task, ")
-	// b.WriteString(nestQuerySingle("SELECT order_id, street, region, city, phone, zip FROM home_addresses	WHERE order_id = o.id)"))
-	// b.WriteString(" AS homeAddress, ")
-	// b.WriteString(nestQuerySingle("SELECT order_id, street, region, city, phone, zip FROM office_addresses WHERE order_id = o.id)"))
-	// b.WriteString(" AS officeAddress, ")
-	// b.WriteString(nestQuerySingle("SELECT order_id, street, region, city, phone, zip FROM post_addresses WHERE order_id = o.id)"))
-	// b.WriteString(" AS postAddress, ")
-	// b.WriteString(nestQuerySingle("SELECT order_id, street, region, city, phone, zip FROM ktp_addresses WHERE order_id = o.id)"))
-	// b.WriteString(" AS ktpAddress, ")
-	// b.WriteString(nestQuery("SELECT id, action_at, pic, descriptions, order_id, file_name FROM actions WHERE order_id = o.id)"))
-	// b.WriteString(" AS actions ")
-	b.WriteString(" FROM orders AS o")
+	b := create_order_query()
 	b.WriteString(" ORDER BY o.id DESC")
 
 	//log.Println(b.String())
@@ -666,10 +600,7 @@ func updateOrder(id *int64, p *models.Order) (int64, error) {
 	return rowsAffected, err
 }
 
-func searchOrders(txt *string) ([]order_all, error) {
-
-	var orders []order_all
-
+func create_order_query() *strings.Builder {
 	b := strings.Builder{}
 
 	q_wheel := `SELECT id, name, short_name AS "shortName" FROM wheels WHERE id = t.wheel_id`
@@ -681,11 +612,14 @@ func searchOrders(txt *string) ([]order_all, error) {
 		nestQuerySingle(q_wheel),
 		nestQuerySingle(q_merk),
 	)
+
+	q_warehouse := "SELECT id, name FROM warehouses WHERE id = u.warehouse_id"
 	q_unit := fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber", 
 	u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId",
-	%s as type
+	%s as type, %s as warehouse
 	FROM units AS u WHERE u.order_id = o.id`,
-		nestQuerySingle(q_type))
+		nestQuerySingle(q_type),
+		nestQuerySingle(q_warehouse))
 
 	b.WriteString("SELECT")
 	b.WriteString(" o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel,")
@@ -697,6 +631,13 @@ func searchOrders(txt *string) ([]order_all, error) {
 	b.WriteString(nestQuerySingle(q_unit))
 	b.WriteString(" AS unit ")
 	b.WriteString(" FROM orders AS o")
+	return &b
+}
+
+func searchOrders(txt *string) ([]order_all, error) {
+
+	var orders []order_all
+	b := create_order_query()
 	b.WriteString(" WHERE token @@ to_tsquery('indonesian', $1)")
 	b.WriteString(" ORDER BY o.id DESC")
 
@@ -751,33 +692,7 @@ func searchOrders(txt *string) ([]order_all, error) {
 func get_order_by_finance(id *int) ([]order_all, error) {
 
 	var orders []order_all
-	b := strings.Builder{}
-
-	q_wheel := `SELECT id, name, short_name AS "shortName" FROM wheels WHERE id = t.wheel_id`
-	q_merk := "SELECT id, name FROM merks WHERE id = t.merk_id"
-	q_type := fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId",
-		%s as wheel, %s as merk
-		FROM types t
-		WHERE t.id = u.type_id`,
-		nestQuerySingle(q_wheel),
-		nestQuerySingle(q_merk),
-	)
-	q_unit := fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber", 
-	u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId",
-	%s as type
-	FROM units AS u WHERE u.order_id = o.id`,
-		nestQuerySingle(q_type))
-
-	b.WriteString("SELECT")
-	b.WriteString(" o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel,")
-	b.WriteString(" o.user_name, o.verified_by, o.finance_id, o.branch_id, o.is_stnk, o.stnk_price, o.matrix, ")
-	b.WriteString(nestQuerySingle(`SELECT id, name, short_name AS "shortName", street, city, phone, cell, zip, email, group_id AS "groupId" FROM finances WHERE id = o.finance_id`))
-	b.WriteString(" AS finance, ")
-	b.WriteString(nestQuerySingle(`SELECT id, name, head_branch AS "headBranch", street, city, phone, cell, zip, email FROM branchs WHERE id = o.branch_id`))
-	b.WriteString(" AS branch, ")
-	b.WriteString(nestQuerySingle(q_unit))
-	b.WriteString(" AS unit ")
-	b.WriteString(" FROM orders AS o")
+	b := create_order_query()
 	b.WriteString(" WHERE o.finance_id=$1 OR 0=$1")
 	b.WriteString(" ORDER BY o.id DESC")
 
@@ -832,33 +747,7 @@ func get_order_by_finance(id *int) ([]order_all, error) {
 func get_order_by_branch(id *int) ([]order_all, error) {
 
 	var orders []order_all
-	b := strings.Builder{}
-
-	q_wheel := `SELECT id, name, short_name AS "shortName" FROM wheels WHERE id = t.wheel_id`
-	q_merk := "SELECT id, name FROM merks WHERE id = t.merk_id"
-	q_type := fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId",
-		%s as wheel, %s as merk
-		FROM types t
-		WHERE t.id = u.type_id`,
-		nestQuerySingle(q_wheel),
-		nestQuerySingle(q_merk),
-	)
-	q_unit := fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber", 
-	u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId",
-	%s as type
-	FROM units AS u WHERE u.order_id = o.id`,
-		nestQuerySingle(q_type))
-
-	b.WriteString("SELECT")
-	b.WriteString(" o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel,")
-	b.WriteString(" o.user_name, o.verified_by, o.finance_id, o.branch_id, o.is_stnk, o.stnk_price, o.matrix, ")
-	b.WriteString(nestQuerySingle(`SELECT id, name, short_name AS "shortName", street, city, phone, cell, zip, email, group_id AS "groupId" FROM finances WHERE id = o.finance_id`))
-	b.WriteString(" AS finance, ")
-	b.WriteString(nestQuerySingle(`SELECT id, name, head_branch AS "headBranch", street, city, phone, cell, zip, email FROM branchs WHERE id = o.branch_id`))
-	b.WriteString(" AS branch, ")
-	b.WriteString(nestQuerySingle(q_unit))
-	b.WriteString(" AS unit ")
-	b.WriteString(" FROM orders AS o")
+	b := create_order_query()
 	b.WriteString(" WHERE o.branch_id=$1 OR 0=$1")
 	b.WriteString(" ORDER BY o.id DESC")
 
@@ -948,33 +837,7 @@ func get_order_by_branch(id *int) ([]order_all, error) {
 func get_order_by_month(id *int) ([]order_all, error) {
 
 	var orders []order_all
-	b := strings.Builder{}
-
-	q_wheel := `SELECT id, name, short_name AS "shortName" FROM wheels WHERE id = t.wheel_id`
-	q_merk := "SELECT id, name FROM merks WHERE id = t.merk_id"
-	q_type := fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId",
-		%s as wheel, %s as merk
-		FROM types t
-		WHERE t.id = u.type_id`,
-		nestQuerySingle(q_wheel),
-		nestQuerySingle(q_merk),
-	)
-	q_unit := fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber", 
-	u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId",
-	%s as type
-	FROM units AS u WHERE u.order_id = o.id`,
-		nestQuerySingle(q_type))
-
-	b.WriteString("SELECT")
-	b.WriteString(" o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel,")
-	b.WriteString(" o.user_name, o.verified_by, o.finance_id, o.branch_id, o.is_stnk, o.stnk_price, o.matrix, ")
-	b.WriteString(nestQuerySingle(`SELECT id, name, short_name AS "shortName", street, city, phone, cell, zip, email, group_id AS "groupId" FROM finances WHERE id = o.finance_id`))
-	b.WriteString(" AS finance, ")
-	b.WriteString(nestQuerySingle(`SELECT id, name, head_branch AS "headBranch", street, city, phone, cell, zip, email FROM branchs WHERE id = o.branch_id`))
-	b.WriteString(" AS branch, ")
-	b.WriteString(nestQuerySingle(q_unit))
-	b.WriteString(" AS unit ")
-	b.WriteString(" FROM orders AS o")
+	b := create_order_query()
 	b.WriteString(" WHERE EXTRACT(MONTH from o.order_at)=$1")
 	b.WriteString(" ORDER BY o.id DESC")
 

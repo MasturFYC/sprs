@@ -194,12 +194,18 @@ func UpdateTransaction(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.ParseInt(params["id"], 10, 64)
 
+	if err != nil {
+		//log.Printf("Unable to decode the request body to transaction.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
 	var trx models.TrxDetailsToken
 
 	err = json.NewDecoder(r.Body).Decode(&trx)
 
 	if err != nil {
-		//log.Printf("Unable to decode the request body to transaction.  %v", err)
+		//	log.Printf("Unable to decode the request body to transaction.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -212,25 +218,26 @@ func UpdateTransaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// if len(trx.Details) > 0 {
+	if len(trx.Details) > 0 {
 
-	// 	_, err = deleteDetailsByOrder(&id)
-	// 	if err != nil {
-	// 		log.Printf("Unable to delete all details by transaction.  %v", err)
-	// 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-	// 		return
-	// 	}
+		_, err = deleteDetailsByOrder(&id)
+		if err != nil {
+			//log.Printf("Unable to delete all details by transaction.  %v", err)
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
+		}
+		//}
 
-	// 	var newId int64 = 0
+		// 	var newId int64 = 0
 
-	err = bulkInsertDetails(trx.Details, &id)
+		err = bulkInsertDetails(trx.Details, &id)
 
-	if err != nil {
-		//log.Printf("Unable to insert transaction details (message from command).  %v", err)
-		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-		return
+		if err != nil {
+			//log.Printf("Unable to insert transaction details (message from command).  %v", err)
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
+		}
 	}
-	//	}
 
 	msg := fmt.Sprintf("Transaction updated successfully. Total rows/record affected %v", updatedRows)
 
@@ -280,8 +287,9 @@ func bulkInsertDetails(rows []models.TrxDetail, id *int64) error {
 	}
 	stmt := fmt.Sprintf("INSERT INTO trx_detail (id, code_id, trx_id, debt, cred) VALUES %s",
 		strings.Join(valueStrings, ","))
-	//log.Printf("%s %v", stmt, valueArgs)
 	_, err := Sql().Exec(stmt+" ON CONFLICT (trx_id, id) DO UPDATE SET code_id=EXCLUDED.code_id, trx_id=EXCLUDED.trx_id, debt=EXCLUDED.debt, cred=EXCLUDED.cred", valueArgs...)
+
+	//log.Printf("%s %s", strings.Join(valueStrings, ","), valueArgs)
 	return err
 }
 
@@ -330,27 +338,17 @@ func DeleteTransaction(w http.ResponseWriter, r *http.Request) {
 func getTransaction(id *int64) (local_trx, error) {
 
 	var p local_trx
+	builder := strings.Builder{}
 
-	var sqlStatement = `SELECT t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
-(SELECT COALESCE(sum(s.debt),0) AS debt FROM trx_detail s WHERE s.trx_id = t.id) saldo,
-COALESCE
-(
-(
-SELECT array_to_json(array_agg(row_to_json(x))) FROM
-(
-SELECT c.id, c.name, d.code_id, d.debt, d.cred
-FROM trx_detail d
-INNER JOIN acc_code c ON c.id = d.code_id
-WHERE d.trx_id=t.id 
-ORDER BY d.id
-) x
-),
-'[]'
-) AS details
-FROM trx t
-WHERE t.id=$1`
+	builder.WriteString("SELECT t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,")
+	//builder.WriteString(" (SELECT COALESCE(sum(s.debt),0) AS debt FROM trx_detail s WHERE s.trx_id = t.id)")
+	//builder.WriteString(" AS saldo, ")
+	builder.WriteString(nestQuery(get_query_details))
+	builder.WriteString(" AS details ")
+	builder.WriteString(" FROM trx t")
+	builder.WriteString(" WHERE t.id=$1")
 
-	rs := Sql().QueryRow(sqlStatement, id)
+	rs := Sql().QueryRow(builder.String(), id)
 
 	err := rs.Scan(
 		&p.ID,
@@ -359,7 +357,8 @@ WHERE t.id=$1`
 		&p.TrxDate,
 		&p.Descriptions,
 		&p.Memo,
-		&p.Saldo,
+		//&p.Saldo,
+		&p.Details,
 	)
 
 	switch err {
@@ -379,31 +378,49 @@ WHERE t.id=$1`
 	return p, err
 }
 
+const (
+	get_query_details = `SELECT c.id, c.name, d.code_id AS "codeId", d.debt, d.cred
+	FROM trx_detail d
+	INNER JOIN acc_code c ON c.id = d.code_id
+	WHERE d.trx_id=t.id 
+	ORDER BY d.id`
+)
+
 func get_all_transactions() ([]local_trx, error) {
 
 	var results []local_trx
 
-	var sqlStatement = `SELECT t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
-(SELECT COALESCE(sum(s.debt),0) AS debt FROM trx_detail s WHERE s.trx_id = t.id) saldo,
-COALESCE
-(
-(
-SELECT array_to_json(array_agg(row_to_json(x))) FROM
-(
-SELECT c.id, c.name, d.code_id, d.debt, d.cred
-FROM trx_detail d
-INNER JOIN acc_code c ON c.id = d.code_id
-WHERE d.trx_id=t.id 
-ORDER BY d.id
-) x
-),
-'[]'
-) AS details
-			
-FROM trx t
-ORDER BY t.id DESC`
+	builder := strings.Builder{}
 
-	rs, err := Sql().Query(sqlStatement)
+	builder.WriteString("SELECT t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,")
+	//builder.WriteString(" (SELECT COALESCE(sum(s.debt),0) AS debt FROM trx_detail s WHERE s.trx_id = t.id)")
+	//builder.WriteString(" AS saldo, ")
+	builder.WriteString(nestQuery(get_query_details))
+	builder.WriteString(" AS details ")
+	builder.WriteString(" FROM trx t")
+	builder.WriteString(" ORDER BY t.id DESC")
+
+	// 	var sqlStatement = `SELECT t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
+	// (SELECT COALESCE(sum(s.debt),0) AS debt FROM trx_detail s WHERE s.trx_id = t.id) saldo,
+	// COALESCE
+	// (
+	// (
+	// SELECT array_to_json(array_agg(row_to_json(x))) FROM
+	// (
+	// SELECT c.id, c.name, d.code_id, d.debt, d.cred
+	// FROM trx_detail d
+	// INNER JOIN acc_code c ON c.id = d.code_id
+	// WHERE d.trx_id=t.id
+	// ORDER BY d.id
+	// ) x
+	// ),
+	// '[]'
+	// ) AS details
+
+	// FROM trx t
+	// ORDER BY t.id DESC`
+
+	rs, err := Sql().Query(builder.String())
 
 	if err != nil {
 		log.Printf("Unable to execute transaction query %v", err)
@@ -422,7 +439,7 @@ ORDER BY t.id DESC`
 			&p.TrxDate,
 			&p.Descriptions,
 			&p.Memo,
-			&p.Saldo,
+			//&p.Saldo,
 			&p.Details,
 		)
 
@@ -527,27 +544,18 @@ func searchTransactions(txt *string) ([]local_trx, error) {
 
 	var results []local_trx
 
-	var sqlStatement = `SELECT t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
-(SELECT COALESCE(sum(s.debt),0) AS debt FROM trx_detail s WHERE s.trx_id = t.id) saldo,
-COALESCE
-(
-(
-SELECT array_to_json(array_agg(row_to_json(x))) FROM
-(
-SELECT c.id, c.name, d.code_id, d.debt, d.cred
-FROM trx_detail d
-INNER JOIN acc_code c ON c.id = d.code_id
-WHERE d.trx_id=t.id 
-ORDER BY d.id
-) x
-),
-'[]'
-) AS details
-FROM trx t
-WHERE t.trx_token @@ to_tsquery('indonesian', $1)
-ORDER BY t.id DESC`
+	builder := strings.Builder{}
 
-	rs, err := Sql().Query(sqlStatement, txt)
+	builder.WriteString("SELECT t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,")
+	//builder.WriteString(" (SELECT COALESCE(sum(s.debt),0) AS debt FROM trx_detail s WHERE s.trx_id = t.id)")
+	//builder.WriteString(" AS saldo, ")
+	builder.WriteString(nestQuery(get_query_details))
+	builder.WriteString(" AS details ")
+	builder.WriteString(" FROM trx t")
+	builder.WriteString(" WHERE t.trx_token @@ to_tsquery('indonesian', $1)")
+	builder.WriteString(" ORDER BY t.id DESC")
+
+	rs, err := Sql().Query(builder.String(), txt)
 
 	if err != nil {
 		log.Printf("Unable to execute transactions code query %v", err)
@@ -566,7 +574,7 @@ ORDER BY t.id DESC`
 			&p.TrxDate,
 			&p.Descriptions,
 			&p.Memo,
-			&p.Saldo,
+			//&p.Saldo,
 			&p.Details,
 		)
 
@@ -587,30 +595,21 @@ func getTransactionsByGroup(id *int64) ([]local_trx, error) {
 
 	var results []local_trx
 
-	var sqlStatement = `SELECT t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
-(SELECT COALESCE(sum(s.debt),0) AS debt FROM trx_detail s WHERE s.trx_id = t.id) saldo,
-COALESCE
-(
-(
-SELECT array_to_json(array_agg(row_to_json(x))) FROM
-(
-SELECT c.id, c.name, d.code_id, d.debt, d.cred
-FROM trx_detail d
-INNER JOIN acc_code c ON c.id = d.code_id
-WHERE d.trx_id=t.id 
-ORDER BY d.id
-) x
-),
-'[]'
-) AS details
-FROM trx t
-INNER JOIN trx_detail d ON d.trx_id = d.id
-INNER JOIN acc_type e ON e.id = d.code_id
-INNER JOIN acc_code c ON c.id = e.group_id
-WHERE c.group_id=$1
-ORDER BY t.id DESC`
+	builder := strings.Builder{}
 
-	rs, err := Sql().Query(sqlStatement, id)
+	builder.WriteString("SELECT t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,")
+	//builder.WriteString(" (SELECT COALESCE(sum(s.debt),0) AS debt FROM trx_detail s WHERE s.trx_id = t.id)")
+	//builder.WriteString(" AS saldo, ")
+	builder.WriteString(nestQuery(get_query_details))
+	builder.WriteString(" AS details ")
+	builder.WriteString(" FROM trx t")
+	builder.WriteString(" INNER JOIN trx_detail d ON d.trx_id = d.id")
+	builder.WriteString(" INNER JOIN acc_type e ON e.id = d.code_id")
+	builder.WriteString(" INNER JOIN acc_code c ON c.id = e.group_id")
+	builder.WriteString(" WHERE c.group_id=$1")
+	builder.WriteString(" ORDER BY t.id DESC")
+
+	rs, err := Sql().Query(builder.String(), id)
 
 	if err != nil {
 		log.Printf("Unable to execute transactions query %v", err)
@@ -629,7 +628,7 @@ ORDER BY t.id DESC`
 			&p.TrxDate,
 			&p.Descriptions,
 			&p.Memo,
-			&p.Saldo,
+			//&p.Saldo,
 			&p.Details,
 		)
 
@@ -691,27 +690,18 @@ func get_trx_by_month(id *int) ([]local_trx, error) {
 
 	var results []local_trx
 
-	var sqlStatement = `SELECT t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,
-(SELECT COALESCE(sum(s.debt),0) AS debt FROM trx_detail s WHERE s.trx_id = t.id) saldo,
-COALESCE
-(
-(
-SELECT array_to_json(array_agg(row_to_json(x))) FROM
-(
-SELECT c.id, c.name, d.code_id, d.debt, d.cred
-FROM trx_detail d
-INNER JOIN acc_code c ON c.id = d.code_id
-WHERE d.trx_id=t.id 
-ORDER BY d.id
-) x
-),
-'[]'
-) AS details
-FROM trx t
-WHERE EXTRACT(MONTH from t.trx_date)=$1
-ORDER BY t.id DESC`
+	builder := strings.Builder{}
 
-	rs, err := Sql().Query(sqlStatement, id)
+	builder.WriteString("SELECT t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,")
+	//builder.WriteString(" (SELECT COALESCE(sum(s.debt),0) AS debt FROM trx_detail s WHERE s.trx_id = t.id)")
+	//builder.WriteString(" AS saldo, ")
+	builder.WriteString(nestQuery(get_query_details))
+	builder.WriteString(" AS details ")
+	builder.WriteString(" FROM trx t")
+	builder.WriteString(" WHERE EXTRACT(MONTH from t.trx_date)=$1")
+	builder.WriteString(" ORDER BY t.id DESC")
+
+	rs, err := Sql().Query(builder.String(), id)
 
 	if err != nil {
 		log.Printf("Unable to execute transactions query %v", err)
@@ -730,7 +720,7 @@ ORDER BY t.id DESC`
 			&p.TrxDate,
 			&p.Descriptions,
 			&p.Memo,
-			&p.Saldo,
+			//&p.Saldo,
 			&p.Details,
 		)
 

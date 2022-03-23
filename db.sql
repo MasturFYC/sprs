@@ -145,6 +145,40 @@ CREATE TABLE public.customers (
 ALTER TABLE public.customers OWNER TO postgres;
 
 --
+-- Name: finance_groups; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.finance_groups (
+    id smallint NOT NULL,
+    name character varying(50) NOT NULL
+);
+
+
+ALTER TABLE public.finance_groups OWNER TO postgres;
+
+--
+-- Name: finance_groups_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.finance_groups_id_seq
+    AS smallint
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.finance_groups_id_seq OWNER TO postgres;
+
+--
+-- Name: finance_groups_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.finance_groups_id_seq OWNED BY public.finance_groups.id;
+
+
+--
 -- Name: finance_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -172,7 +206,8 @@ CREATE TABLE public.finances (
     phone character varying(25),
     cell character varying(25),
     zip character varying(10),
-    email character varying(50)
+    email character varying(50),
+    group_id smallint DEFAULT 0 NOT NULL
 );
 
 
@@ -644,6 +679,13 @@ CREATE TABLE public.wheels (
 ALTER TABLE public.wheels OWNER TO postgres;
 
 --
+-- Name: finance_groups id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.finance_groups ALTER COLUMN id SET DEFAULT nextval('public.finance_groups_id_seq'::regclass);
+
+
+--
 -- Name: invoices id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -757,6 +799,18 @@ COPY public.branchs (id, name, street, city, phone, cell, zip, head_branch, emai
 --
 
 COPY public.customers (order_id, name, agreement_number, payment_type) FROM stdin;
+23	test	\N	c0-1
+\.
+
+
+--
+-- Data for Name: finance_groups; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.finance_groups (id, name) FROM stdin;
+1	BAF
+2	CLIPAN
+3	MTF
 \.
 
 
@@ -764,28 +818,28 @@ COPY public.customers (order_id, name, agreement_number, payment_type) FROM stdi
 -- Data for Name: finances; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.finances (id, name, short_name, street, city, phone, cell, zip, email) FROM stdin;
-1	Bussan Auto Finance	BAF	Jl. Jend. Sudirman	Indramayu	2569874545	65979	2598987	busan.123@gmail.com
-2	Auto Discret Finance	Adira	Jl. Jend. Sudirman	Indramayu	2569874545	65979	2598987	adira.finance@gmail.com
-3	Mandiri Tunas Finance	MTF	\N	Cirebon	\N	\N	\N	\N
-4	Clipan Bekasi	CLIP B	\N	\N	\N	\N	\N	\N
-5	OTO Kredit Motor	OTTO	\N	\N	\N	\N	\N	\N
-6	COLLECTIUS	COL	\N	\N	\N	\N	\N	\N
-7	Mandiri Utama Finance	MUF	\N	\N	\N	\N	\N	\N
-8	FIF Group	FIF	\N	\N	\N	\N	\N	\N
-9	Mitra Pinasthika Mustika Finance	MPMF	\N	\N	\N	\N	\N	\N
-10	Top Finance Company	TFC	\N	\N	\N	\N	\N	\N
-11	Kredit Plus	KP+	\N	\N	\N	\N	\N	\N
-12	WOM Finance	WOMF	\N	\N	\N	\N	\N	\N
-13	MEGAPARA	MPR	\N	\N	\N	\N	\N	\N
-14	Clipan Karawang\n	CLIP K	\N	\N	\N	\N	\N	\N
-15	Clipan Palembang	CLIP P	\N	\N	\N	\N	\N	\N
-16	Safron Finance Karawang	SFI K	\N	\N	\N	\N	\N	\N
-17	BFI Finance	BFI	\N	\N	\N	\N	\N	\N
-18	Mandiri Tunas Finance Semarang	MTF S	\N	\N	\N	\N	\N	\N
-19	CLIPAN	CLIP	\N	\N	\N	\N	\N	\N
-20	Radana Finance	RAD	\N	\N	\N	\N	\N	\N
-21	Mega Auto Central Finance	MACF	\N	\N	\N	\N	\N	\N
+COPY public.finances (id, name, short_name, street, city, phone, cell, zip, email, group_id) FROM stdin;
+1	Bussan Auto Finance	BAF	Jl. Jend. Sudirman	Indramayu	2569874545	65979	2598987	busan.123@gmail.com	1
+2	Auto Discret Finance	Adira	Jl. Jend. Sudirman	Indramayu	2569874545	65979	2598987	adira.finance@gmail.com	1
+5	OTO Kredit Motor	OTTO	\N	\N	\N	\N	\N	\N	1
+6	COLLECTIUS	COL	\N	\N	\N	\N	\N	\N	1
+7	Mandiri Utama Finance	MUF	\N	\N	\N	\N	\N	\N	1
+8	FIF Group	FIF	\N	\N	\N	\N	\N	\N	1
+9	Mitra Pinasthika Mustika Finance	MPMF	\N	\N	\N	\N	\N	\N	1
+10	Top Finance Company	TFC	\N	\N	\N	\N	\N	\N	1
+11	Kredit Plus	KP+	\N	\N	\N	\N	\N	\N	1
+12	WOM Finance	WOMF	\N	\N	\N	\N	\N	\N	1
+13	MEGAPARA	MPR	\N	\N	\N	\N	\N	\N	1
+16	Safron Finance Karawang	SFI K	\N	\N	\N	\N	\N	\N	1
+17	BFI Finance	BFI	\N	\N	\N	\N	\N	\N	1
+20	Radana Finance	RAD	\N	\N	\N	\N	\N	\N	1
+21	Mega Auto Central Finance	MACF	\N	\N	\N	\N	\N	\N	1
+19	CLIPAN	CLIP	\N	\N	\N	\N	\N	\N	2
+14	Clipan Karawang\n	CLIP K	\N	\N	\N	\N	\N	\N	2
+15	Clipan Palembang	CLIP P	\N	\N	\N	\N	\N	\N	2
+3	Mandiri Tunas Finance	MTF	\N	Cirebon	\N	\N	\N	\N	3
+18	Mandiri Tunas Finance Semarang	MTF S	\N	\N	\N	\N	\N	\N	3
+4	Clipan Bekasi	CLIP B	\N	\N	\N	\N	\N	\N	2
 \.
 
 
@@ -1273,7 +1327,6 @@ COPY public.units (order_id, nopol, year, frame_number, machine_number, color, t
 20	E 5253 TY	2013	\N	\N	\N	2	3
 21	B 6262 VKY	2015	\N	\N	\N	9	3
 22	E 2830 QR	2015	\N	\N	\N	9	3
-23	E 2815 PBX	2021	\N	\N	\N	17	4
 24	E 2146 QAF	2018	\N	\N	\N	18	3
 25	B 3812 UJY	2015	\N	\N	\N	19	2
 26	T 2891 WP	2014	\N	\N	\N	19	2
@@ -1326,6 +1379,7 @@ COPY public.units (order_id, nopol, year, frame_number, machine_number, color, t
 73	B 3351 KUH	2015	\N	\N	\N	37	2
 74	E 6871 CM	2018	\N	\N	\N	8	2
 75	E 4080 UO	2018	\N	\N	\N	9	2
+23	E 2815 PBX	2021	\N	\N	\N	17	4
 \.
 
 
@@ -1372,6 +1426,13 @@ SELECT pg_catalog.setval('public.action_id_seq', 7, true);
 --
 
 SELECT pg_catalog.setval('public.branch_id_seq', 5, true);
+
+
+--
+-- Name: finance_groups_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.finance_groups_id_seq', 3, true);
 
 
 --
@@ -1513,6 +1574,22 @@ ALTER TABLE ONLY public.branchs
 
 ALTER TABLE ONLY public.customers
     ADD CONSTRAINT customers_order_id_key UNIQUE (order_id);
+
+
+--
+-- Name: finance_groups finance_groups_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.finance_groups
+    ADD CONSTRAINT finance_groups_name_key UNIQUE (name);
+
+
+--
+-- Name: finance_groups finance_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.finance_groups
+    ADD CONSTRAINT finance_groups_pkey PRIMARY KEY (id);
 
 
 --
@@ -1807,6 +1884,13 @@ CREATE INDEX ix_acc_type_group ON public.acc_type USING btree (group_id);
 
 
 --
+-- Name: ix_finance_group; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_finance_group ON public.finances USING btree (group_id);
+
+
+--
 -- Name: ix_gin_trx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1908,6 +1992,14 @@ ALTER TABLE ONLY public.types
 
 ALTER TABLE ONLY public.types
     ADD CONSTRAINT fk_type_roda FOREIGN KEY (wheel_id) REFERENCES public.wheels(id) ON DELETE RESTRICT;
+
+
+--
+-- Name: finances fkey_finance_group; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.finances
+    ADD CONSTRAINT fkey_finance_group FOREIGN KEY (group_id) REFERENCES public.finance_groups(id);
 
 
 --

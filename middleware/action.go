@@ -1,7 +1,9 @@
 package middleware
 
 import (
+	"crypto/rand"
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,11 +19,13 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// get all action by order
-
 func Action_UploadFile(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 	w.Header().Set("Access-Control-Allow-Methods", "POST")
+
+	b := make([]byte, 4)
+	rand.Read(b) // Doesn’t actually fail
+	uid := hex.EncodeToString(b)
 
 	params := mux.Vars(r)
 
@@ -44,7 +48,9 @@ func Action_UploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	targetPath := filepath.Join(os.Getenv("UPLOADFILE_LOCATION"), h.Filename)
+	ext := filepath.Ext(h.Filename)
+	sfile := fmt.Sprintf("%s%s", uid, ext)
+	targetPath := filepath.Join(os.Getenv("UPLOADFILE_LOCATION"), sfile)
 
 	tmpfile, err := os.Create(targetPath)
 	defer tmpfile.Close()
@@ -59,19 +65,19 @@ func Action_UploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rowsAffected, err := update_file_name(&id, &h.Filename)
+	rowsAffected, err := update_file_name(&id, &sfile)
 
 	if err != nil {
 		w.WriteHeader(http.StatusRequestURITooLong)
 		return
 	}
 
-	msg := fmt.Sprintf("File successfully uploaded. Total rows/record affected %v", rowsAffected)
+	//msg := fmt.Sprintf("File successfully uploaded. Total rows/record affected %v", rowsAffected)
 
 	// format the response message
 	res := Response{
 		ID:      rowsAffected,
-		Message: msg,
+		Message: sfile,
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(res)
@@ -407,9 +413,9 @@ func updateAction(id *int64, act *models.Action) (int64, error) {
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Printf("Error while updating action. %v", err)
-	}
+	// if err != nil {
+	// 	log.Printf("Error while updating action. %v", err)
+	// }
 
 	return rowsAffected, err
 }
@@ -428,9 +434,9 @@ func update_file_name(id *int64, file_name *string) (int64, error) {
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Printf("Error while updating action. %v", err)
-	}
+	// if err != nil {
+	// 	log.Printf("Error while updating action. %v", err)
+	// }
 
 	return rowsAffected, err
 }

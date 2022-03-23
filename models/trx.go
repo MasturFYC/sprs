@@ -31,14 +31,14 @@ type AccInfo struct {
 }
 
 type Trx struct {
-	ID           int64       `json:"id"`
-	RefID        int64       `json:"refId"`
-	Division     string      `json:"division"`
-	Descriptions string      `json:"descriptions"`
-	TrxDate      string      `json:"trxDate"`
-	Memo         NullString  `json:"memo"`
-	Saldo        float64     `json:"saldo"`
-	Details      []TrxDetail `json:"details,omitempty"`
+	ID           int64      `json:"id"`
+	RefID        int64      `json:"refId"`
+	Division     string     `json:"division"`
+	Descriptions string     `json:"descriptions"`
+	TrxDate      string     `json:"trxDate"`
+	Memo         NullString `json:"memo"`
+	//Saldo        float64     `json:"saldo"`
+	Details []TrxDetail `json:"details,omitempty"`
 }
 
 type TrxDetailsToken struct {
