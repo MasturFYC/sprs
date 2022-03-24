@@ -161,7 +161,7 @@ func get_report_trx_by_month(m *int, y *int) ([]reportMonth, error) {
 	b.WriteString(" FROM rs t")
 	b.WriteString(" ORDER BY t.group, t.id;")
 
-	log.Println(b.String())
+	//log.Println(b.String())
 	rs, err := Sql().Query(b.String(), m, y)
 
 	if err != nil {

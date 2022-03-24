@@ -24,8 +24,13 @@ func createRouter() {
 }
 
 func loadEnvirontment() {
-	//err := godotenv.Load("/home/mastur/.env")
-	err := godotenv.Load(".env")
+	// home, err := os.UserHomeDir()
+	// if err != nil {
+	// 	log.Fatalf("Error loading .env file")
+	// }
+	// env_path := filepath.Join(home, ".env.sprs")
+	err := godotenv.Load("/home/mastur/.env")
+	//err := godotenv.Load(".env")
 
 	if err != nil {
 		log.Fatalf("Error loading .env file")

@@ -20,5 +20,6 @@ func OrderRouter(router *mux.Router) {
 	router.HandleFunc("/", middleware.CreateOrder).Methods("POST")
 	router.HandleFunc("/{id}/", middleware.UpdateOrder).Methods("PUT")
 	router.HandleFunc("/name-seq", middleware.Order_GetNameSeq).Methods("GET")
+	router.HandleFunc("/invoiced/{month}/{year}/{financeId}", middleware.Order_GetInvoiced).Methods("GET")
 
 }
