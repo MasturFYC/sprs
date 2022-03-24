@@ -670,7 +670,7 @@ func searchOrders(txt *string) ([]order_all, error) {
 	var orders []order_all
 	b := create_order_query()
 	b.WriteString(" WHERE token @@ to_tsquery('indonesian', $1)")
-	b.WriteString(" ORDER BY o.id DESC")
+	b.WriteString(" ORDER BY o.name")
 
 	rs, err := Sql().Query(b.String(), txt)
 
@@ -725,7 +725,7 @@ func get_order_by_finance(id *int) ([]order_all, error) {
 	var orders []order_all
 	b := create_order_query()
 	b.WriteString(" WHERE o.finance_id=$1 OR 0=$1")
-	b.WriteString(" ORDER BY o.id DESC")
+	b.WriteString(" ORDER BY o.finance_id")
 
 	rs, err := Sql().Query(b.String(), id)
 
@@ -780,7 +780,7 @@ func get_order_by_branch(id *int) ([]order_all, error) {
 	var orders []order_all
 	b := create_order_query()
 	b.WriteString(" WHERE o.branch_id=$1 OR 0=$1")
-	b.WriteString(" ORDER BY o.id DESC")
+	b.WriteString(" ORDER BY o.branch_id, o.id DESC")
 
 	rs, err := Sql().Query(b.String(), id)
 
@@ -869,8 +869,8 @@ func get_order_by_month(id *int) ([]order_all, error) {
 
 	var orders []order_all
 	b := create_order_query()
-	b.WriteString(" WHERE EXTRACT(MONTH from o.order_at)=$1")
-	b.WriteString(" ORDER BY o.id DESC")
+	b.WriteString(" WHERE EXTRACT(MONTH from o.order_at)=$1 OR 0 = $1")
+	b.WriteString(" ORDER BY o.order_at DESC")
 
 	rs, err := Sql().Query(b.String(), id)
 
