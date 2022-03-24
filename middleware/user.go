@@ -38,7 +38,7 @@ func GenerateJWT(email, role string) (string, error) {
 	tokenString, err := token.SignedString(mySigningKey)
 
 	if err != nil {
-		_ = fmt.Errorf("Something Went Wrong: %s", err.Error())
+		_ = fmt.Errorf("something went wrong: %s", err.Error())
 		return "", err
 	}
 	return tokenString, nil
@@ -63,7 +63,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 
 	var email string
 
-	err = rs.Scan(&email)
+	_ = rs.Scan(&email)
 
 	if email != "" {
 		w.Header().Set("Content-Type", "application/json")
@@ -79,7 +79,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 
 	var name string
 
-	err = rs.Scan(&name)
+	_ = rs.Scan(&name)
 
 	if name != "" {
 		w.Header().Set("Content-Type", "application/json")
@@ -182,7 +182,7 @@ func IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 
 		token, err := jwt.Parse(r.Header["Token"][0], func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("There was an error in parsing")
+				return nil, fmt.Errorf("there was an error in parsing")
 			}
 			return mySigningKey, nil
 		})

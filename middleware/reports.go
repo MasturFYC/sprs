@@ -3,6 +3,7 @@ package middleware
 import (
 	"encoding/json"
 	"log"
+	"strings"
 
 	"net/http"
 
@@ -94,7 +95,7 @@ func GetRepotTrxByMonth(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
 
-	m, err := strconv.Atoi(params["month"])
+	m, _ := strconv.Atoi(params["month"])
 	//m2, err := strconv.Atoi(params["month2"])
 	y, err := strconv.Atoi(params["year"])
 
@@ -122,45 +123,46 @@ func get_report_trx_by_month(m *int, y *int) ([]reportMonth, error) {
 
 	var reports []reportMonth
 
-	var sqlStatement = `WITH RECURSIVE rs AS (
-		SELECT 0 AS group, 0 AS id, 'Saldo awal' AS name,
-			-- COALESCE(SUM(d.debt), 0) AS debt,
-			0 AS debt,
-			COALESCE(SUM(d.debt - d.cred), 0) AS cred
-		FROM trx_detail d
-		INNER JOIN trx x on x.id = d.trx_id
-		INNER JOIN acc_code c on c.id = d.code_id
-		-- INNER JOIN acc_type t on t.id = c.type_id
-		WHERE c.receivable_option = 1 AND
-			EXTRACT(MONTH FROM x.trx_date) < $1 AND
-			EXTRACT(YEAR  FROM x.trx_date) = $2		
+	b := strings.Builder{}
 
-		UNION ALL
-		
-		SELECT 1 as group, t.id, t.name, 
-			COALESCE(sum(d.debt), 0) AS debt,
-			COALESCE(sum(d.cred), 0) AS cred
-		from trx_detail d
-		inner join trx x on x.id = d.trx_id
-		inner join acc_code c on c.id = d.code_id
-		inner join acc_type t on t.id = c.type_id
-		where c.receivable_option != 1 AND
-			extract(MONTH FROM x.trx_date) = $1 
-			AND extract(YEAR  FROM x.trx_date) = $2
-		group by t.id
-		)
-		
-		select
-		  t.group,
-			t.id,
-			t.name,
-			t.debt, t.cred,
-			sum(t.cred - t.debt)
-			over (order by t.group, t.id rows between unbounded preceding and current row) as saldo
-		from rs t    
-		order by t.group, t.id;`
+	b.WriteString("WITH RECURSIVE rs AS (\n")
+	b.WriteString("SELECT 0 AS group, 0 AS id, 'Saldo awal' AS name,")
+	// -- COALESCE(SUM(d.debt), 0) AS debt,
+	b.WriteString(" 0 AS debt,")
+	b.WriteString(" COALESCE(SUM(d.debt - d.cred), 0) AS cred")
+	b.WriteString(" FROM trx_detail d")
+	b.WriteString(" INNER JOIN trx x on x.id = d.trx_id")
+	b.WriteString(" INNER JOIN acc_code c on c.id = d.code_id")
+	//-- INNER JOIN acc_type t on t.id = c.type_id
+	b.WriteString(" WHERE c.receivable_option = 1 AND")
+	b.WriteString(" EXTRACT(MONTH FROM x.trx_date) < $1 AND")
+	b.WriteString(" EXTRACT(YEAR  FROM x.trx_date) = $2")
 
-	rs, err := Sql().Query(sqlStatement, m, y)
+	b.WriteString("\nUNION ALL\n")
+
+	b.WriteString("SELECT 1 as group, t.id, t.name,")
+	b.WriteString(" COALESCE(sum(d.debt), 0) AS debt,")
+	b.WriteString(" COALESCE(sum(d.cred), 0) AS cred")
+	b.WriteString(" FROM trx_detail d")
+	b.WriteString(" INNER JOIN trx x on x.id = d.trx_id")
+	b.WriteString(" INNER JOIN acc_code c on c.id = d.code_id")
+	b.WriteString(" INNER JOIN acc_type t on t.id = c.type_id")
+	b.WriteString(" WHERE c.receivable_option != 1 AND")
+	b.WriteString(" extract(MONTH FROM x.trx_date) = $1")
+	b.WriteString(" AND extract(YEAR  FROM x.trx_date) = $2")
+	b.WriteString(" GROUP BY t.id)\n")
+	b.WriteString("SELECT")
+	b.WriteString(" t.group,")
+	b.WriteString(" t.id,")
+	b.WriteString(" t.name,")
+	b.WriteString(" t.debt, t.cred,")
+	b.WriteString(" SUM(t.cred - t.debt)")
+	b.WriteString(" OVER (ORDER BY t.group, t.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as saldo")
+	b.WriteString(" FROM rs t")
+	b.WriteString(" ORDER BY t.group, t.id;")
+
+	log.Println(b.String())
+	rs, err := Sql().Query(b.String(), m, y)
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)

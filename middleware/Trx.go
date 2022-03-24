@@ -16,13 +16,13 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type local_detail struct {
-	ID        int64   `json:"id"`
-	Name      string  `json:"name"`
-	AccCodeID int32   `json:"accCodeId"`
-	Debt      float64 `json:"debt"`
-	Cred      float64 `json:"cred"`
-}
+// type local_detail struct {
+// 	ID        int64   `json:"id"`
+// 	Name      string  `json:"name"`
+// 	AccCodeID int32   `json:"accCodeId"`
+// 	Debt      float64 `json:"debt"`
+// 	Cred      float64 `json:"cred"`
+// }
 
 type local_trx struct {
 	models.Trx

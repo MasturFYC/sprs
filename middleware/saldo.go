@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type remain_saldo struct {
@@ -46,27 +47,21 @@ func get_remain_saldo() ([]remain_saldo, error) {
 	   		WHERE g.id != 1
 	   		group by g.id
 	*/
-	var sqlStatement = `with recursive rs as (
-		select c.id, c.name,
-		coalesce(sum(d.debt), 0) debt,
-		coalesce(sum(d.cred), 0) cred
-		from trx_detail d
-		RIGHT join acc_code c on c.id = d.code_id
-		inner join acc_type t on t.id = c.type_id
-		WHERE t.group_id = 1
-		group by t.group_id, c.id
+	b := strings.Builder{}
+	b.WriteString("WITH RECURSIVE rs AS (\n")
+	b.WriteString("	SELECT c.id, c.name,")
+	b.WriteString("	COALESCE(sum(d.debt), 0) AS debt,")
+	b.WriteString("	COALESCE(sum(d.cred), 0) AS cred")
+	b.WriteString("	FROM trx_detail AS d")
+	b.WriteString("	RIGHT JOIN acc_code AS c on c.id = d.code_id")
+	b.WriteString("	INNER JOIN acc_type AS t on t.id = c.type_id")
+	b.WriteString("	WHERE t.group_id = 1")
+	b.WriteString("	GROUP BY t.group_id, c.id)\n")
+	b.WriteString("SELECT	t.id, t.name, t.debt, t.cred,")
+	b.WriteString("	t.debt - t.cred AS saldo")
+	b.WriteString("	FROM rs t;")
 
-	)
-		select
-			t.id,
-			t.name,
-			t.debt,
-			t.cred,
-			t.debt - t.cred as saldo
-		from rs t;
-										`
-
-	rs, err := Sql().Query(sqlStatement)
+	rs, err := Sql().Query(b.String())
 
 	if err != nil {
 		log.Printf("Unable to execute saldo query %v", err)

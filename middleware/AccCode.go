@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
 	"fyc.com/sprs/models"
 
@@ -28,6 +29,11 @@ func Account_GetSpec(w http.ResponseWriter, r *http.Request) {
 
 	spec_id, err := strconv.Atoi(params["id"])
 
+	if err != nil {
+		//log.Printf("Unable to get all account codes. %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
 	accounts, err := get_accounts_spec(&spec_id)
 
 	if err != nil || len(accounts) == 0 {
@@ -249,16 +255,17 @@ func getAccCode(id *int) (models.AccInfo, error) {
 
 	var p models.AccInfo
 
-	var sqlStatement = `SELECT 
-		c.type_id, c.id, c.name, c.descriptions, c.is_active, c.is_auto_debet, c.receivable_option,
-		t.name as type_name, g.name as group_name, t.descriptions as type_desc, g.descriptions as group_desc
+	b := strings.Builder{}
 
-	FROM acc_code c
-	INNER JOIN acc_type t ON t.id = c.type_id
-	INNER JOIN acc_group g ON g.id = t.group_id
-	WHERE c.id=$1`
+	b.WriteString("SELECT")
+	b.WriteString(" c.type_id, c.id, c.name, c.descriptions, c.is_active, c.is_auto_debet, c.receivable_option,")
+	b.WriteString(" t.name as type_name, g.name as group_name, t.descriptions as type_desc, g.descriptions as group_desc")
+	b.WriteString(" FROM acc_code c")
+	b.WriteString(" INNER JOIN acc_type t ON t.id = c.type_id")
+	b.WriteString(" INNER JOIN acc_group g ON g.id = t.group_id")
+	b.WriteString(" WHERE c.id=$1")
 
-	rs := Sql().QueryRow(sqlStatement, id)
+	rs := Sql().QueryRow(b.String(), id)
 
 	err := rs.Scan(
 		&p.TypeID,

@@ -53,7 +53,7 @@ func Invoice_GetByFinance(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 	params := mux.Vars(r)
 
-	id, err := strconv.Atoi(params["id"])
+	id, _ := strconv.Atoi(params["id"])
 
 	invoices, err := invoices_by_finance(&id)
 
@@ -71,8 +71,8 @@ func Invoice_GetByMonth(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 	params := mux.Vars(r)
 
-	m, err := strconv.Atoi(params["month"])
-	y, err := strconv.Atoi(params["year"])
+	m, _ := strconv.Atoi(params["month"])
+	y, _ := strconv.Atoi(params["year"])
 
 	invoices, err := invoices_by_month(&m, &y)
 
@@ -133,7 +133,7 @@ func Invoice_GetItem(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
 
-	id, err := strconv.ParseInt(params["id"], 10, 64)
+	id, _ := strconv.ParseInt(params["id"], 10, 64)
 
 	invoice, err := invoice_get_item(&id)
 
@@ -224,8 +224,15 @@ func Invoice_Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deletedRows := invoice_delete(&invoice_id)
-	deletedRows = invoice_delete_transaction(&invoice_id)
+	invoice_delete(&invoice_id)
+
+	// if err != nil {
+	// 	//log.Printf("Unable to convert the string into int.  %v", err)
+	// 	http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+	// 	return
+	// }
+
+	deletedRows := invoice_delete_transaction(&invoice_id)
 	msg := fmt.Sprintf("Invoice deleted successfully. Total rows/record affected %v", deletedRows)
 
 	// format the reponse message
@@ -283,7 +290,7 @@ func Invoice_Update(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	_, err = invocie_update_transaction(&param.Trx.ID, &param.Trx, param.Token)
+	_, err = invoice_update_transaction(&param.Trx.ID, &param.Trx, param.Token)
 
 	if err != nil {
 		//log.Printf("(API) Unable to create transaction.  %v", err)
@@ -311,15 +318,18 @@ func Invoice_Update(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func invocie_update_transaction(id *int64, p *models.Trx, token string) (int64, error) {
+func invoice_update_transaction(id *int64, p *models.Trx, token string) (int64, error) {
 
-	sqlStatement := `UPDATE trx SET
-		descriptions=$2,
-		memo=$3,
-		trx_token=to_tsvector('indonesian', $4)
-	WHERE ref_id=$1 AND division='trx-invoice'`
+	b := strings.Builder{}
 
-	res, err := Sql().Exec(sqlStatement,
+	b.WriteString("UPDATE trx SET")
+	b.WriteString(" descriptions=$2,")
+	b.WriteString(" memo=$3,")
+	b.WriteString(" trx_token=to_tsvector('indonesian', $4)")
+	b.WriteString(" WHERE ref_id=$1")
+	b.WriteString(" AND division='trx-invoice'")
+
+	res, err := Sql().Exec(b.String(),
 		p.RefID,
 		p.Descriptions,
 		p.Memo,
@@ -381,59 +391,62 @@ func invocie_delete_details(id *int64) (int64, error) {
 
 type invoice_item struct {
 	models.Invoice
-	Finance     json.RawMessage `json:"finance,ommitempty"`
-	Account     json.RawMessage `json:"account,ommitempty"`
-	Details     json.RawMessage `json:"details,ommitempty"`
-	Transaction json.RawMessage `json:"transaction,ommitempty"`
+	Finance     json.RawMessage `json:"finance,omitempty"`
+	Account     json.RawMessage `json:"account,omitempty"`
+	Details     json.RawMessage `json:"details,omitempty"`
+	Transaction json.RawMessage `json:"transaction,omitempty"`
 }
 
 func invoice_get_item(id *int64) (invoice_item, error) {
 	var item invoice_item
-	var queryWheel = `SELECT id, name, short_name as "shortName" FROM wheels WHERE id = t.wheel_id`
-	var queryMerk = `SELECT id, name FROM merks WHERE id = t.merk_id`
+	var queryWheel = nestQuerySingle(`SELECT id, name, short_name as "shortName" FROM wheels WHERE id = t.wheel_id`)
+	var queryMerk = nestQuerySingle(`SELECT id, name FROM merks WHERE id = t.merk_id`)
 
-	var queryType = fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId", %s AS wheel, %s AS merk FROM types t WHERE t.id = u.type_id`,
-		nestQuerySingle(queryWheel),
-		nestQuerySingle(queryMerk))
+	var queryType = nestQuerySingle(fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId", %s AS wheel, %s AS merk FROM types t WHERE t.id = u.type_id`,
+		queryWheel,
+		queryMerk))
 
-	var queryUnit = fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber",
+	var queryUnit = nestQuerySingle(fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber",
 		u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId", %s AS type
 		FROM units u
 		WHERE u.order_id = o.id`,
-		nestQuerySingle(queryType))
+		queryType))
 
-	var queryDetails = fmt.Sprintf(`SELECT o.id, o.name, o.order_at as "orderAt", o.printed_at AS "printedAt",
+	var queryDetails = nestQuery(fmt.Sprintf(`SELECT o.id, o.name, o.order_at as "orderAt", o.printed_at AS "printedAt",
 	o.bt_finance as "btFinance", o.bt_percent AS "btPercent", o.bt_matel AS "btMatel",
 	o.user_name AS "userName", o.verified_by AS "verifiedBy",
 	o.finance_id AS "financeId", o.branch_id AS "branchId",
 	o.is_stnk AS "isStnk", o.stnk_price AS "stnkPrice", matrix, true AS "isSelected", %s AS unit 
 	FROM orders o
 	INNER JOIN invoice_details d ON d.order_id = o.id
-	WHERE d.invoice_id = v.id`, nestQuerySingle(queryUnit))
+	WHERE d.invoice_id = v.id
+	ORDER BY d.order_id`, queryUnit))
 
-	var querFinance = `SELECT f.id, f.name, f.short_name AS "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email, f.group_id AS "groupId" FROM finances f WHERE f.id = v.finance_id`
-	var queryAccount = `SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`
+	var querFinance = nestQuerySingle(`SELECT f.id, f.name, f.short_name AS "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email, f.group_id AS "groupId" FROM finances f WHERE f.id = v.finance_id`)
+	var queryAccount = nestQuerySingle(`SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`)
 
-	var queryTansactionDetails = `SELECT id, code_id AS "codeId", trx_id AS "trxId", debt, cred FROM trx_detail WHERE trx_id = x.id`
+	var queryTansactionDetails = nestQuery(`SELECT id, code_id AS "codeId", trx_id AS "trxId", debt, cred FROM trx_detail WHERE trx_id = x.id`)
 
-	var queryTansaction = fmt.Sprintf(`SELECT x.id, x.ref_id AS "refId", x.division, x.descriptions,
+	var queryTansaction = nestQuerySingle(fmt.Sprintf(`SELECT x.id, x.ref_id AS "refId", x.division, x.descriptions,
 	x.trx_date AS "trxDate", x.memo, %s AS details
-	FROM trx x WHERE x.ref_id = v.id AND x.division = 'trx-invoice'`, nestQuery(queryTansactionDetails))
+	FROM trx x WHERE x.ref_id = v.id AND x.division = 'trx-invoice'`, queryTansactionDetails))
 
-	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at,
-	v.salesman, v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo,
-%s AS finance,
-%s AS account,
-COALESCE(%s, '{}') AS transaction,
-%s AS details
-FROM invoices v
-WHERE v.id=$1`,
-		nestQuerySingle(querFinance),
-		nestQuerySingle(queryAccount),
-		nestQuerySingle(queryTansaction),
-		nestQuery(queryDetails))
+	b := strings.Builder{}
+	b.WriteString("SELECT v.id, v.invoice_at, v.payment_term, v.due_at,")
+	b.WriteString(" v.salesman, v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo,")
+	b.WriteString(querFinance)
+	b.WriteString(" AS finance, ")
+	b.WriteString(queryAccount)
+	b.WriteString(" AS account,")
+	b.WriteString(" COALESCE(")
+	b.WriteString(queryTansaction)
+	b.WriteString(", '{}') AS transaction, ")
+	b.WriteString(queryDetails)
+	b.WriteString(" AS details")
+	b.WriteString(" FROM invoices v")
+	b.WriteString(" WHERE v.id=$1")
 
-	rs := Sql().QueryRow(sqlStatement, id)
+	rs := Sql().QueryRow(b.String(), id)
 
 	err := rs.Scan(
 		&item.ID,
@@ -595,8 +608,8 @@ func invoice_update(id *int64, inv *models.Invoice, token *string) (int64, error
 
 type invoice_all struct {
 	models.Invoice
-	Finance json.RawMessage `json:"finance,ommitempty"`
-	Account json.RawMessage `json:"account,ommitempty"`
+	Finance json.RawMessage `json:"finance,omitempty"`
+	Account json.RawMessage `json:"account,omitempty"`
 }
 
 func invoice_get_all() ([]invoice_all, error) {
@@ -678,56 +691,60 @@ func invoice_get_orders(finance_id *int, invoice_id *int64) ([]invoice_order, er
 		nestQuerySingle(queryWheel),
 		nestQuerySingle(queryMerk))
 
-	var queryUnit = fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber",
+	var queryUnit = nestQuerySingle(fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber",
 		u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId", %s AS type
 		FROM units u
 		WHERE u.order_id = o.id`,
-		nestQuerySingle(queryTye))
+		nestQuerySingle(queryTye)))
 
-	var queryBranch = `SELECT b.id, b.name, b.street, b.city, b.phone,
+	var queryBranch = nestQuerySingle(`SELECT b.id, b.name, b.street, b.city, b.phone,
 	b.cell, b.zip, b.head_branch AS "headBranch", b.email
 	FROM branchs AS b
-	WHERE b.id = o.branch_id`
+	WHERE b.id = o.branch_id`)
 
-	var sqlStatement = fmt.Sprintf(`WITH RECURSIVE rs AS(
-		SELECT true as is_selected, o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel, 
-		o.user_name, o.verified_by, o.finance_id, o.branch_id,
-		o.is_stnk, o.stnk_price, o.matrix,
-		%s AS branch,
-		%s AS unit
-	FROM orders AS o
-	WHERE o.id IN (SELECT d.order_id FROM invoice_details as d WHERE d.invoice_id = $2)
-	
-	UNION ALL
+	b := strings.Builder{}
 
-	SELECT false as is_selected, o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel,
-		o.user_name, o.verified_by, o.finance_id, o.branch_id,
-		o.is_stnk, o.stnk_price, o.matrix,
-		%s AS branch,
-		%s AS unit
-	FROM orders AS o
-	WHERE o.finance_id=$1 AND o.verified_by IS NOT NULL
-	AND o.id NOT IN (
-    SELECT order_id
-    FROM invoice_details
-		-- WHERE 0 = $2
-    -- WHERE d.invoice_id = $2
-)
-	)
-	
-	SELECT t.is_selected, t.id, t.name, t.order_at, t.printed_at, t.bt_finance,
-		t.bt_percent, t.bt_matel, t.user_name, t.verified_by,
-		t.finance_id, t.branch_id, t.is_stnk, t.stnk_price, t.matrix, t.branch, t.unit
-		FROM rs AS t
-		ORDER BY t.is_selected DESC, t.finance_id, t.id DESC
-	`,
-		nestQuerySingle(queryBranch),
-		nestQuerySingle(queryUnit),
-		nestQuerySingle(queryBranch),
-		nestQuerySingle(queryUnit),
-	)
+	b.WriteString("WITH RECURSIVE rs AS(")
+	b.WriteString(" SELECT true as is_selected, o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel,")
+	b.WriteString(" o.user_name, o.verified_by, o.finance_id, o.branch_id,")
+	b.WriteString(" o.is_stnk, o.stnk_price, o.matrix, ")
+	b.WriteString(queryBranch)
+	b.WriteString(" AS branch, ")
+	b.WriteString(queryUnit)
+	b.WriteString(" AS unit ")
+	b.WriteString(" FROM orders AS o")
+	b.WriteString(" WHERE o.id IN (SELECT d.order_id FROM invoice_details as d WHERE d.invoice_id = $2)")
 
-	rs, err := Sql().Query(sqlStatement, finance_id, invoice_id)
+	b.WriteString(" UNION ALL")
+
+	b.WriteString(" SELECT false as is_selected, o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel,")
+	b.WriteString(" o.user_name, o.verified_by, o.finance_id, o.branch_id,")
+	b.WriteString(" o.is_stnk, o.stnk_price, o.matrix, ")
+	b.WriteString(queryBranch)
+	b.WriteString(" AS branch, ")
+	b.WriteString(queryUnit)
+	b.WriteString(" AS unit")
+	b.WriteString(" FROM orders AS o")
+	b.WriteString(" WHERE o.finance_id=$1")
+	b.WriteString(" AND o.verified_by IS NOT NULL")
+	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM invoice_details)")
+	b.WriteString(")")
+	// -- WHERE 0 = $2
+	// -- WHERE d.invoice_id = $2
+
+	b.WriteString(" SELECT t.is_selected, t.id, t.name, t.order_at, t.printed_at, t.bt_finance,")
+	b.WriteString(" t.bt_percent, t.bt_matel, t.user_name, t.verified_by,")
+	b.WriteString(" t.finance_id, t.branch_id, t.is_stnk, t.stnk_price, t.matrix, t.branch, t.unit")
+	b.WriteString(" FROM rs AS t")
+	b.WriteString(" ORDER BY t.is_selected DESC, t.finance_id, t.id DESC")
+	// `,
+	// 	,
+	// 	,
+	// 	nestQuerySingle(queryBranch),
+	// 	nestQuerySingle(queryUnit),
+	// )
+
+	rs, err := Sql().Query(b.String(), finance_id, invoice_id)
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)
@@ -776,19 +793,23 @@ func invoice_get_orders(finance_id *int, invoice_id *int64) ([]invoice_order, er
 
 func invoices_search(txt *string) ([]invoice_all, error) {
 	var invoices []invoice_all
+
+	b := strings.Builder{}
+
 	var querFinance = `SELECT f.id, f.name, f.short_name "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email, f.group_id AS "groupId" FROM finances f WHERE f.id = v.finance_id`
 	var queryAccount = `SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`
 
-	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo,
-		%s AS finance, %s AS account 
-		FROM invoices AS v
-		WHERE token @@ to_tsquery('indonesian', $1) 
-		ORDER BY v.id DESC`,
-		nestQuerySingle(querFinance),
-		nestQuerySingle(queryAccount),
-	)
+	b.WriteString("SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman,")
+	b.WriteString(" v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo,")
+	b.WriteString(nestQuerySingle(querFinance))
+	b.WriteString("	AS finance, ")
+	b.WriteString(nestQuerySingle(queryAccount))
+	b.WriteString(" AS account ")
+	b.WriteString(" FROM invoices AS v")
+	b.WriteString(" WHERE token @@ to_tsquery('indonesian', $1)")
+	b.WriteString(" ORDER BY v.id DESC")
 
-	rs, err := Sql().Query(sqlStatement, txt)
+	rs, err := Sql().Query(b.String(), txt)
 
 	if err != nil {
 		log.Fatalf("Unable to execute merks query %v", err)
@@ -899,17 +920,21 @@ func invoices_by_finance(finance_id *int) ([]invoice_all, error) {
 	var querFinance = `SELECT f.id, f.name, f.short_name "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email, f.group_id AS "groupId" FROM finances f WHERE f.id = v.finance_id`
 	var queryAccount = `SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`
 
-	var sqlStatement = fmt.Sprintf(`SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, 
-		v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo,
-		%s AS finance, %s AS account 
-		FROM invoices AS v
-		WHERE v.finance_id=$1 OR 0=$1
-		ORDER BY v.id DESC`,
-		nestQuerySingle(querFinance),
-		nestQuerySingle(queryAccount),
-	)
+	b := strings.Builder{}
 
-	rs, err := Sql().Query(sqlStatement, finance_id)
+	b.WriteString("SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman,")
+	b.WriteString(" v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo, ")
+	b.WriteString(nestQuerySingle(querFinance))
+	b.WriteString(" AS finance, ")
+	b.WriteString(nestQuerySingle(queryAccount))
+	b.WriteString(" AS account")
+	b.WriteString(" FROM invoices AS v")
+	b.WriteString(" WHERE v.finance_id=$1 OR 0=$1")
+	b.WriteString(" ORDER BY v.id DESC")
+
+	rs, err := Sql().Query(b.String(), finance_id)
+
+	//log.Println(b.String())
 
 	if err != nil {
 		log.Fatalf("Unable to execute merks query %v", err)

@@ -1,19 +1,26 @@
 package middleware
 
 import (
+	"bytes"
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
+	"image/color"
+	"image/draw"
+	"image/jpeg"
 	"io"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"fyc.com/sprs/models"
 	"github.com/gorilla/mux"
@@ -53,7 +60,14 @@ func Action_UploadFile(w http.ResponseWriter, r *http.Request) {
 	targetPath := filepath.Join(os.Getenv("UPLOADFILE_LOCATION"), sfile)
 
 	tmpfile, err := os.Create(targetPath)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	defer tmpfile.Close()
+
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -225,9 +239,9 @@ func getAllActions(OrderID *int64) ([]models.Action, error) {
 	var actions []models.Action
 
 	sqlStatement := `SELECT
-		id, action_at, pic, descriptions, order_id, file_name
-	FROM actions
-	WHERE order_id=$1`
+    id, action_at, pic, descriptions, order_id, file_name
+  FROM actions
+  WHERE order_id=$1`
 
 	rows, err := Sql().Query(sqlStatement, OrderID)
 
@@ -263,9 +277,9 @@ func getAction(id *int64) (models.Action, error) {
 	var act models.Action
 
 	sqlStatement := `SELECT
-		id, action_at, pic, descriptions, order_id, file_name
-	FROM actions
-	WHERE id=$1`
+    id, action_at, pic, descriptions, order_id, file_name
+  FROM actions
+  WHERE id=$1`
 	//stmt, _ := Sql().Prepare(sqlStatement)
 
 	//defer stmt.Close()
@@ -368,10 +382,10 @@ func deleteAction(id *int64) int64 {
 func createAction(act *models.Action) (int64, error) {
 
 	sqlStatement := `INSERT INTO actions
-		(action_at, pic, descriptions, order_id)
-	VALUES
-		($1, $2, $3, $4)
-	RETURNING id`
+    (action_at, pic, descriptions, order_id)
+  VALUES
+    ($1, $2, $3, $4)
+  RETURNING id`
 
 	var id int64
 
@@ -392,9 +406,9 @@ func createAction(act *models.Action) (int64, error) {
 
 func updateAction(id *int64, act *models.Action) (int64, error) {
 
-	sqlStatement := `UPDATE actions SET 
-		action_at=$2, pic=$3, descriptions=$4, order_id=$5
-	WHERE id=$1`
+	sqlStatement := `UPDATE actions SET
+    action_at=$2, pic=$3, descriptions=$4, order_id=$5
+  WHERE id=$1`
 
 	res, err := Sql().Exec(sqlStatement,
 		id,
@@ -470,5 +484,129 @@ func Action_GetFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNotFound)
-	return
+}
+
+func Action_GetPreview(w http.ResponseWriter, r *http.Request) {
+	EnableCors(&w)
+
+	params := mux.Vars(r)
+
+	txt := params["txt"]
+
+	targetPath := filepath.Join(os.Getenv("UPLOADFILE_LOCATION"), txt)
+
+	if strings.ToLower(filepath.Ext(targetPath)) != "pdf" {
+
+		if exists(targetPath) {
+
+			//			fileBytes, err := ioutil.ReadFile(targetPath)
+			f, err := os.Open(targetPath)
+			if err != nil {
+				//log.Fatal(err)
+				w.WriteHeader(http.StatusNotFound)
+				return
+			}
+
+			//encoding message is discarded, because OP wanted only jpg, else use encoding in resize function
+			img, _, err := image.Decode(f)
+			if err != nil {
+				w.WriteHeader(http.StatusInsufficientStorage)
+				return
+				//				log.Fatal(err)
+			}
+
+			//this is the resized image
+			resImg := resize(img, 64, 80)
+
+			//this is the resized image []bytes
+			imgBytes := imgToBytes(resImg)
+
+			// if err != nil {
+			// 	w.WriteHeader(http.StatusNotFound)
+			// 	return
+			// }
+
+			w.Header().Set("Content-Type", "application/octet-stream")
+			w.WriteHeader(http.StatusOK)
+			w.Write(imgBytes)
+
+			return
+		}
+	}
+	w.WriteHeader(http.StatusNotFound)
+
+}
+
+func resize(img image.Image, length int, width int) image.Image {
+	//truncate pixel size
+	minX := img.Bounds().Min.X
+	minY := img.Bounds().Min.Y
+	maxX := img.Bounds().Max.X
+	maxY := img.Bounds().Max.Y
+	for (maxX-minX)%length != 0 {
+		maxX--
+	}
+	for (maxY-minY)%width != 0 {
+		maxY--
+	}
+	scaleX := (maxX - minX) / length
+	scaleY := (maxY - minY) / width
+
+	imgRect := image.Rect(0, 0, length, width)
+	resImg := image.NewRGBA(imgRect)
+	draw.Draw(resImg,
+		resImg.Bounds(),
+		&image.Uniform{C: color.White},
+		image.Point{}, draw.Over)
+	for y := 0; y < width; y += 1 {
+		for x := 0; x < length; x += 1 {
+			averageColor := getAverageColor(img, minX+x*scaleX, minX+(x+1)*scaleX, minY+y*scaleY, minY+(y+1)*scaleY)
+			resImg.Set(x, y, averageColor)
+		}
+	}
+	return resImg
+}
+
+func getAverageColor(img image.Image, minX int, maxX int, minY int, maxY int) color.Color {
+	var averageRed float64
+	var averageGreen float64
+	var averageBlue float64
+	var averageAlpha float64
+	scale := 1.0 / float64((maxX-minX)*(maxY-minY))
+
+	for i := minX; i < maxX; i++ {
+		for k := minY; k < maxY; k++ {
+			r, g, b, a := img.At(i, k).RGBA()
+			averageRed += float64(r) * scale
+			averageGreen += float64(g) * scale
+			averageBlue += float64(b) * scale
+			averageAlpha += float64(a) * scale
+		}
+	}
+
+	averageRed = math.Sqrt(averageRed)
+	averageGreen = math.Sqrt(averageGreen)
+	averageBlue = math.Sqrt(averageBlue)
+	averageAlpha = math.Sqrt(averageAlpha)
+
+	averageColor := color.RGBA{
+		R: uint8(averageRed),
+		G: uint8(averageGreen),
+		B: uint8(averageBlue),
+		A: uint8(averageAlpha)}
+
+	return averageColor
+}
+
+func imgToBytes(img image.Image) []byte {
+	var opt jpeg.Options
+	opt.Quality = 80
+
+	buff := bytes.NewBuffer(nil)
+	err := jpeg.Encode(buff, img, &opt)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return buff.Bytes()
 }

@@ -21,7 +21,7 @@ func Pdf_GenInvoice(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
 
-	id, err := strconv.ParseInt(params["id"], 10, 64)
+	id, _ := strconv.ParseInt(params["id"], 10, 64)
 
 	invoice, err := invoice_get_item(&id)
 
@@ -61,7 +61,7 @@ func Pdf_GenInvoice(w http.ResponseWriter, r *http.Request) {
 	//w.Header().Set("Content-Type", "application/octet-stream")
 	w.WriteHeader(http.StatusOK)
 	buf.WriteTo(w)
-	return
+	//return
 }
 
 func isNullString(v models.NullString, prefix string, sufix string) string {
