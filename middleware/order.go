@@ -101,6 +101,8 @@ func GetOrdersByMonth(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(params["id"])
 
+	//log.Printf("%d============", id)
+
 	if err != nil {
 		//log.Printf("Unable to convert the string into int.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -127,7 +129,9 @@ func GetOrders(w http.ResponseWriter, r *http.Request) {
 	addresses, err := getAllOrders()
 
 	if err != nil {
-		log.Fatalf("Unable to get all orderes. %v", err)
+		//log.Fatalf("Unable to get all orderes. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
 	}
 
 	json.NewEncoder(w).Encode(&addresses)
@@ -143,13 +147,17 @@ func GetOrder(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(params["id"], 10, 64)
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		//log.Fatalf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	rv, err := getOrder(&id)
 
 	if err != nil {
-		log.Printf("Unable to get order. %v", err)
+		//log.Printf("Unable to get order. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
 	}
 
 	json.NewEncoder(w).Encode(&rv)
@@ -168,7 +176,9 @@ func DeleteOrder(w http.ResponseWriter, r *http.Request) {
 	log.Printf("id to remove.  %v", id)
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		//		log.Fatalf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
 	}
 
 	deletedRows := deleteOrder(&id)
@@ -205,12 +215,20 @@ func Order_GetNameSeq(w http.ResponseWriter, r *http.Request) {
 
 }
 
+type st_order_create struct {
+	models.Order
+	Finance models.Finance `json:"finance,omitempty"`
+	Branch  models.Branch  `json:"branch,omitempty"`
+}
+
 func CreateOrder(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 
 	w.Header().Set("Access-Control-Allow-Methods", "POST")
 
-	var order models.Order
+	var order st_order_create
+
+	//log.Printf("%v", r.Body)
 
 	err := json.NewDecoder(r.Body).Decode(&order)
 
@@ -245,7 +263,7 @@ func UpdateOrder(w http.ResponseWriter, r *http.Request) {
 
 	id, _ := strconv.ParseInt(params["id"], 10, 64)
 
-	var rv models.Order
+	var rv st_order_update
 
 	err := json.NewDecoder(r.Body).Decode(&rv)
 
@@ -309,6 +327,7 @@ func getOrder(id *int64) (order_all, error) {
 
 	var o order_all
 	b := create_order_query()
+	b.WriteString(" FROM orders AS o")
 	b.WriteString(" WHERE o.id=$1")
 
 	rs := Sql().QueryRow(b.String(), id)
@@ -355,16 +374,26 @@ func getOrder(id *int64) (order_all, error) {
 }
 
 type order_all struct {
-	models.Order
-	Finance json.RawMessage `json:"finance,omitempty"`
-	Branch  json.RawMessage `json:"branch,omitempty"`
-	//	Customer      json.RawMessage `json:"customer,omitempty"`
-	Unit json.RawMessage `json:"unit,omitempty"`
-	//	Task          json.RawMessage `json:"task,omitempty"`
-	//	HomeAddress   json.RawMessage `json:"home,omitempty"`
-	//	OfficeAddress json.RawMessage `json:"officeAddress,omitempty"`
-	//	PostAddress   json.RawMessage `json:"postAddress,omitempty"`
-	//	KtpAddress    json.RawMessage `json:"ktpAddress,omitempty"`
+	ID        int64   `json:"id"`
+	Name      string  `json:"name"`
+	OrderAt   string  `json:"orderAt"`
+	PrintedAt string  `json:"printedAt"`
+	BtFinance float64 `json:"btFinance"`
+	BtPercent float32 `json:"btPercent"`
+	BtMatel   float64 `json:"btMatel"`
+	UserName  string  `json:"userName"`
+
+	VerifiedBy models.NullString `json:"verifiedBy"`
+
+	FinanceID int     `json:"financeId"`
+	BranchID  int     `json:"branchId"`
+	IsStnk    bool    `json:"isStnk"`
+	StnkPrice float64 `json:"stnkPrice"`
+	Matrix    float64 `json:"matrix"`
+
+	Finance json.RawMessage  `json:"finance,omitempty"`
+	Branch  json.RawMessage  `json:"branch,omitempty"`
+	Unit    *json.RawMessage `json:"unit,omitempty"`
 }
 
 func getAllOrders() ([]order_all, error) {
@@ -372,6 +401,7 @@ func getAllOrders() ([]order_all, error) {
 	var orders []order_all
 
 	b := create_order_query()
+	b.WriteString(" FROM orders AS o")
 	b.WriteString(" ORDER BY o.id DESC")
 
 	//log.Println(b.String())
@@ -460,7 +490,7 @@ func create_name_seq() (int64, error) {
 	return id, err
 }
 
-func createOrder(p *models.Order) (int64, error) {
+func createOrder(p *st_order_create) (int64, error) {
 
 	sqlStatement := `INSERT INTO orders (
 		name, order_at, printed_at, bt_finance, bt_percent, bt_matel,
@@ -473,7 +503,7 @@ func createOrder(p *models.Order) (int64, error) {
 
 	var id int64
 
-	token := create_token(p)
+	token := create_new_token(p)
 
 	err := Sql().QueryRow(sqlStatement,
 		p.Name,
@@ -503,13 +533,47 @@ func createOrder(p *models.Order) (int64, error) {
 	return id, err
 }
 
-func create_token(p *models.Order) string {
+type st_order_update struct {
+	order_unit
+	Finance models.Finance `json:"finance,omitempty"`
+	Branch  models.Branch  `json:"branch,omitempty"`
+}
+
+func create_new_token(p *st_order_create) string {
 	builder := strings.Builder{}
 
 	builder.WriteString(p.Name)
 	builder.WriteString(" ")
 	builder.WriteString(p.OrderAt)
 	builder.WriteString(" ")
+
+	builder.WriteString(p.Finance.Name)
+	builder.WriteString(" ")
+	builder.WriteString(p.Finance.ShortName)
+	builder.WriteString(" ")
+	builder.WriteString(p.Branch.Name)
+	builder.WriteString(" ")
+	builder.WriteString(p.Branch.HeadBranch)
+	builder.WriteString(" ")
+
+	if p.IsStnk {
+		builder.WriteString(" stnk-ada")
+	} else {
+		builder.WriteString(" stnk-tidak-ada")
+	}
+
+	return builder.String()
+
+}
+
+func create_token(p *st_order_update) string {
+	builder := strings.Builder{}
+
+	builder.WriteString(p.Name)
+	builder.WriteString(" ")
+	builder.WriteString(p.OrderAt)
+	builder.WriteString(" ")
+
 	builder.WriteString(p.Finance.Name)
 	builder.WriteString(" ")
 	builder.WriteString(p.Finance.ShortName)
@@ -584,7 +648,7 @@ func create_token(p *models.Order) string {
 
 }
 
-func updateOrder(id *int64, p *models.Order) (int64, error) {
+func updateOrder(id *int64, p *st_order_update) (int64, error) {
 
 	sqlStatement := `UPDATE orders SET
 		name=$2, order_at=$3, printed_at=$4, bt_finance=$5, bt_percent=$6, bt_matel=$7, 
@@ -659,9 +723,10 @@ func create_order_query() *strings.Builder {
 	b.WriteString(" AS finance, ")
 	b.WriteString(nestQuerySingle(`SELECT id, name, head_branch AS "headBranch", street, city, phone, cell, zip, email FROM branchs WHERE id = o.branch_id`))
 	b.WriteString(" AS branch, ")
+	//b.WriteString(" COALESCE(")
 	b.WriteString(nestQuerySingle(q_unit))
+	//b.WriteString(", '{}') ")
 	b.WriteString(" AS unit ")
-	b.WriteString(" FROM orders AS o")
 	return &b
 }
 
@@ -669,6 +734,7 @@ func searchOrders(txt *string) ([]order_all, error) {
 
 	var orders []order_all
 	b := create_order_query()
+	b.WriteString(" FROM orders AS o")
 	b.WriteString(" WHERE token @@ to_tsquery('indonesian', $1)")
 	b.WriteString(" ORDER BY o.name")
 
@@ -724,6 +790,7 @@ func get_order_by_finance(id *int) ([]order_all, error) {
 
 	var orders []order_all
 	b := create_order_query()
+	b.WriteString(" FROM orders AS o")
 	b.WriteString(" WHERE o.finance_id=$1 OR 0=$1")
 	b.WriteString(" ORDER BY o.finance_id")
 
@@ -779,6 +846,7 @@ func get_order_by_branch(id *int) ([]order_all, error) {
 
 	var orders []order_all
 	b := create_order_query()
+	b.WriteString(" FROM orders AS o")
 	b.WriteString(" WHERE o.branch_id=$1 OR 0=$1")
 	b.WriteString(" ORDER BY o.branch_id, o.id DESC")
 
@@ -869,6 +937,7 @@ func get_order_by_month(id *int) ([]order_all, error) {
 
 	var orders []order_all
 	b := create_order_query()
+	b.WriteString(" FROM orders AS o")
 	b.WriteString(" WHERE EXTRACT(MONTH from o.order_at)=$1 OR 0 = $1")
 	b.WriteString(" ORDER BY o.order_at DESC")
 
@@ -936,9 +1005,9 @@ type order_invoiced struct {
 	Status    int     `json:"status"`
 	FinanceId int     `json:"financeId"`
 
-	Branch  json.RawMessage `json:"branch,omitempty"`
-	Unit    json.RawMessage `json:"unit,omitempty"`
-	Finance json.RawMessage `json:"finance,omitempty"`
+	Branch  json.RawMessage  `json:"branch,omitempty"`
+	Unit    *json.RawMessage `json:"unit,omitempty"`
+	Finance json.RawMessage  `json:"finance,omitempty"`
 }
 
 func order_get_invoiced(m *int, y *int, fid *int) ([]order_invoiced, error) {
@@ -997,7 +1066,7 @@ func order_get_invoiced(m *int, y *int, fid *int) ([]order_invoiced, error) {
 	b.WriteString(" FROM orders AS o")
 	//b.WriteString(" WHERE (EXTRACT(MONTH from o.order_at)=$1 AND EXTRACT(YEAR from o.order_at)=$2")
 	b.WriteString(" WHERE o.id NOT IN (SELECT order_id FROM invoice_details)")
-	b.WriteString(" AND (o.finance_id=$3 OR 0=$3)")
+	b.WriteString(" AND (o.finance_id=$3 OR 0=$3) AND o.verified_by IS NOT NULL")
 	b.WriteString(")")
 	// -- WHERE 0 = $2
 	// -- WHERE d.invoice_id = $2

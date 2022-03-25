@@ -8,8 +8,9 @@ import (
 
 func OfficeAddressRouter(router *mux.Router) {
 
-	router.HandleFunc("/", middleware.CreateOfficeAddress).Methods("POST")
-	router.HandleFunc("/{id}/", middleware.UpdateOfficeAddress).Methods("PUT")
-	router.HandleFunc("/{id}/", middleware.DeleteOfficeAddress).Methods("DELETE")
+	router.HandleFunc("", middleware.CreateOfficeAddress).Methods("POST")
+	router.HandleFunc("/{id}", middleware.GetOfficeAddress).Methods("GET")
+	router.HandleFunc("/{id}", middleware.UpdateOfficeAddress).Methods("PUT")
+	router.HandleFunc("/{id}", middleware.DeleteOfficeAddress).Methods("DELETE")
 
 }

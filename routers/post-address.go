@@ -8,8 +8,9 @@ import (
 
 func PostAddressRouter(router *mux.Router) {
 
-	router.HandleFunc("/", middleware.CreatePostAddress).Methods("POST")
-	router.HandleFunc("/{id}/", middleware.UpdatePostAddress).Methods("PUT")
-	router.HandleFunc("/{id}/", middleware.DeletePostAddress).Methods("DELETE")
+	router.HandleFunc("", middleware.CreatePostAddress).Methods("POST")
+	router.HandleFunc("/{id}", middleware.GetPostAddress).Methods("GET")
+	router.HandleFunc("/{id}", middleware.UpdatePostAddress).Methods("PUT")
+	router.HandleFunc("/{id}", middleware.DeletePostAddress).Methods("DELETE")
 
 }

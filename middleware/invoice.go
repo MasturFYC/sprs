@@ -392,10 +392,10 @@ func invocie_delete_details(id *int64) (int64, error) {
 
 type invoice_item struct {
 	models.Invoice
-	Finance     json.RawMessage `json:"finance,omitempty"`
-	Account     json.RawMessage `json:"account,omitempty"`
-	Details     json.RawMessage `json:"details,omitempty"`
-	Transaction json.RawMessage `json:"transaction,omitempty"`
+	Finance     json.RawMessage  `json:"finance,omitempty"`
+	Account     json.RawMessage  `json:"account,omitempty"`
+	Details     json.RawMessage  `json:"details,omitempty"`
+	Transaction *json.RawMessage `json:"transaction,omitempty"`
 }
 
 func invoice_get_item(id *int64) (invoice_item, error) {
@@ -439,9 +439,10 @@ func invoice_get_item(id *int64) (invoice_item, error) {
 	b.WriteString(" AS finance, ")
 	b.WriteString(queryAccount)
 	b.WriteString(" AS account,")
-	b.WriteString(" COALESCE(")
+	//b.WriteString(" COALESCE(")
 	b.WriteString(queryTansaction)
-	b.WriteString(", '{}') AS transaction, ")
+	//b.WriteString(", '{}') AS transaction, ")
+	b.WriteString(" AS transaction, ")
 	b.WriteString(queryDetails)
 	b.WriteString(" AS details")
 	b.WriteString(" FROM invoices v")
@@ -675,10 +676,26 @@ func invoice_get_all() ([]invoice_all, error) {
 }
 
 type invoice_order struct {
-	models.Order
-	IsSelected bool            `json:"isSelected"`
-	Branch     json.RawMessage `json:"branch,omitempty"`
-	Unit       json.RawMessage `json:"unit,omitempty"`
+	ID        int64   `json:"id"`
+	Name      string  `json:"name"`
+	OrderAt   string  `json:"orderAt"`
+	PrintedAt string  `json:"printedAt"`
+	BtFinance float64 `json:"btFinance"`
+	BtPercent float32 `json:"btPercent"`
+	BtMatel   float64 `json:"btMatel"`
+	UserName  string  `json:"userName"`
+
+	VerifiedBy models.NullString `json:"verifiedBy"`
+
+	FinanceID int     `json:"financeId"`
+	BranchID  int     `json:"branchId"`
+	IsStnk    bool    `json:"isStnk"`
+	StnkPrice float64 `json:"stnkPrice"`
+	Matrix    float64 `json:"matrix"`
+
+	IsSelected bool             `json:"isSelected"`
+	Branch     json.RawMessage  `json:"branch,omitempty"`
+	Unit       *json.RawMessage `json:"unit,omitempty"`
 }
 
 func invoice_get_orders(finance_id *int, invoice_id *int64) ([]invoice_order, error) {

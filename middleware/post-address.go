@@ -37,13 +37,17 @@ func GetPostAddress(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(params["id"], 10, 64)
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		//log.Fatalf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	ha, err := getPostAddress(&id)
 
 	if err != nil {
-		log.Fatalf("Unable to get post address. %v", err)
+		//log.Fatalf("Unable to get post address. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
 	}
 
 	json.NewEncoder(w).Encode(&ha)
@@ -60,7 +64,9 @@ func DeletePostAddress(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(params["id"], 10, 64)
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		//log.Fatalf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	deletedRows := deletePostAddress(&id)
@@ -87,13 +93,17 @@ func CreatePostAddress(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&ha)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		//log.Fatalf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	rowAffected, err := createPostAddress(&ha)
 
 	if err != nil {
-		log.Fatalf("Nama post address tidak boleh sama.  %v", err)
+		//log.Fatalf("Nama post address tidak boleh sama.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
 	}
 
 	msg := fmt.Sprintf("Post address created successfully. Total rows/record affected %v", rowAffected)
@@ -124,7 +134,9 @@ func UpdatePostAddress(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&ha)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		//log.Fatalf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
 	}
 
 	updatedRows := updatePostAddress(&id, &ha)

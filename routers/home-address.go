@@ -8,8 +8,9 @@ import (
 
 func HomeAddressRouter(router *mux.Router) {
 
-	router.HandleFunc("/", middleware.CreateHomeAddress).Methods("POST")
-	router.HandleFunc("/{id}/", middleware.UpdateHomeAddress).Methods("PUT")
-	router.HandleFunc("/{id}/", middleware.DeleteHomeAddress).Methods("DELETE")
+	router.HandleFunc("", middleware.CreateHomeAddress).Methods("POST")
+	router.HandleFunc("/{id}", middleware.GetHomeAddress).Methods("GET")
+	router.HandleFunc("/{id}", middleware.UpdateHomeAddress).Methods("PUT")
+	router.HandleFunc("/{id}", middleware.DeleteHomeAddress).Methods("DELETE")
 
 }

@@ -105,6 +105,7 @@ func GetRepotTrxByMonth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("%d %d", m, y)
 	rpt, err := get_report_trx_by_month(&m, &y)
 
 	if err != nil || len(rpt) == 0 {

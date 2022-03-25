@@ -102,9 +102,11 @@ func CreateCustomer(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		//log.Printf("Unable to decode the request body.  %v", err)
-		http.Error(w, http.StatusText(http.StatusCreated), http.StatusCreated)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
+
+	//log.Printf("%v", cust)
 
 	_, err = createCustomer(&cust)
 

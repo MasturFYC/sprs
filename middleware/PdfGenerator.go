@@ -16,6 +16,11 @@ import (
 	"golang.org/x/text/message"
 )
 
+type order_unit struct {
+	models.Order
+	Unit models.Unit `json:"unit,omitempt"`
+}
+
 func Pdf_GenInvoice(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 
@@ -39,7 +44,7 @@ func Pdf_GenInvoice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var orders []models.Order
+	var orders []order_unit
 	source = (*json.RawMessage)(&invoice.Details)
 	err = json.Unmarshal(*source, &orders)
 
@@ -107,7 +112,7 @@ func format_number(f float64) string {
 	return s
 }
 
-func createInvoice(w io.Writer, invoice_id *int64, inv *invoice_item, finance *models.Finance, orders []models.Order) (err error) {
+func createInvoice(w io.Writer, invoice_id *int64, inv *invoice_item, finance *models.Finance, orders []order_unit) (err error) {
 
 	const (
 		unit        = "mm"

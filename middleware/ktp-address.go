@@ -37,13 +37,17 @@ func GetKTPAddress(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(params["id"], 10, 64)
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		//log.Fatalf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	ha, err := getKTPAddress(&id)
 
 	if err != nil {
-		log.Fatalf("Unable to get ktp address. %v", err)
+		//log.Fatalf("Unable to get ktp address. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
 	}
 
 	json.NewEncoder(w).Encode(&ha)
@@ -60,7 +64,9 @@ func DeleteKTPAddress(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(params["id"], 10, 64)
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		//log.Fatalf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	deletedRows := deleteKTPAddress(&id)
@@ -87,13 +93,17 @@ func CreateKTPAddress(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&ha)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		//log.Fatalf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	rowAffected, err := createKTPAddress(&ha)
 
 	if err != nil {
-		log.Fatalf("Nama ktp address tidak boleh sama.  %v", err)
+		//log.Fatalf("Nama ktp address tidak boleh sama.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
 	}
 
 	msg := fmt.Sprintf("KTP address created successfully. Total rows/record affected %v", rowAffected)
@@ -124,7 +134,9 @@ func UpdateKTPAddress(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&ha)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		//		log.Fatalf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	updatedRows := updateKTPAddress(&id, &ha)

@@ -37,13 +37,17 @@ func GetHomeAddress(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(params["id"], 10, 64)
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		//log.Fatalf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	ha, err := getHomeAddress(&id)
 
 	if err != nil {
-		log.Fatalf("Unable to get home address. %v", err)
+		//log.Fatalf("Unable to get home address. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
 	}
 
 	json.NewEncoder(w).Encode(&ha)
@@ -60,7 +64,9 @@ func DeleteHomeAddress(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(params["id"], 10, 64)
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		//		log.Fatalf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	deletedRows := deleteHomeAddress(&id)
@@ -87,13 +93,17 @@ func CreateHomeAddress(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&ha)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		//		log.Fatalf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	rowAffected, err := createHomeAddress(&ha)
 
 	if err != nil {
-		log.Fatalf("Nama home address tidak boleh sama.  %v", err)
+		//log.Fatalf("Nama home address tidak boleh sama.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
 	}
 
 	msg := fmt.Sprintf("Home address created successfully. Total rows/record affected %v", rowAffected)
@@ -124,7 +134,9 @@ func UpdateHomeAddress(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&ha)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		//		log.Fatalf("Unable to decode the request body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	updatedRows := updateHomeAddress(&id, &ha)

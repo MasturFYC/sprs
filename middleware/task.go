@@ -37,13 +37,17 @@ func GetTask(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(params["id"], 10, 64)
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		//log.Fatalf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	tasks, err := getTask(&id)
 
 	if err != nil {
-		log.Fatalf("Unable to get task. %v", err)
+		//		log.Fatalf("Unable to get task. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
 	}
 
 	json.NewEncoder(w).Encode(&tasks)
@@ -60,7 +64,9 @@ func DeleteTask(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(params["id"], 10, 64)
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		//	log.Fatalf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	deletedRows := deleteTask(&id)
@@ -88,7 +94,7 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		//log.Printf("Unable to decode the request body.  %v", err)
-		http.Error(w, http.StatusText(http.StatusRequestedRangeNotSatisfiable), http.StatusRequestedRangeNotSatisfiable)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 

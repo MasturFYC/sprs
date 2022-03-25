@@ -27,26 +27,26 @@ type Order struct {
 	Matrix    float64 `json:"matrix"`
 
 	// * badan keuangan
-	Finance Finance `json:"finance,omitempty"`
+	//Finance Finance `json:"finance,omitempty"`
 	// * cabang yg menangani
-	Branch Branch `json:"branch,omitempty"`
+	//Branch Branch `json:"branch,omitempty"`
 
 	// data pelanggan
-	Customer Customer `json:"customer,omitempty"`
+	//Customer Customer `json:"customer,omitempty"`
 	// data tunggakan
 	//	Receivable Receivable `json:"receivable,omitempty"`
 	// data unit kendaraan
-	Unit Unit `json:"unit,omitempty"`
+	//Unit Unit `json:"unit,omitempty"`
 	// tindakan2 yg pernah dilakukan
-	Actions []Action `json:"actions,omitempty"`
+	//Actions []Action `json:"actions,omitempty"`
 
 	// data pemberian tugas
-	Task Task `json:"task,omitempty"`
+	//Task Task `json:"task,omitempty"`
 
-	HomeAddress   HomeAddress   `json:"homeAddress,omitempty"`
-	OfficeAddress OfficeAddress `json:"officeAddress,omitempty"`
+	//HomeAddress   HomeAddress   `json:"homeAddress,omitempty"`
+	//OfficeAddress OfficeAddress `json:"officeAddress,omitempty"`
 	// alamat penagihan
-	PostAddress PostAddress `json:"postAddress,omitempty"`
+	//PostAddress PostAddress `json:"postAddress,omitempty"`
 	// alamat kendaraan berdasarkan ktp
-	KtpAddress KtpAddress `json:"ktpAddress,omitempty"`
+	//KtpAddress KtpAddress `json:"ktpAddress,omitempty"`
 }
