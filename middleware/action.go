@@ -494,45 +494,48 @@ func Action_GetPreview(w http.ResponseWriter, r *http.Request) {
 	txt := params["txt"]
 
 	targetPath := filepath.Join(os.Getenv("UPLOADFILE_LOCATION"), txt)
+	log.Printf("%s", strings.ToLower(filepath.Ext(targetPath)))
 
-	if strings.ToLower(filepath.Ext(targetPath)) != "pdf" {
+	if strings.ToLower(filepath.Ext(targetPath)) == ".pdf" {
+		targetPath = filepath.Join(os.Getenv("UPLOADFILE_LOCATION"), "default.jpg")
+	}
 
-		if exists(targetPath) {
+	if exists(targetPath) {
 
-			//			fileBytes, err := ioutil.ReadFile(targetPath)
-			f, err := os.Open(targetPath)
-			if err != nil {
-				//log.Fatal(err)
-				w.WriteHeader(http.StatusNotFound)
-				return
-			}
-
-			//encoding message is discarded, because OP wanted only jpg, else use encoding in resize function
-			img, _, err := image.Decode(f)
-			if err != nil {
-				w.WriteHeader(http.StatusInsufficientStorage)
-				return
-				//				log.Fatal(err)
-			}
-
-			//this is the resized image
-			resImg := resize(img, 64, 80)
-
-			//this is the resized image []bytes
-			imgBytes := imgToBytes(resImg)
-
-			// if err != nil {
-			// 	w.WriteHeader(http.StatusNotFound)
-			// 	return
-			// }
-
-			w.Header().Set("Content-Type", "application/octet-stream")
-			w.WriteHeader(http.StatusOK)
-			w.Write(imgBytes)
-
+		//			fileBytes, err := ioutil.ReadFile(targetPath)
+		f, err := os.Open(targetPath)
+		if err != nil {
+			//log.Fatal(err)
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
+
+		//encoding message is discarded, because OP wanted only jpg, else use encoding in resize function
+		img, _, err := image.Decode(f)
+		if err != nil {
+			w.WriteHeader(http.StatusInsufficientStorage)
+			return
+			//				log.Fatal(err)
+		}
+
+		//this is the resized image
+		resImg := resize(img, 64, 80)
+
+		//this is the resized image []bytes
+		imgBytes := imgToBytes(resImg)
+
+		// if err != nil {
+		// 	w.WriteHeader(http.StatusNotFound)
+		// 	return
+		// }
+
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.WriteHeader(http.StatusOK)
+		w.Write(imgBytes)
+
+		return
 	}
+
 	w.WriteHeader(http.StatusNotFound)
 
 }

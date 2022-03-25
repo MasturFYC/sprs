@@ -18,10 +18,58 @@ import (
 
 type order_unit struct {
 	models.Order
-	Unit models.Unit `json:"unit,omitempt"`
+	Unit models.Unit `json:"unit,omitempty"`
 }
 
-func Pdf_GenInvoice(w http.ResponseWriter, r *http.Request) {
+func Pdf_GetInvoice(w http.ResponseWriter, r *http.Request) {
+	EnableCors(&w)
+
+	params := mux.Vars(r)
+
+	id, _ := strconv.ParseInt(params["id"], 10, 64)
+
+	invoice, err := invoice_get_item(&id)
+
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	var finance models.Finance
+	source := (*json.RawMessage)(&invoice.Finance)
+	err = json.Unmarshal(*source, &finance)
+
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	var orders []order_unit
+	source = (*json.RawMessage)(&invoice.Details)
+	err = json.Unmarshal(*source, &orders)
+
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	var buf bytes.Buffer
+
+	err = createInvoice(&buf, &id, &invoice, &finance, orders)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/pdf")
+	//w.Header().Set("Content-Type", "application/octet-stream")
+	w.WriteHeader(http.StatusOK)
+	buf.WriteTo(w)
+	//return
+}
+
+func Pdf_GetInvoiceClipan(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 
 	params := mux.Vars(r)
