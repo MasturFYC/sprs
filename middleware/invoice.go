@@ -990,3 +990,91 @@ func invoices_by_finance(finance_id *int) ([]invoice_all, error) {
 
 	return invoices, err
 }
+
+func invoice_get_item_customer(id *int64) (invoice_item, error) {
+	var item invoice_item
+	var queryWheel = nestQuerySingle(`SELECT id, name, short_name as "shortName" FROM wheels WHERE id = t.wheel_id`)
+	var queryMerk = nestQuerySingle(`SELECT id, name FROM merks WHERE id = t.merk_id`)
+
+	var queryType = nestQuerySingle(fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId", %s AS wheel, %s AS merk FROM types t WHERE t.id = u.type_id`,
+		queryWheel,
+		queryMerk))
+
+	var queryUnit = nestQuerySingle(fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber",
+		u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId", %s AS type
+		FROM units u
+		WHERE u.order_id = o.id`,
+		queryType))
+
+	var q_customer = nestQuerySingle("SELECT order_id, name, agreement_number, payment_type FROM customers WHERE order_id=o.id")
+
+	var queryDetails = nestQuery(fmt.Sprintf(`SELECT o.id, o.name, o.order_at as "orderAt", o.printed_at AS "printedAt",
+	o.bt_finance as "btFinance", o.bt_percent AS "btPercent", o.bt_matel AS "btMatel",
+	o.user_name AS "userName", o.verified_by AS "verifiedBy",
+	o.finance_id AS "financeId", o.branch_id AS "branchId",
+	o.is_stnk AS "isStnk", o.stnk_price AS "stnkPrice", matrix, true AS "isSelected", %s AS unit,
+	%s as customer
+	FROM orders o
+	INNER JOIN invoice_details d ON d.order_id = o.id
+	WHERE d.invoice_id = v.id
+	ORDER BY d.order_id`, queryUnit, q_customer))
+
+	var querFinance = nestQuerySingle(`SELECT f.id, f.name, f.short_name AS "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email, f.group_id AS "groupId" FROM finances f WHERE f.id = v.finance_id`)
+	var queryAccount = nestQuerySingle(`SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`)
+
+	var queryTansactionDetails = nestQuery(`SELECT id, code_id AS "codeId", trx_id AS "trxId", debt, cred FROM trx_detail WHERE trx_id = x.id`)
+
+	var queryTansaction = nestQuerySingle(fmt.Sprintf(`SELECT x.id, x.ref_id AS "refId", x.division, x.descriptions,
+	x.trx_date AS "trxDate", x.memo, %s AS details
+	FROM trx x WHERE x.ref_id = v.id AND x.division = 'trx-invoice'`, queryTansactionDetails))
+
+	b := strings.Builder{}
+	b.WriteString("SELECT v.id, v.invoice_at, v.payment_term, v.due_at,")
+	b.WriteString(" v.salesman, v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo,")
+	b.WriteString(querFinance)
+	b.WriteString(" AS finance, ")
+	b.WriteString(queryAccount)
+	b.WriteString(" AS account,")
+	//b.WriteString(" COALESCE(")
+	b.WriteString(queryTansaction)
+	//b.WriteString(", '{}') AS transaction, ")
+	b.WriteString(" AS transaction, ")
+	b.WriteString(queryDetails)
+	b.WriteString(" AS details")
+	b.WriteString(" FROM invoices v")
+	b.WriteString(" WHERE v.id=$1")
+
+	rs := Sql().QueryRow(b.String(), id)
+
+	err := rs.Scan(
+		&item.ID,
+		&item.InvoiceAt,
+		&item.PaymentTerm,
+		&item.DueAt,
+		&item.Salesman,
+		&item.FinanceID,
+		&item.Subtotal,
+		&item.Ppn,
+		&item.Tax,
+		&item.Total,
+		&item.AccountId,
+		&item.Memo,
+		&item.Finance,
+		&item.Account,
+		&item.Transaction,
+		&item.Details,
+	)
+
+	switch err {
+	case sql.ErrNoRows:
+		fmt.Println("No rows were returned!")
+		return item, nil
+	case nil:
+		return item, nil
+	default:
+		log.Fatalf("Unable to scan the row. %v", err)
+	}
+
+	// return empty user on error
+	return item, err
+}

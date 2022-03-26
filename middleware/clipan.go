@@ -4,14 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"image"
 	_ "image/jpeg"
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	convertion "fyc.com/sprs/Convertion"
 	"fyc.com/sprs/models"
@@ -19,26 +18,10 @@ import (
 	"github.com/jung-kurt/gofpdf"
 )
 
-//will call the init() function of the package
-//thus enabling working with jpeg file
-func OpenImage(path string) (image.Image, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-	defer f.Close()
-	img, format, err := image.Decode(f)
-	if err != nil {
-		e := fmt.Errorf("error in decoding: %w", err)
-		return nil, e
-	}
-
-	if format != "jpeg" && format != "png" {
-		e := fmt.Errorf("error in image format - not jpeg")
-		return nil, e
-	}
-	return img, nil
+type order_unit_customer struct {
+	models.Order
+	Unit     *models.Unit     `json:"unit,omitempty"`
+	Customer *models.Customer `json:"customer,omitempty"`
 }
 
 func Clipan_GetInvoice(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +31,7 @@ func Clipan_GetInvoice(w http.ResponseWriter, r *http.Request) {
 
 	id, _ := strconv.ParseInt(params["id"], 10, 64)
 
-	invoice, err := invoice_get_item(&id)
+	invoice, err := invoice_get_item_customer(&id)
 
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -64,7 +47,7 @@ func Clipan_GetInvoice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var orders []order_unit
+	var orders []order_unit_customer
 	source = (*json.RawMessage)(&invoice.Details)
 	err = json.Unmarshal(*source, &orders)
 
@@ -89,32 +72,7 @@ func Clipan_GetInvoice(w http.ResponseWriter, r *http.Request) {
 	//return
 }
 
-func create_indonesian_date(date string) string {
-	months := [12]string{"Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "Nopember", "Desember"}
-
-	t, err := time.Parse("2006-01-02", date[0:10])
-
-	if err != nil {
-		return date[0:10]
-	}
-	year, month, day := t.Date()
-	return fmt.Sprintf(" %02d %s %d", day, months[month-1], year)
-}
-
-func create_invoice_number(id int64, date string) string {
-	rom := [12]string{"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"}
-
-	t, err := time.Parse("2006-01-02", date[0:10])
-
-	if err != nil {
-		return date[0:10]
-	}
-	year, month, _ := t.Date()
-	return fmt.Sprintf(" %d/INV/SPRS/%s/%d", id, rom[month-1], year)
-	//return fmt.Sprintf(" %05d/INV/SPRS/%s/%d", id, rom[month-1], year)
-}
-
-func clipan_create_invoice(w io.Writer, invoice_id *int64, inv *invoice_item, finance *models.Finance, orders []order_unit) (err error) {
+func clipan_create_invoice(w io.Writer, invoice_id *int64, inv *invoice_item, finance *models.Finance, orders []order_unit_customer) (err error) {
 
 	var account models.AccCode
 	source := (*json.RawMessage)(&inv.Account)
@@ -140,17 +98,29 @@ func clipan_create_invoice(w io.Writer, invoice_id *int64, inv *invoice_item, fi
 	pw, _ := p.GetPageSize()
 
 	box := pw - ml - mr
+	box1 := 30.0
+	box2 := box - box1
+	x := ml + box1
+
+	//img, _ := OpenImage(filepath.Join(os.Getenv("POSTGRES_URL"), "logo.jpg"))
 
 	p.AddPage()
 
 	p.SetY(10)
+
+	//log.Println()
+	p.Image(filepath.Join(os.Getenv("UPLOADFILE_LOCATION"), "logo.jpg"), ml, p.GetY(), box1, 0, false, "", 0, "")
+	p.SetX(x)
 	p.SetFont(font, "B", 18)
-	p.CellFormat(box, lh, "PT. SARANA PADMA RIDHO SEPUH", "", 1, "C", false, 0, "")
+	p.CellFormat(box2, lh, "PT. SARANA PADMA RIDHO SEPUH", "", 1, "C", false, 0, "")
 	p.SetFont(font2, "", 12)
 	p.SetY(p.GetY() + 2)
-	p.CellFormat(box, lh, "GENERAL SUPPLIER, CONTRACTOR, COLLECTION", "", 1, "C", false, 0, "")
-	p.CellFormat(box, lh, "Jl. Gator Subroto Villa Gatsu No. 01 - Indramayu", "", 1, "C", false, 0, "")
+	p.SetX(x)
+	p.CellFormat(box2, lh, "GENERAL SUPPLIER, CONTRACTOR, COLLECTION", "", 1, "C", false, 0, "")
+	p.SetX(x)
+	p.CellFormat(box2, lh, "Jl. Gator Subroto Villa Gatsu No. 01 - Indramayu", "", 1, "C", false, 0, "")
 
+	p.SetX(ml)
 	p.SetLineWidth(0.75)
 	p.Line(ml, p.GetY()+2, ml+box, p.GetY()+2)
 	p.SetLineWidth(0.25)
@@ -168,10 +138,10 @@ func clipan_create_invoice(w io.Writer, invoice_id *int64, inv *invoice_item, fi
 	p.CellFormat(box, lh, "PT. CLIPAN FINANCE INDONESIA", "", 1, "L", false, 0, "")
 
 	lh = 7.5
-	box1 := 25.0
-	box2 := 50.0
+	box1 = 25.0
+	box2 = 50.0
 
-	x := pw - box1 - box2 - mr
+	x = pw - box1 - box2 - mr
 
 	p.SetLineWidth(0.15)
 	p.SetXY(x, y)
@@ -208,8 +178,14 @@ func clipan_create_invoice(w io.Writer, invoice_id *int64, inv *invoice_item, fi
 		y = p.GetY()
 		top := y + 1
 		p.SetXY(ml+box1+2, top)
-		p.MultiCell(box2-4, 5, fmt.Sprintf("Success fee atas nama %s\rNomor Perjanjian pembiayaan %s\nNomor Polisi %s",
-			finance.Name, inv.Salesman, o.Unit.Nopol), "0", "LM", false)
+
+		if o.Customer != nil {
+			p.MultiCell(box2-4, 5, fmt.Sprintf("Success fee atas nama %s\r\nNomor Perjanjian pembiayaan %s\r\nNomor Polisi %s",
+				o.Customer.Name, o.Name, o.Unit.Nopol), "0", "LM", false)
+		} else {
+			p.MultiCell(box2-4, 5, fmt.Sprintf("Success fee atas nama %s\r\nNomor Perjanjian pembiayaan %s\r\nNomor Polisi %s",
+				finance.Name, o.Name, o.Unit.Nopol), "0", "LM", false)
+		}
 		bottom := p.GetY() + 1
 
 		p.Line(ml, bottom, ml+box1+box2+box3, bottom)

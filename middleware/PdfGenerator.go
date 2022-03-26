@@ -21,6 +21,28 @@ type order_unit struct {
 	Unit models.Unit `json:"unit,omitempty"`
 }
 
+// //will call the init() function of the package
+// //thus enabling working with jpeg file
+// func OpenImage(path string) (image.Image, error) {
+// 	f, err := os.Open(path)
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		return nil, err
+// 	}
+// 	defer f.Close()
+// 	img, format, err := image.Decode(f)
+// 	if err != nil {
+// 		e := fmt.Errorf("error in decoding: %w", err)
+// 		return nil, e
+// 	}
+
+// 	if format != "jpeg" && format != "png" {
+// 		e := fmt.Errorf("error in image format - not jpeg")
+// 		return nil, e
+// 	}
+// 	return img, nil
+// }
+
 func Pdf_GetInvoice(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 
@@ -336,4 +358,29 @@ func createInvoice(w io.Writer, invoice_id *int64, inv *invoice_item, finance *m
 	pdf.Close()
 	//_ = pdf.OutputFileAndClose("hello.pdf")
 	return err
+}
+
+func create_indonesian_date(date string) string {
+	months := [12]string{"Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "Nopember", "Desember"}
+
+	t, err := time.Parse("2006-01-02", date[0:10])
+
+	if err != nil {
+		return date[0:10]
+	}
+	year, month, day := t.Date()
+	return fmt.Sprintf(" %02d %s %d", day, months[month-1], year)
+}
+
+func create_invoice_number(id int64, date string) string {
+	rom := [12]string{"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"}
+
+	t, err := time.Parse("2006-01-02", date[0:10])
+
+	if err != nil {
+		return date[0:10]
+	}
+	year, month, _ := t.Date()
+	return fmt.Sprintf(" %d/INV/SPRS/%s/%d", id, rom[month-1], year)
+	//return fmt.Sprintf(" %05d/INV/SPRS/%s/%d", id, rom[month-1], year)
 }

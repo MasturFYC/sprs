@@ -19,5 +19,8 @@ func InvoiceRouter(router *mux.Router) {
 	router.HandleFunc("/{id}/", middleware.Invoice_Delete).Methods("DELETE")
 	router.HandleFunc("/download/{id}", middleware.Pdf_GetInvoice).Methods("GET")
 
-	router.HandleFunc("/download/clipan/{id}", middleware.Clipan_GetInvoice).Methods("GET")
+	//CLIPAN  : 2
+	router.HandleFunc("/download/2/{id}", middleware.Clipan_GetInvoice).Methods("GET")
+	// MTF  : 3
+	router.HandleFunc("/download/3/{id}", middleware.Mtf_GetInvoice).Methods("GET")
 }
