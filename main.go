@@ -70,6 +70,8 @@ func loadRouter() {
 	routers.SaldoRouter(mainRouter.PathPrefix("/api/saldo/").Subrouter())
 	routers.ReportRouter(mainRouter.PathPrefix("/api/report/").Subrouter())
 	routers.InvoiceRouter(mainRouter.PathPrefix("/api/invoices/").Subrouter())
+
+	routers.LoanRouter(mainRouter.PathPrefix("/api/loans").Subrouter())
 }
 
 func runServer() {

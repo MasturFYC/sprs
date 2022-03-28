@@ -2,13 +2,13 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.10 (Debian 12.10-1.pgdg100+1)
--- Dumped by pg_dump version 12.10 (Debian 12.10-1.pgdg100+1)
+-- Dumped from database version 13.5 (Debian 13.5-0+deb11u1)
+-- Dumped by pg_dump version 13.5 (Debian 13.5-0+deb11u1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
+SET client_encoding = 'SQL_ASCII';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
@@ -301,6 +301,140 @@ CREATE TABLE public.ktp_addresses (
 
 
 ALTER TABLE public.ktp_addresses OWNER TO postgres;
+
+--
+-- Name: lent_details; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.lent_details (
+    order_id integer NOT NULL,
+    payment_at date DEFAULT now() NOT NULL,
+    id integer NOT NULL,
+    descripts character varying(256),
+    debt numeric(12,2) DEFAULT 0 NOT NULL,
+    cred numeric(12,2) DEFAULT 0 NOT NULL
+);
+
+
+ALTER TABLE public.lent_details OWNER TO postgres;
+
+--
+-- Name: lent_details_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.lent_details_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.lent_details_id_seq OWNER TO postgres;
+
+--
+-- Name: lent_details_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.lent_details_id_seq OWNED BY public.lent_details.id;
+
+
+--
+-- Name: lents; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.lents (
+    order_id integer NOT NULL,
+    name character varying(50) NOT NULL,
+    descripts character varying(256),
+    street character varying(128),
+    city character varying(50),
+    phone character varying(25),
+    cell character varying(25),
+    zip character varying(6)
+);
+
+
+ALTER TABLE public.lents OWNER TO postgres;
+
+--
+-- Name: loan_details; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.loan_details (
+    loan_id integer NOT NULL,
+    payment_at date DEFAULT now() NOT NULL,
+    id integer NOT NULL,
+    descripts character varying(128),
+    debt numeric(12,2) DEFAULT 0 NOT NULL,
+    cred numeric(12,2) DEFAULT 0 NOT NULL
+);
+
+
+ALTER TABLE public.loan_details OWNER TO postgres;
+
+--
+-- Name: loan_details_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.loan_details_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.loan_details_id_seq OWNER TO postgres;
+
+--
+-- Name: loan_details_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.loan_details_id_seq OWNED BY public.loan_details.id;
+
+
+--
+-- Name: loans; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.loans (
+    id integer NOT NULL,
+    name character varying(50) NOT NULL,
+    street character varying(128),
+    city character varying(50),
+    phone character varying(25),
+    cell character varying(25),
+    zip character varying(6),
+    descripts character varying(256)
+);
+
+
+ALTER TABLE public.loans OWNER TO postgres;
+
+--
+-- Name: loans_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.loans_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.loans_id_seq OWNER TO postgres;
+
+--
+-- Name: loans_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.loans_id_seq OWNED BY public.loans.id;
+
 
 --
 -- Name: merks; Type: TABLE; Schema: public; Owner: postgres
@@ -693,6 +827,27 @@ ALTER TABLE ONLY public.invoices ALTER COLUMN id SET DEFAULT nextval('public.inv
 
 
 --
+-- Name: lent_details id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lent_details ALTER COLUMN id SET DEFAULT nextval('public.lent_details_id_seq'::regclass);
+
+
+--
+-- Name: loan_details id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.loan_details ALTER COLUMN id SET DEFAULT nextval('public.loan_details_id_seq'::regclass);
+
+
+--
+-- Name: loans id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.loans ALTER COLUMN id SET DEFAULT nextval('public.loans_id_seq'::regclass);
+
+
+--
 -- Name: merks id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -780,8 +935,8 @@ COPY public.acc_type (id, name, descriptions, group_id) FROM stdin;
 --
 
 COPY public.actions (id, action_at, pic, descriptions, order_id, file_name) FROM stdin;
-8	2022-03-23	Test	Upload jpg / jpeg / png	23	59c4ee3f.jpg
-9	2022-03-23	Test PDF	Upload PDF File	23	bc012e61.pdf
+8	2022-03-23	Test	Upload jpg / jpeg / png	23	1036d948.jpg
+9	2022-03-23	Test PDF	Upload PDF File	23	731fca27.pdf
 \.
 
 
@@ -802,6 +957,7 @@ COPY public.branchs (id, name, street, city, phone, cell, zip, head_branch, emai
 
 COPY public.customers (order_id, name, agreement_number, payment_type) FROM stdin;
 23	test	\N	c0-1
+77	eqweqwewqe	\N	qweqwewqe
 \.
 
 
@@ -858,6 +1014,20 @@ COPY public.home_addresses (order_id, street, region, city, phone, zip) FROM std
 --
 
 COPY public.invoice_details (invoice_id, order_id) FROM stdin;
+6	10
+6	8
+6	4
+6	33
+6	31
+6	28
+7	56
+7	42
+7	39
+7	50
+8	59
+8	55
+8	53
+8	41
 \.
 
 
@@ -866,6 +1036,9 @@ COPY public.invoice_details (invoice_id, order_id) FROM stdin;
 --
 
 COPY public.invoices (id, invoice_at, payment_term, due_at, salesman, finance_id, account_id, subtotal, ppn, tax, total, memo, token) FROM stdin;
+6	2022-03-23	2	2022-03-23	Junaedi	2	1113	8350000.00	0.00	0.00	8350000.00	\N	'-15':30,43 '/id-6':2 '1340000006105':9 '2191':19 '2391':40 '4487':45 '4593':15 '5080':32 '5474':23 '5856':36 '6277':27 '938':11 'adira':6 'auto':3 'bank':7 'beat':21,25 'br':31 'discret':4 'e':10,14,22,26,39 'expander':13 'finance':5 'genio':38 'jm':41 'junaed':1 'jupiter':17 'mandir':8 'mio':47 'paz':28 'pj':46 'py':33 'q':24 'r':29,42 't':18,35,44 'tq':16 'vixion':34 'xy':12 'ys':20 'z':48 'zt':37
+7	2022-03-24	2	2022-03-24	Udin	18	1113	97500000.00	0.00	0.00	97500000.00	\N	'/id-7':2 '1000':20,25,30 '1340000006105':11 '8715':22 '9049':17 '9086':13 '9442':27 'agya':15 'bank':9 'brio':19,24,29 'finance':5 'gp':23 'h':12,16,21,26 'mandir':3,10 'mtf':7 'ng':28 's':8 'se':18 'semarang':6 'te':14 'tunas':4 'udin':1
+8	2022-03-25	2	2022-03-25	Junaedi	14	1113	106220000.00	2.00	2124400.00	104095600.00	\N	'/id-8':2 '1305':11 '1312':19 '1340000006105':9 '1729':15 '1788':23 'bank':7 'bc':24 'bf':16 'brv':17 'clip':5 'clipan':3 'd':18 'dl':12 'ertiga':13 'junaed':1 'k':6 'karawang':4 'mandir':8 'mobilio':25 't':10,14,22 'wf':20 'xenia':21
 \.
 
 
@@ -874,6 +1047,42 @@ COPY public.invoices (id, invoice_at, payment_term, due_at, salesman, finance_id
 --
 
 COPY public.ktp_addresses (order_id, street, region, city, phone, zip) FROM stdin;
+\.
+
+
+--
+-- Data for Name: lent_details; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.lent_details (order_id, payment_at, id, descripts, debt, cred) FROM stdin;
+\.
+
+
+--
+-- Data for Name: lents; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.lents (order_id, name, descripts, street, city, phone, cell, zip) FROM stdin;
+\.
+
+
+--
+-- Data for Name: loan_details; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.loan_details (loan_id, payment_at, id, descripts, debt, cred) FROM stdin;
+1	2022-03-27	1	\N	14000000.00	0.00
+1	2022-03-28	2	\N	0.00	250000.00
+1	2022-03-29	3	\N	0.00	500000.00
+\.
+
+
+--
+-- Data for Name: loans; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.loans (id, name, street, city, phone, cell, zip, descripts) FROM stdin;
+1	Mastur	\N	\N	\N	\N	\N	Saldo piutang
 \.
 
 
@@ -915,7 +1124,6 @@ COPY public.orders (id, name, order_at, printed_at, bt_finance, bt_percent, bt_m
 31	000000031	2022-03-12	2022-03-12	1800000.00	20.00	1440000.00	Mastur	test	2	1	t	0.00	1800000.00	'-03':3 '-12':4 '-15':21 '00':6 '000000031':1 '00z':7 '2':26 '2017':23 '2022':2 '2391':18 'ada':16 'adira':11 'auto':8 'discret':9 'e':17 'finance':10 'jatibarang':12,22 'jm':19 'r':20 'r2':27 'roda':25 'stnk':15 'stnk-ada':14 'syaenudin':13 't00':5 'yamaha':24
 29	000000029	2022-03-09	2022-03-09	1450000.00	20.00	1160000.00	Mastur	test	13	1	t	0.00	1450000.00	'-03':3 '-09':4 '00':6 '000000029':1 '00z':7 '2':23 '2015':20 '2022':2 '4544':16 'ada':14 'e':15 'gapara':8 'gudang':19 'jatibarang':10 'jd':17 'mio':18 'mpr':9 'r2':24 'roda':22 'stnk':13 'stnk-ada':12 'syaenudin':11 't00':5 'yamaha':21
 26	000000026	2022-03-07	2022-03-07	850000.00	20.00	680000.00	Mastur	test	11	1	t	0.00	850000.00	'-03':3 '-07':4 '00':6 '000000026':1 '00z':7 '150':20 '2':25 '2014':22 '2022':2 '2891':17 'ada':15 'honda':23 'jatibarang':11,21 'kp':10 'kredit':8 'plus':9 'r2':26 'roda':24 'stnk':14 'stnk-ada':13 'syaenudin':12 't':16 't00':5 'vario':19 'wp':18
-23	000000023	2022-02-23	2022-02-23	0.00	20.00	40000.00	Mastur	\N	12	1	t	0.00	0.00	'2021':1 '2815':6 'e':5 'gear':3 'pbx':7 'r2':8 'womf':4 'yamaha':2
 24	000000024	2022-02-25	2022-02-25	1500000.00	20.00	1200000.00	Mastur	test	1	1	t	0.00	1500000.00	'-02':3 '-25':4 '00':6 '000000024':1 '00z':7 '2':26 '2018':23 '2022':2 '2146':18 'ada':16 'auto':9 'baf':11 'bussan':8 'e':17 'finance':10 'gudang':22 'jatibarang':12 'mio':20 'qaf':19 'r2':27 'roda':25 's':21 'stnk':15 'stnk-ada':14 'syaenudin':13 't00':5 'yamaha':24
 21	000000021	2022-02-21	2022-02-21	950000.00	20.00	760000.00	Mastur	test	1	1	t	0.00	950000.00	'-02':3 '-21':4 '00':6 '000000021':1 '00z':7 '2':26 '2015':23 '2022':2 '6262':18 'ada':16 'auto':9 'b':17 'baf':11 'bussan':8 'finance':10 'gudang':22 'jatibarang':12 'm3':21 'mio':20 'r2':27 'roda':25 'stnk':15 'stnk-ada':14 'syaenudin':13 't00':5 'vky':19 'yamaha':24
 15	000000015	2022-01-06	2022-01-06	900000.00	20.00	900000.00	Mastur	test	5	1	t	0.00	900000.00	'-01':3 '-06':4 '00':6 '000000015':1 '00z':7 '2':26 '2012':23 '2022':2 '4146':18 'ada':16 'gudang':22 'jatibarang':12 'jupiter':20 'ko':19 'kredit':9 'motor':10 'mx':21 'oto':8 'otto':11 'r2':27 'roda':25 'stnk':15 'stnk-ada':14 'syaenudin':13 't':17 't00':5 'yamaha':24
@@ -980,6 +1188,9 @@ COPY public.orders (id, name, order_at, printed_at, bt_finance, bt_percent, bt_m
 63	000000063	2021-12-24	2021-12-24	1800000.00	20.00	1440000.00	Mastur	test	5	3	t	0.00	1800000.00	'-12':3 '-24':4 '00':6 '000000063':1 '00z':7 '2':27 '2019':24 '2021':2 '2113':20 'ada':18 'deddy':14 'e':19 'honda':25 'indramayu':13 'kredit':9 'motor':10 'oto':8 'otto':11 'pbm':21 'pcx':22 'pranoto':15 'pusat':12,23 'r2':28 'roda':26 'stnk':17 'stnk-ada':16 't00':5
 61	000000061	2021-12-29	2021-12-29	1500000.00	20.00	1200000.00	Mastur	test	7	3	t	0.00	1500000.00	'-12':3 '-29':4 '00':6 '000000061':1 '00z':7 '2':27 '2015':24 '2021':2 '3310':20 'ada':18 'deddy':14 'e':19 'finance':10 'indramayu':13 'mandir':8 'muf':11 'pranoto':15 'pusat':12,23 'qr':21 'r2':28 'roda':26 'stnk':17 'stnk-ada':16 't00':5 'utama':9 'vixion':22 'yamaha':25
 60	000000060	2021-09-30	2021-09-30	920000.00	0.00	920000.00	Mastur	test	2	3	t	0.00	920000.00	'-09':3 '-30':4 '00':6 '000000060':1 '00z':7 '2':27 '2018':24 '2021':2 '6181':20 'ada':18 'adira':11 'auto':8 'beat':22 'deddy':14 'discret':9 'f':19 'fch':21 'finance':10 'honda':25 'indramayu':13 'pranoto':15 'pusat':12,23 'r2':28 'roda':26 'stnk':17 'stnk-ada':16 't00':5
+23	000000023	2022-02-23	2022-02-23	2500000.00	20.00	2000000.00	Mastur	\N	12	1	t	0.00	2500000.00	'-02':3 '-23':4 '00':6 '000000023':1 '00z':7 '2':25 '2021':22 '2022':2 '2815':17 '300':21 'ada':15 'e':16 'finance':9 'gear':19 'jatibarang':11 'kurang':20 'pbx':18 'r2':26 'roda':24 'stnk':14 'stnk-ada':13 'syaenudin':12 't00':5 'wom':8 'womf':10 'yamaha':23
+77	000000135a	2022-03-27	2022-03-27	2500000.00	20.00	2000000.00	Opick	\N	2	1	t	0.00	2500000.00	'-03':3 '-27':4 '000000135a':1 '2022':2 '22':5 '59':6 'ada':9 'stnk':8 'stnk-ada':7
+80	000000141	2022-03-27	2022-03-27	2500000.00	20.00	2000000.00	Opick	\N	17	4	t	0.00	2500000.00	'-03':3 '-27':4 '000000141':1 '09':6 '2022':2 '23':5 'ada':9 'stnk':8 'stnk-ada':7
 \.
 
 
@@ -1086,6 +1297,9 @@ COPY public.trx (id, ref_id, division, descriptions, trx_date, memo, trx_token) 
 143	62	TRX-Order	Piutang jasa Bussan Auto Finance (BAF) Order SPK: /000000062	2022-03-22	Kendaraan R2 Yamaha NMax , Nopol E 3217 PAR	'/000000062':1 '/ref-62':16 '3217':6 'auto':9 'baf':11 'bussan':8 'deddy':14 'e':5 'finance':10 'indramayu':13 'nmax':4 'order':19 'par':7 'pranoto':15 'pusat':12 'r2':2 'trx':18 'trx-order':17 'yamaha':3
 144	61	TRX-Order	Piutang jasa Mandiri Utama Finance (MUF) Order SPK: /000000061	2022-03-22	Kendaraan R2 Yamaha Vixion , Nopol E 3310 QR	'/000000061':1 '/ref-61':16 '3310':6 'deddy':14 'e':5 'finance':10 'indramayu':13 'mandir':8 'muf':11 'order':19 'pranoto':15 'pusat':12 'qr':7 'r2':2 'trx':18 'trx-order':17 'utama':9 'vixion':4 'yamaha':3
 145	60	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000060	2022-03-22	Kendaraan R2 Honda BEAT , Nopol F 6181 FCH	'/000000060':1 '/ref-60':16 '6181':6 'adira':11 'auto':8 'beat':4 'deddy':14 'discret':9 'f':5 'fch':7 'finance':10 'honda':3 'indramayu':13 'order':19 'pranoto':15 'pusat':12 'r2':2 'trx':18 'trx-order':17
+146	6	trx-invoice	Pendapatan jasa dari Auto Discret Finance Invoice #6	2022-03-23	\N	'-15':30,43 '/id-6':2 '1340000006105':9 '2191':19 '2391':40 '4487':45 '4593':15 '5080':32 '5474':23 '5856':36 '6277':27 '938':11 'adira':6 'auto':3 'bank':7 'beat':21,25 'br':31 'discret':4 'e':10,14,22,26,39 'expander':13 'finance':5 'genio':38 'jm':41 'junaed':1 'jupiter':17 'mandir':8 'mio':47 'paz':28 'pj':46 'py':33 'q':24 'r':29,42 't':18,35,44 'tq':16 'vixion':34 'xy':12 'ys':20 'z':48 'zt':37
+147	7	trx-invoice	Pendapatan jasa dari Mandiri Tunas Finance Semarang Invoice #7	2022-03-24	\N	'/id-7':2 '1000':20,25,30 '1340000006105':11 '8715':22 '9049':17 '9086':13 '9442':27 'agya':15 'bank':9 'brio':19,24,29 'finance':5 'gp':23 'h':12,16,21,26 'mandir':3,10 'mtf':7 'ng':28 's':8 'se':18 'semarang':6 'te':14 'tunas':4 'udin':1
+148	8	trx-invoice	Pendapatan jasa dari Clipan Karawang\n Invoice #8	2022-03-25	\N	'/id-8':2 '1305':11 '1312':19 '1340000006105':9 '1729':15 '1788':23 'bank':7 'bc':24 'bf':16 'brv':17 'clip':5 'clipan':3 'd':18 'dl':12 'ertiga':13 'junaed':1 'k':6 'karawang':4 'mandir':8 'mobilio':25 't':10,14,22 'wf':20 'xenia':21
 \.
 
 
@@ -1242,6 +1456,12 @@ COPY public.trx_detail (id, code_id, trx_id, debt, cred) FROM stdin;
 2	1113	145	0.00	920000.00
 1	5511	144	1200000.00	0.00
 2	1113	144	0.00	1200000.00
+1	4111	146	0.00	8350000.00
+2	1113	146	8350000.00	0.00
+1	4111	147	0.00	97500000.00
+2	1113	147	97500000.00	0.00
+1	4111	148	0.00	104095600.00
+2	1113	148	104095600.00	0.00
 \.
 
 
@@ -1382,6 +1602,8 @@ COPY public.units (order_id, nopol, year, frame_number, machine_number, color, t
 74	E 6871 CM	2018	\N	\N	\N	8	2
 75	E 4080 UO	2018	\N	\N	\N	9	2
 23	E 2815 PBX	2021	\N	\N	\N	17	4
+77	E 2565 GHJ	2022	\N	\N	Hitam	6	2
+80	456465489	2022	\N	\N	\N	33	2
 \.
 
 
@@ -1448,7 +1670,28 @@ SELECT pg_catalog.setval('public.finance_id_seq', 22, true);
 -- Name: invoices_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.invoices_id_seq', 5, true);
+SELECT pg_catalog.setval('public.invoices_id_seq', 8, true);
+
+
+--
+-- Name: lent_details_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.lent_details_id_seq', 1, false);
+
+
+--
+-- Name: loan_details_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.loan_details_id_seq', 1, false);
+
+
+--
+-- Name: loans_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.loans_id_seq', 1, true);
 
 
 --
@@ -1462,14 +1705,14 @@ SELECT pg_catalog.setval('public.merk_id_seq', 17, true);
 -- Name: order_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.order_id_seq', 76, true);
+SELECT pg_catalog.setval('public.order_id_seq', 80, true);
 
 
 --
 -- Name: order_name_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.order_name_seq', 100, true);
+SELECT pg_catalog.setval('public.order_name_seq', 201, true);
 
 
 --
@@ -1483,7 +1726,7 @@ SELECT pg_catalog.setval('public.trx_detail_seq', 1, false);
 -- Name: trx_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.trx_seq', 145, true);
+SELECT pg_catalog.setval('public.trx_seq', 148, true);
 
 
 --
@@ -1640,6 +1883,38 @@ ALTER TABLE ONLY public.invoices
 
 ALTER TABLE ONLY public.ktp_addresses
     ADD CONSTRAINT ktp_addresses_order_id_key UNIQUE (order_id);
+
+
+--
+-- Name: lent_details lent_details_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lent_details
+    ADD CONSTRAINT lent_details_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lents lents_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lents
+    ADD CONSTRAINT lents_pkey PRIMARY KEY (order_id);
+
+
+--
+-- Name: loan_details loan_details_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.loan_details
+    ADD CONSTRAINT loan_details_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: loans loans_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.loans
+    ADD CONSTRAINT loans_pkey PRIMARY KEY (id);
 
 
 --
@@ -1928,6 +2203,41 @@ CREATE INDEX ix_invoice_finance ON public.invoices USING btree (finance_id);
 
 
 --
+-- Name: ix_lent_detail_date; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_lent_detail_date ON public.lent_details USING btree (payment_at);
+
+
+--
+-- Name: ix_lent_detail_lent; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_lent_detail_lent ON public.lent_details USING btree (order_id);
+
+
+--
+-- Name: ix_lent_order; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_lent_order ON public.lents USING btree (order_id);
+
+
+--
+-- Name: ix_loan_detail_date; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_loan_detail_date ON public.loan_details USING btree (payment_at);
+
+
+--
+-- Name: ix_loan_detail_loan; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_loan_detail_loan ON public.loan_details USING btree (loan_id);
+
+
+--
 -- Name: ix_order_token; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2050,6 +2360,30 @@ ALTER TABLE ONLY public.home_addresses
 
 ALTER TABLE ONLY public.ktp_addresses
     ADD CONSTRAINT ktp_addresses_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lent_details lent_details_order_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lent_details
+    ADD CONSTRAINT lent_details_order_fkey FOREIGN KEY (order_id) REFERENCES public.lents(order_id) ON DELETE CASCADE;
+
+
+--
+-- Name: lents lents_order_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lents
+    ADD CONSTRAINT lents_order_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id);
+
+
+--
+-- Name: loan_details loan_details_loan_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.loan_details
+    ADD CONSTRAINT loan_details_loan_fkey FOREIGN KEY (loan_id) REFERENCES public.loans(id) ON DELETE CASCADE;
 
 
 --

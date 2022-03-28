@@ -1,9 +1,38 @@
 package models
 
 import (
+	"database/sql"
 	"database/sql/driver"
+	"encoding/json"
 	"errors"
+	"reflect"
 )
+
+type NullFloat64 sql.NullFloat64
+
+// Scan implements the Scanner interface.
+func (ni *NullFloat64) Scan(value interface{}) error {
+	var i sql.NullFloat64
+	if err := i.Scan(value); err != nil {
+		return err
+	}
+	// if nil the make Valid false
+	if reflect.TypeOf(value) == nil {
+		*ni = NullFloat64{i.Float64, false}
+	} else {
+		*ni = NullFloat64{i.Float64, true}
+	}
+	return nil
+}
+
+// MarshalJSON for NullInt64
+func (ni *NullFloat64) MarshalJSON() ([]byte, error) {
+	if !ni.Valid {
+		return []byte("null"), nil
+		//return []byte("0"), nil
+	}
+	return json.Marshal(ni.Float64)
+}
 
 type NullString string
 
@@ -14,7 +43,7 @@ func (s *NullString) Scan(value interface{}) error {
 	}
 	strVal, ok := value.(string)
 	if !ok {
-		return errors.New("Column is not a string")
+		return errors.New("column is not a string")
 	}
 	*s = NullString(strVal)
 	return nil
