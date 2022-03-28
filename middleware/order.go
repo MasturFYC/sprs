@@ -544,22 +544,21 @@ func create_new_token(p *st_order_create) string {
 
 	builder.WriteString(p.Name)
 	builder.WriteString(" ")
-	builder.WriteString(p.OrderAt)
-	builder.WriteString(" ")
-
+	builder.WriteString(strings.Replace(create_indonesian_date(p.OrderAt, true), " ", "-", -1))
+	builder.WriteString(" finance ")
 	builder.WriteString(p.Finance.Name)
 	builder.WriteString(" ")
 	builder.WriteString(p.Finance.ShortName)
-	builder.WriteString(" ")
+	builder.WriteString(" cabang ")
 	builder.WriteString(p.Branch.Name)
 	builder.WriteString(" ")
 	builder.WriteString(p.Branch.HeadBranch)
 	builder.WriteString(" ")
 
 	if p.IsStnk {
-		builder.WriteString(" stnk-ada")
+		builder.WriteString(" stnk-ada ")
 	} else {
-		builder.WriteString(" stnk-tidak-ada")
+		builder.WriteString(" stnk-tidak-ada ")
 	}
 
 	return builder.String()
@@ -571,77 +570,25 @@ func create_token(p *st_order_update) string {
 
 	builder.WriteString(p.Name)
 	builder.WriteString(" ")
-	builder.WriteString(p.OrderAt)
-	builder.WriteString(" ")
-
+	builder.WriteString(strings.Replace(create_indonesian_date(p.OrderAt, true), " ", "-", -1))
+	builder.WriteString(" finance ")
 	builder.WriteString(p.Finance.Name)
 	builder.WriteString(" ")
 	builder.WriteString(p.Finance.ShortName)
-	builder.WriteString(" ")
+	builder.WriteString(" cabang ")
 	builder.WriteString(p.Branch.Name)
 	builder.WriteString(" ")
 	builder.WriteString(p.Branch.HeadBranch)
 	builder.WriteString(" ")
 
 	if p.IsStnk {
-		builder.WriteString(" stnk-ada")
+		builder.WriteString(" stnk-ada ")
 	} else {
-		builder.WriteString(" stnk-tidak-ada")
+		builder.WriteString(" stnk-tidak-ada ")
 	}
 
 	if p.Unit.TypeID > 0 {
-
-		builder.WriteString(" ")
-		builder.WriteString(p.Unit.Nopol)
-		builder.WriteString(" ")
-		builder.WriteString(p.Unit.Type.Name)
-
-		if p.Unit.WarehouseID > 0 {
-			builder.WriteString(" ")
-			builder.WriteString(p.Unit.Warehouse.Name)
-		}
-
-		if p.Unit.FrameNumber != "" {
-			builder.WriteString(" ")
-			builder.WriteString(string(p.Unit.FrameNumber))
-		}
-
-		if p.Unit.MachineNumber != "" {
-			builder.WriteString(" ")
-			builder.WriteString(string(p.Unit.MachineNumber))
-		}
-		if p.Unit.Color != "" {
-			builder.WriteString(" ")
-			builder.WriteString(string(p.Unit.Color))
-		}
-
-		if p.Unit.Year != 0 {
-			builder.WriteString(" ")
-			builder.WriteString(strconv.FormatInt(p.Unit.Year, 10))
-		}
-
-		// if p.Unit.Dealer != "" {
-		// 	s = append(s, p.Unit.Dealer)
-		// }
-
-		// if p.Unit.Surveyor != "" {
-		// 	s = append(s, p.Unit.Surveyor)
-		// }
-
-		// if p.Unit.BpkbName != "" {
-		// 	s = append(s, p.Unit.BpkbName)
-		// }
-
-		if p.Unit.Type.MerkID > 0 {
-			builder.WriteString(" ")
-			builder.WriteString(p.Unit.Type.Merk.Name)
-		}
-		if p.Unit.Type.WheelID > 0 {
-			builder.WriteString(" ")
-			builder.WriteString(p.Unit.Type.Wheel.Name)
-			builder.WriteString(" ")
-			builder.WriteString(p.Unit.Type.Wheel.ShortName)
-		}
+		builder.WriteString(create_unit_token(&p.Unit))
 	}
 
 	return builder.String()
@@ -736,6 +683,7 @@ func searchOrders(txt *string) ([]order_all, error) {
 	b := create_order_query()
 	b.WriteString(" FROM orders AS o")
 	b.WriteString(" WHERE token @@ to_tsquery('indonesian', $1)")
+	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM invoice_details)")
 	b.WriteString(" ORDER BY o.order_at, o.id")
 
 	rs, err := Sql().Query(b.String(), txt)
@@ -792,6 +740,7 @@ func get_order_by_finance(id *int) ([]order_all, error) {
 	b := create_order_query()
 	b.WriteString(" FROM orders AS o")
 	b.WriteString(" WHERE o.finance_id=$1 OR 0=$1")
+	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM invoice_details)")
 	b.WriteString(" ORDER BY o.order_at, o.id")
 
 	rs, err := Sql().Query(b.String(), id)
@@ -848,6 +797,7 @@ func get_order_by_branch(id *int) ([]order_all, error) {
 	b := create_order_query()
 	b.WriteString(" FROM orders AS o")
 	b.WriteString(" WHERE o.branch_id=$1 OR 0=$1")
+	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM invoice_details)")
 	b.WriteString(" ORDER BY o.order_at, o.id")
 
 	rs, err := Sql().Query(b.String(), id)
@@ -941,6 +891,7 @@ func get_order_by_month(id *int) ([]order_all, error) {
 	b := create_order_query()
 	b.WriteString(" FROM orders AS o")
 	b.WriteString(" WHERE EXTRACT(MONTH from o.order_at)=$1 OR 0 = $1")
+	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM invoice_details)")
 	b.WriteString(" ORDER BY o.order_at, o.id")
 	rs, err := Sql().Query(b.String(), id)
 

@@ -150,7 +150,7 @@ func clipan_create_invoice(w io.Writer, invoice_id *int64, inv *invoice_item, fi
 
 	p.SetX(x)
 	p.CellFormat(box1, lh, " Tanggal", "1", 0, "LM", false, 0, "")
-	p.CellFormat(box2, lh, create_indonesian_date(inv.InvoiceAt), "1", 1, "L", false, 0, "")
+	p.CellFormat(box2, lh, create_indonesian_date(inv.InvoiceAt, false), "1", 1, "L", false, 0, "")
 
 	p.SetY(p.GetY() + 5)
 	p.CellFormat(box, lh, "Dengan hormat,", "0", 1, "L", false, 0, "")

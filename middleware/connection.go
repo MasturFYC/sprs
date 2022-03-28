@@ -75,3 +75,12 @@ func NestQuery(query string) string {
         SELECT array_to_json(array_agg(row_to_json(x)))
         FROM (%s) x), '[]')`, query)
 }
+
+func GetMonthName(id int, isShort bool) string {
+	months := [12]string{"Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "Nopember", "Desember"}
+	//months2 := [12]string{"Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agus", "Sep", "Okt", "Nop", "Des"}
+	if isShort {
+		return months[id][0:3]
+	}
+	return months[id]
+}

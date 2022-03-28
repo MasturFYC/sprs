@@ -1,0 +1,17 @@
+update orders set token = to_tsvector('indonesian', (select o.name || ' ' || to_char(o.order_at, 'dd-TMmon-yyyy') || ' finance ' ||
+f.name || ' ' || coalesce(f.short_name, '') || ' cabang ' || b.name || ' ' || 
+(case when o.is_stnk then ' stnk-ada ' else ' stnk-tidak-ada ' end) from orders o
+inner join finances f on f.id = o.finance_id
+inner join branchs b on b.id = o.branch_id where o.id = orders.id));
+
+
+update orders set token = token || ' ' || to_tsvector('indonesian', (select replace(u.nopol,' ','-') || ' ' || u.year::varchar(4) || ' ' || 
+coalesce(u.frame_number, '') || ' ' || coalesce(u.machine_number, '') || ' ' || 
+coalesce(u.color, '') || t.name || ' '|| ' gudang ' || g.name || ' ' || m.name ||
+' ' || w.short_name
+from units as u 
+inner join warehouses as g on g.id = u.warehouse_id 
+inner join types t on t.id = u.type_id
+inner join wheels w on w.id = t.wheel_id
+inner join merks m on m.id = t.merk_id
+where u.order_id = orders.id));

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
 	"fyc.com/sprs/models"
 
@@ -37,13 +38,17 @@ func GetUnit(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(params["id"], 10, 64)
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		//log.Fatalf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	units, err := getUnit(&id)
 
 	if err != nil {
-		log.Fatalf("Unable to get unit. %v", err)
+		//log.Fatalf("Unable to get unit. %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
 	}
 
 	json.NewEncoder(w).Encode(&units)
@@ -60,10 +65,17 @@ func DeleteUnit(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(params["id"], 10, 64)
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		//log.Fatalf("Unable to convert the string into int.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
-	deletedRows := deleteUnit(&id)
+	deletedRows, err := deleteUnit(&id)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
 
 	msg := fmt.Sprintf("Unit deleted successfully. Total rows/record affected %v", deletedRows)
 
@@ -90,7 +102,7 @@ func CreateUnit(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		//log.Printf("Unable to decode the request body.  %v", err)
-		http.Error(w, http.StatusText(http.StatusRequestedRangeNotSatisfiable), http.StatusRequestedRangeNotSatisfiable)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
@@ -104,6 +116,7 @@ func CreateUnit(w http.ResponseWriter, r *http.Request) {
 
 	msg := fmt.Sprintf("Unit created successfully. Total rows/record affected %v", rowAffected)
 
+	order_update_unit_token(&unit)
 	// format the reponse message
 	res := Response{
 		ID:      rowAffected,
@@ -141,6 +154,8 @@ func UpdateUnit(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
+
+	order_update_unit_token(&unit)
 
 	msg := fmt.Sprintf("Unit updated successfully. Total rows/record affected %v", updatedRows)
 
@@ -247,7 +262,7 @@ func getUnit(id *int64) (models.Unit, error) {
 // 	return units, err
 // }
 
-func deleteUnit(id *int64) int64 {
+func deleteUnit(id *int64) (int64, error) {
 	// create the delete sql query
 	sqlStatement := `DELETE FROM units WHERE order_id=$1`
 
@@ -256,16 +271,68 @@ func deleteUnit(id *int64) int64 {
 
 	if err != nil {
 		log.Fatalf("Unable to delete unit. %v", err)
+		return 0, err
 	}
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Fatalf("Error while checking the affected rows. %v", err)
+	return rowsAffected, err
+}
+
+func create_unit_token(p *models.Unit) string {
+	sb := strings.Builder{}
+
+	sb.WriteString(" ")
+	sb.WriteString(strings.Replace(p.Nopol, " ", "-", -1))
+	sb.WriteString(" ")
+	sb.WriteString(p.Type.Name)
+
+	sb.WriteString(" gudang ")
+	sb.WriteString(p.Warehouse.Name)
+
+	if p.FrameNumber != "" {
+		sb.WriteString(" ")
+		sb.WriteString(string(p.FrameNumber))
 	}
 
-	return rowsAffected
+	if p.MachineNumber != "" {
+		sb.WriteString(" ")
+		sb.WriteString(string(p.MachineNumber))
+	}
+	if p.Color != "" {
+		sb.WriteString(" ")
+		sb.WriteString(string(p.Color))
+	}
+
+	sb.WriteString(" tahun ")
+	sb.WriteString(strconv.FormatInt(p.Year, 10))
+
+	if p.Type.MerkID > 0 {
+		sb.WriteString(" ")
+		sb.WriteString(p.Type.Merk.Name)
+	}
+	if p.Type.WheelID > 0 {
+		sb.WriteString(" ")
+		sb.WriteString(p.Type.Wheel.Name)
+		sb.WriteString(" ")
+		sb.WriteString(p.Type.Wheel.ShortName)
+	}
+
+	return sb.String()
+}
+
+func order_update_unit_token(p *models.Unit) {
+
+	token := create_unit_token(p)
+
+	sqlStatement := `UPDATE orders SET token=token || ' ' || to_tsvector('indonesian', $2)	WHERE id=$1`
+
+	Sql().Exec(sqlStatement,
+		p.OrderID,
+		token,
+	)
+
 }
 
 func createUnit(t *models.Unit) (int64, error) {
@@ -289,18 +356,10 @@ func createUnit(t *models.Unit) (int64, error) {
 	)
 
 	if err != nil {
-		log.Fatalf("Unable to create unit. %v", err)
-	}
-
-	if err != nil {
-		log.Fatalf("Unable to create customer. %v", err)
+		return 0, err
 	}
 
 	rowsAffected, err := res.RowsAffected()
-
-	if err != nil {
-		log.Fatalf("Unable to create customer. %v", err)
-	}
 
 	return rowsAffected, err
 }
@@ -327,16 +386,12 @@ func updateUnit(id *int64, t *models.Unit) (int64, error) {
 	)
 
 	if err != nil {
-		log.Printf("Unable to update unit. %v", err)
+		//log.Printf("Unable to update unit. %v", err)
 		return 0, err
 	}
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
-
-	if err != nil {
-		log.Fatalf("Error while updating unit. %v", err)
-	}
 
 	return rowsAffected, err
 }
