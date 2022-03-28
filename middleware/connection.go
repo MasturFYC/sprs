@@ -66,11 +66,11 @@ func CombineString(a string, b string) string {
 
 var Sql = LoadConnection()
 
-func nestQuerySingle(query string) string {
+func NestQuerySingle(query string) string {
 	return fmt.Sprintf(`(SELECT row_to_json(x) FROM (%s) x)`, query)
 }
 
-func nestQuery(query string) string {
+func NestQuery(query string) string {
 	return fmt.Sprintf(`COALESCE((
         SELECT array_to_json(array_agg(row_to_json(x)))
         FROM (%s) x), '[]')`, query)

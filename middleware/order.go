@@ -704,8 +704,8 @@ func create_order_query() *strings.Builder {
 		%s as wheel, %s as merk
 		FROM types t
 		WHERE t.id = u.type_id`,
-		nestQuerySingle(q_wheel),
-		nestQuerySingle(q_merk),
+		NestQuerySingle(q_wheel),
+		NestQuerySingle(q_merk),
 	)
 
 	q_warehouse := "SELECT id, name FROM warehouses WHERE id = u.warehouse_id"
@@ -713,18 +713,18 @@ func create_order_query() *strings.Builder {
 	u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId",
 	%s as type, %s as warehouse
 	FROM units AS u WHERE u.order_id = o.id`,
-		nestQuerySingle(q_type),
-		nestQuerySingle(q_warehouse))
+		NestQuerySingle(q_type),
+		NestQuerySingle(q_warehouse))
 
 	b.WriteString("SELECT")
 	b.WriteString(" o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel,")
 	b.WriteString(" o.user_name, o.verified_by, o.finance_id, o.branch_id, o.is_stnk, o.stnk_price, o.matrix, ")
-	b.WriteString(nestQuerySingle(`SELECT id, name, short_name AS "shortName", street, city, phone, cell, zip, email, group_id AS "groupId" FROM finances WHERE id = o.finance_id`))
+	b.WriteString(NestQuerySingle(`SELECT id, name, short_name AS "shortName", street, city, phone, cell, zip, email, group_id AS "groupId" FROM finances WHERE id = o.finance_id`))
 	b.WriteString(" AS finance, ")
-	b.WriteString(nestQuerySingle(`SELECT id, name, head_branch AS "headBranch", street, city, phone, cell, zip, email FROM branchs WHERE id = o.branch_id`))
+	b.WriteString(NestQuerySingle(`SELECT id, name, head_branch AS "headBranch", street, city, phone, cell, zip, email FROM branchs WHERE id = o.branch_id`))
 	b.WriteString(" AS branch, ")
 	//b.WriteString(" COALESCE(")
-	b.WriteString(nestQuerySingle(q_unit))
+	b.WriteString(NestQuerySingle(q_unit))
 	//b.WriteString(", '{}') ")
 	b.WriteString(" AS unit ")
 	return &b
@@ -736,7 +736,7 @@ func searchOrders(txt *string) ([]order_all, error) {
 	b := create_order_query()
 	b.WriteString(" FROM orders AS o")
 	b.WriteString(" WHERE token @@ to_tsquery('indonesian', $1)")
-	b.WriteString(" ORDER BY o.name")
+	b.WriteString(" ORDER BY o.order_at, o.id")
 
 	rs, err := Sql().Query(b.String(), txt)
 
@@ -792,7 +792,7 @@ func get_order_by_finance(id *int) ([]order_all, error) {
 	b := create_order_query()
 	b.WriteString(" FROM orders AS o")
 	b.WriteString(" WHERE o.finance_id=$1 OR 0=$1")
-	b.WriteString(" ORDER BY o.finance_id")
+	b.WriteString(" ORDER BY o.order_at, o.id")
 
 	rs, err := Sql().Query(b.String(), id)
 
@@ -848,7 +848,7 @@ func get_order_by_branch(id *int) ([]order_all, error) {
 	b := create_order_query()
 	b.WriteString(" FROM orders AS o")
 	b.WriteString(" WHERE o.branch_id=$1 OR 0=$1")
-	b.WriteString(" ORDER BY o.branch_id, o.id DESC")
+	b.WriteString(" ORDER BY o.order_at, o.id")
 
 	rs, err := Sql().Query(b.String(), id)
 
@@ -898,6 +898,7 @@ func get_order_by_branch(id *int) ([]order_all, error) {
 	return orders, err
 }
 
+/*
 // func set_child(o *models.Order) {
 // 	finance, _ := getFinance(&o.FinanceID)
 // 	o.Finance = finance
@@ -932,6 +933,7 @@ func get_order_by_branch(id *int) ([]order_all, error) {
 // 	ktp, _ := getKTPAddress(&o.ID)
 // 	o.KtpAddress = ktp
 // }
+*/
 
 func get_order_by_month(id *int) ([]order_all, error) {
 
@@ -939,8 +941,7 @@ func get_order_by_month(id *int) ([]order_all, error) {
 	b := create_order_query()
 	b.WriteString(" FROM orders AS o")
 	b.WriteString(" WHERE EXTRACT(MONTH from o.order_at)=$1 OR 0 = $1")
-	b.WriteString(" ORDER BY o.order_at DESC")
-
+	b.WriteString(" ORDER BY o.order_at, o.id")
 	rs, err := Sql().Query(b.String(), id)
 
 	if err != nil {
@@ -1019,16 +1020,16 @@ func order_get_invoiced(m *int, y *int, fid *int) ([]order_invoiced, error) {
 	var queryMerk = `SELECT name FROM merks WHERE id = t.merk_id`
 
 	var queryTye = fmt.Sprintf(`SELECT t.name, %s AS wheel, %s AS merk FROM types t WHERE t.id = u.type_id`,
-		nestQuerySingle(queryWheel),
-		nestQuerySingle(queryMerk))
+		NestQuerySingle(queryWheel),
+		NestQuerySingle(queryMerk))
 
-	var queryUnit = nestQuerySingle(fmt.Sprintf(`SELECT u.nopol, u.year,
+	var queryUnit = NestQuerySingle(fmt.Sprintf(`SELECT u.nopol, u.year,
 		%s AS type
 		FROM units u
 		WHERE u.order_id = t.id`,
-		nestQuerySingle(queryTye)))
+		NestQuerySingle(queryTye)))
 
-	var queryBranch = nestQuerySingle(`SELECT b.name FROM branchs AS b WHERE b.id = t.branch_id`)
+	var queryBranch = NestQuerySingle(`SELECT b.name FROM branchs AS b WHERE b.id = t.branch_id`)
 
 	b := strings.Builder{}
 
@@ -1078,7 +1079,7 @@ func order_get_invoiced(m *int, y *int, fid *int) ([]order_invoiced, error) {
 	b.WriteString(" AS branch, ")
 	b.WriteString(queryUnit)
 	b.WriteString(" AS unit, ")
-	b.WriteString(nestQuerySingle(q_finance))
+	b.WriteString(NestQuerySingle(q_finance))
 	b.WriteString(" AS finance ")
 	b.WriteString(" FROM rs AS t")
 	//b.WriteString(" WHERE t.id=1")

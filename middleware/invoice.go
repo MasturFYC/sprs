@@ -400,20 +400,20 @@ type invoice_item struct {
 
 func invoice_get_item(id *int64) (invoice_item, error) {
 	var item invoice_item
-	var queryWheel = nestQuerySingle(`SELECT id, name, short_name as "shortName" FROM wheels WHERE id = t.wheel_id`)
-	var queryMerk = nestQuerySingle(`SELECT id, name FROM merks WHERE id = t.merk_id`)
+	var queryWheel = NestQuerySingle(`SELECT id, name, short_name as "shortName" FROM wheels WHERE id = t.wheel_id`)
+	var queryMerk = NestQuerySingle(`SELECT id, name FROM merks WHERE id = t.merk_id`)
 
-	var queryType = nestQuerySingle(fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId", %s AS wheel, %s AS merk FROM types t WHERE t.id = u.type_id`,
+	var queryType = NestQuerySingle(fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId", %s AS wheel, %s AS merk FROM types t WHERE t.id = u.type_id`,
 		queryWheel,
 		queryMerk))
 
-	var queryUnit = nestQuerySingle(fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber",
+	var queryUnit = NestQuerySingle(fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber",
 		u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId", %s AS type
 		FROM units u
 		WHERE u.order_id = o.id`,
 		queryType))
 
-	var queryDetails = nestQuery(fmt.Sprintf(`SELECT o.id, o.name, o.order_at as "orderAt", o.printed_at AS "printedAt",
+	var queryDetails = NestQuery(fmt.Sprintf(`SELECT o.id, o.name, o.order_at as "orderAt", o.printed_at AS "printedAt",
 	o.bt_finance as "btFinance", o.bt_percent AS "btPercent", o.bt_matel AS "btMatel",
 	o.user_name AS "userName", o.verified_by AS "verifiedBy",
 	o.finance_id AS "financeId", o.branch_id AS "branchId",
@@ -423,12 +423,12 @@ func invoice_get_item(id *int64) (invoice_item, error) {
 	WHERE d.invoice_id = v.id
 	ORDER BY d.order_id`, queryUnit))
 
-	var querFinance = nestQuerySingle(`SELECT f.id, f.name, f.short_name AS "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email, f.group_id AS "groupId" FROM finances f WHERE f.id = v.finance_id`)
-	var queryAccount = nestQuerySingle(`SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`)
+	var querFinance = NestQuerySingle(`SELECT f.id, f.name, f.short_name AS "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email, f.group_id AS "groupId" FROM finances f WHERE f.id = v.finance_id`)
+	var queryAccount = NestQuerySingle(`SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`)
 
-	var queryTansactionDetails = nestQuery(`SELECT id, code_id AS "codeId", trx_id AS "trxId", debt, cred FROM trx_detail WHERE trx_id = x.id`)
+	var queryTansactionDetails = NestQuery(`SELECT id, code_id AS "codeId", trx_id AS "trxId", debt, cred FROM trx_detail WHERE trx_id = x.id`)
 
-	var queryTansaction = nestQuerySingle(fmt.Sprintf(`SELECT x.id, x.ref_id AS "refId", x.division, x.descriptions,
+	var queryTansaction = NestQuerySingle(fmt.Sprintf(`SELECT x.id, x.ref_id AS "refId", x.division, x.descriptions,
 	x.trx_date AS "trxDate", x.memo, %s AS details
 	FROM trx x WHERE x.ref_id = v.id AND x.division = 'trx-invoice'`, queryTansactionDetails))
 
@@ -624,9 +624,9 @@ func invoice_get_all() ([]invoice_all, error) {
 
 	builder.WriteString("SELECT")
 	builder.WriteString(" v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo, ")
-	builder.WriteString(nestQuerySingle(querFinance))
+	builder.WriteString(NestQuerySingle(querFinance))
 	builder.WriteString(" AS finance,")
-	builder.WriteString(nestQuerySingle(queryAccount))
+	builder.WriteString(NestQuerySingle(queryAccount))
 	builder.WriteString(" AS account")
 	builder.WriteString(" FROM invoices AS v")
 	builder.WriteString(" ORDER BY v.id DESC")
@@ -706,16 +706,16 @@ func invoice_get_orders(finance_id *int, invoice_id *int64) ([]invoice_order, er
 	var queryMerk = `SELECT id, name FROM merks WHERE id = t.merk_id`
 
 	var queryTye = fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId", %s AS wheel, %s AS merk FROM types t WHERE t.id = u.type_id`,
-		nestQuerySingle(queryWheel),
-		nestQuerySingle(queryMerk))
+		NestQuerySingle(queryWheel),
+		NestQuerySingle(queryMerk))
 
-	var queryUnit = nestQuerySingle(fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber",
+	var queryUnit = NestQuerySingle(fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber",
 		u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId", %s AS type
 		FROM units u
 		WHERE u.order_id = o.id`,
-		nestQuerySingle(queryTye)))
+		NestQuerySingle(queryTye)))
 
-	var queryBranch = nestQuerySingle(`SELECT b.id, b.name, b.street, b.city, b.phone,
+	var queryBranch = NestQuerySingle(`SELECT b.id, b.name, b.street, b.city, b.phone,
 	b.cell, b.zip, b.head_branch AS "headBranch", b.email
 	FROM branchs AS b
 	WHERE b.id = o.branch_id`)
@@ -819,9 +819,9 @@ func invoices_search(txt *string) ([]invoice_all, error) {
 
 	b.WriteString("SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman,")
 	b.WriteString(" v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo,")
-	b.WriteString(nestQuerySingle(querFinance))
+	b.WriteString(NestQuerySingle(querFinance))
 	b.WriteString("	AS finance, ")
-	b.WriteString(nestQuerySingle(queryAccount))
+	b.WriteString(NestQuerySingle(queryAccount))
 	b.WriteString(" AS account ")
 	b.WriteString(" FROM invoices AS v")
 	b.WriteString(" WHERE token @@ to_tsquery('indonesian', $1)")
@@ -884,9 +884,9 @@ func invoices_by_month(month *int, year *int) ([]invoice_all, error) {
 	// )
 
 	builder.WriteString("SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman, v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo, ")
-	builder.WriteString(nestQuerySingle(querFinance))
+	builder.WriteString(NestQuerySingle(querFinance))
 	builder.WriteString(" AS finance, ")
-	builder.WriteString(nestQuerySingle(queryAccount))
+	builder.WriteString(NestQuerySingle(queryAccount))
 	builder.WriteString(" AS account")
 	builder.WriteString(" FROM invoices AS v")
 	builder.WriteString(" WHERE EXTRACT(MONTH FROM v.invoice_at)=$1")
@@ -942,9 +942,9 @@ func invoices_by_finance(finance_id *int) ([]invoice_all, error) {
 
 	b.WriteString("SELECT v.id, v.invoice_at, v.payment_term, v.due_at, v.salesman,")
 	b.WriteString(" v.finance_id, v.subtotal, v.ppn, v.tax, v.total, v.account_id, v.memo, ")
-	b.WriteString(nestQuerySingle(querFinance))
+	b.WriteString(NestQuerySingle(querFinance))
 	b.WriteString(" AS finance, ")
-	b.WriteString(nestQuerySingle(queryAccount))
+	b.WriteString(NestQuerySingle(queryAccount))
 	b.WriteString(" AS account")
 	b.WriteString(" FROM invoices AS v")
 	b.WriteString(" WHERE v.finance_id=$1 OR 0=$1")
@@ -993,22 +993,22 @@ func invoices_by_finance(finance_id *int) ([]invoice_all, error) {
 
 func invoice_get_item_customer(id *int64) (invoice_item, error) {
 	var item invoice_item
-	var queryWheel = nestQuerySingle(`SELECT id, name, short_name as "shortName" FROM wheels WHERE id = t.wheel_id`)
-	var queryMerk = nestQuerySingle(`SELECT id, name FROM merks WHERE id = t.merk_id`)
+	var queryWheel = NestQuerySingle(`SELECT id, name, short_name as "shortName" FROM wheels WHERE id = t.wheel_id`)
+	var queryMerk = NestQuerySingle(`SELECT id, name FROM merks WHERE id = t.merk_id`)
 
-	var queryType = nestQuerySingle(fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId", %s AS wheel, %s AS merk FROM types t WHERE t.id = u.type_id`,
+	var queryType = NestQuerySingle(fmt.Sprintf(`SELECT t.id, t.name, t.wheel_id AS "wheelId", t.merk_id AS "merkId", %s AS wheel, %s AS merk FROM types t WHERE t.id = u.type_id`,
 		queryWheel,
 		queryMerk))
 
-	var queryUnit = nestQuerySingle(fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber",
+	var queryUnit = NestQuerySingle(fmt.Sprintf(`SELECT u.order_id AS "orderId", u.nopol, u.year, u.frame_number AS "frameNumber",
 		u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId", %s AS type
 		FROM units u
 		WHERE u.order_id = o.id`,
 		queryType))
 
-	var q_customer = nestQuerySingle("SELECT order_id, name, agreement_number, payment_type FROM customers WHERE order_id=o.id")
+	var q_customer = NestQuerySingle("SELECT order_id, name, agreement_number, payment_type FROM customers WHERE order_id=o.id")
 
-	var queryDetails = nestQuery(fmt.Sprintf(`SELECT o.id, o.name, o.order_at as "orderAt", o.printed_at AS "printedAt",
+	var queryDetails = NestQuery(fmt.Sprintf(`SELECT o.id, o.name, o.order_at as "orderAt", o.printed_at AS "printedAt",
 	o.bt_finance as "btFinance", o.bt_percent AS "btPercent", o.bt_matel AS "btMatel",
 	o.user_name AS "userName", o.verified_by AS "verifiedBy",
 	o.finance_id AS "financeId", o.branch_id AS "branchId",
@@ -1019,12 +1019,12 @@ func invoice_get_item_customer(id *int64) (invoice_item, error) {
 	WHERE d.invoice_id = v.id
 	ORDER BY d.order_id`, queryUnit, q_customer))
 
-	var querFinance = nestQuerySingle(`SELECT f.id, f.name, f.short_name AS "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email, f.group_id AS "groupId" FROM finances f WHERE f.id = v.finance_id`)
-	var queryAccount = nestQuerySingle(`SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`)
+	var querFinance = NestQuerySingle(`SELECT f.id, f.name, f.short_name AS "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email, f.group_id AS "groupId" FROM finances f WHERE f.id = v.finance_id`)
+	var queryAccount = NestQuerySingle(`SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`)
 
-	var queryTansactionDetails = nestQuery(`SELECT id, code_id AS "codeId", trx_id AS "trxId", debt, cred FROM trx_detail WHERE trx_id = x.id`)
+	var queryTansactionDetails = NestQuery(`SELECT id, code_id AS "codeId", trx_id AS "trxId", debt, cred FROM trx_detail WHERE trx_id = x.id`)
 
-	var queryTansaction = nestQuerySingle(fmt.Sprintf(`SELECT x.id, x.ref_id AS "refId", x.division, x.descriptions,
+	var queryTansaction = NestQuerySingle(fmt.Sprintf(`SELECT x.id, x.ref_id AS "refId", x.division, x.descriptions,
 	x.trx_date AS "trxDate", x.memo, %s AS details
 	FROM trx x WHERE x.ref_id = v.id AND x.division = 'trx-invoice'`, queryTansactionDetails))
 

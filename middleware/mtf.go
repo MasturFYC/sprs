@@ -249,7 +249,7 @@ func mtf_create_invoice(w io.Writer, invoice_id *int64, inv *invoice_item, finan
 		p.SetX(ml + box1 + box2)
 		p.CellFormat(box3, lh, fmt.Sprintf("%d", 1), "0", 0, "CM", false, 0, "")
 		p.SetX(ml + box1 + box2 + box3)
-		p.CellFormat(box4, lh, fmt.Sprintf("%s", o.Unit.Type.Wheel.ShortName), "0", 0, "CM", false, 0, "")
+		p.CellFormat(box4, lh, o.Unit.Type.Wheel.ShortName, "0", 0, "CM", false, 0, "")
 		p.SetX(ml + box1 + box2 + box3 + box4)
 		p.CellFormat(box5-1, lh, format_number(subtotal), "0", 1, "RM", false, 0, "")
 

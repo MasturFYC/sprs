@@ -41,11 +41,11 @@ func loadRouter() {
 
 	routers.InitializeRoute(mainRouter)
 
-	routers.AccGroupRouter(mainRouter.PathPrefix("/api/acc-group/").Subrouter())
-	routers.AccountTypeRouter(mainRouter.PathPrefix("/api/acc-type/").Subrouter())
-	routers.AccountCodeRouter(mainRouter.PathPrefix("/api/acc-code/").Subrouter())
+	routers.AccGroupRouter(mainRouter.PathPrefix("/api/acc-group").Subrouter())
+	routers.AccountTypeRouter(mainRouter.PathPrefix("/api/acc-type").Subrouter())
+	routers.AccountCodeRouter(mainRouter.PathPrefix("/api/acc-code").Subrouter())
 	routers.ActionRouter(mainRouter.PathPrefix("/api/actions/").Subrouter())
-	routers.BranchRouter(mainRouter.PathPrefix("/api/branchs/").Subrouter())
+	routers.BranchRouter(mainRouter.PathPrefix("/api/branchs").Subrouter())
 	routers.CustomerRouter(mainRouter.PathPrefix("/api/customers").Subrouter())
 	routers.FinanceGroupRouter(mainRouter.PathPrefix("/api/finance-group").Subrouter())
 	routers.FinanceRouter(mainRouter.PathPrefix("/api/finances/").Subrouter())
@@ -60,10 +60,10 @@ func loadRouter() {
 
 	// routers.ReceivableRouter(mainRouter.PathPrefix("/api/receivables/").Subrouter())
 	routers.TaskRouter(mainRouter.PathPrefix("/api/tasks").Subrouter())
-	routers.TypeRouter(mainRouter.PathPrefix("/api/types/").Subrouter())
+	routers.TypeRouter(mainRouter.PathPrefix("/api/types").Subrouter())
 	routers.UnitRouter(mainRouter.PathPrefix("/api/units/").Subrouter())
 	routers.WarehouseRouter(mainRouter.PathPrefix("/api/warehouses/").Subrouter())
-	routers.WheelRouter(mainRouter.PathPrefix("/api/wheels/").Subrouter())
+	routers.WheelRouter(mainRouter.PathPrefix("/api/wheels").Subrouter())
 	routers.PropertyRouter(mainRouter.PathPrefix("/api/properties/").Subrouter())
 	routers.TransactionRouter(mainRouter.PathPrefix("/api/trx/").Subrouter())
 	routers.TransactionDetailRouter(mainRouter.PathPrefix("/api/trx-detail/").Subrouter())
