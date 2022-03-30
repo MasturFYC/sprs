@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"strings"
 
-	convertion "fyc.com/sprs/Convertion"
 	"fyc.com/sprs/models"
+	"github.com/MasturFYC/fyc"
 	"github.com/gorilla/mux"
 	"github.com/jung-kurt/gofpdf"
 )
@@ -152,12 +152,12 @@ func mtf_create_invoice(w io.Writer, invoice_id *int64, inv *invoice_item, finan
 	p.SetXY(x, y)
 	p.CellFormat(box1, lh, "Invoice No.", "", 0, "R", false, 0, "")
 	p.CellFormat(box3, lh, ":", "", 0, "R", false, 0, "")
-	p.CellFormat(box2, lh, create_invoice_number(inv.ID, inv.InvoiceAt), "", 1, "L", false, 0, "")
+	p.CellFormat(box2, lh, fyc.CreateInvoiceNumber(inv.ID, inv.InvoiceAt), "", 1, "L", false, 0, "")
 
 	p.SetX(x)
 	p.CellFormat(box1, lh, "Date", "0", 0, "R", false, 0, "")
 	p.CellFormat(box3, lh, ":", "", 0, "R", false, 0, "")
-	p.CellFormat(box2, lh, create_indonesian_date(inv.InvoiceAt, false), "0", 1, "L", false, 0, "")
+	p.CellFormat(box2, lh, fyc.CreateIndonesianDate(inv.InvoiceAt, false), "0", 1, "L", false, 0, "")
 
 	box1 = 30
 	box2 = box - box1 - box3
@@ -372,7 +372,7 @@ func mft_create_lampiran1(
 	lh = 7
 
 	p.SetFont(font, "", 10)
-	p.CellFormat(box, lh, fmt.Sprintf("Indramayu, %s", create_indonesian_date(inv.InvoiceAt, false)),
+	p.CellFormat(box, lh, fmt.Sprintf("Indramayu, %s", fyc.CreateIndonesianDate(inv.InvoiceAt, false)),
 		"", 1, "L", false, 0, "")
 	p.CellFormat(box, lh, "Bersama ini, saya yang bertandatangan di bawah ini:",
 		"", 1, "L", false, 0, "")
@@ -437,7 +437,7 @@ func mft_create_lampiran1(
 	_, lineHt := p.GetFontSize()
 	lineHt += 2
 	html.Write(lineHt, fmt.Sprintf("Dengan total biaya <b>Rp%s,-</b> (<i>** %s Rupiah</i>)",
-		format_number(*total), strings.TrimSpace(convertion.Terbilang(*total))))
+		format_number(*total), strings.TrimSpace(fyc.Terbilang(*total))))
 
 	html.Write(lineHt,
 		fmt.Sprintf(`<br /><br />Bersama ini saya menyatakan dengan sebenarnya bahwa unit tersebut sudah bebas

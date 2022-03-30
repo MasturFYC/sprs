@@ -9,18 +9,11 @@ require (
 	github.com/rs/cors v1.8.2
 )
 
+require github.com/MasturFYC/fyc v0.3.0
+
 require (
-	github.com/boombuler/barcode v1.0.1 // indirect
-	github.com/btcsuite/btcutil v1.0.2
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
-	github.com/google/uuid v1.3.0
-	github.com/jung-kurt/gofpdf v1.16.2 // indirect
-	github.com/lithammer/shortuuid/v3 v3.0.7
-	github.com/phpdave11/gofpdi v1.0.13 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
-	github.com/ruudk/golang-pdf417 v0.0.0-20201230142125-a7e3863a1245 // indirect
-	github.com/satori/go.uuid v1.2.0
-	golang.org/x/crypto v0.0.0-20220214200702-86341886e292 // indirect
-	golang.org/x/image v0.0.0-20220302094943-723b81ca9867 // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/jung-kurt/gofpdf v1.16.2
+	golang.org/x/crypto v0.0.0-20220321153916-2c7772ba3064
 	golang.org/x/text v0.3.7
 )

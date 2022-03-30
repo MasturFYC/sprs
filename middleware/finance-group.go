@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"fyc.com/sprs/models"
+	"github.com/MasturFYC/fyc"
 
 	"net/http"
 
@@ -197,7 +198,7 @@ func fg_get_finances() ([]FgFinances, error) {
 	var querFinance = `SELECT id, name, short_name AS "shortName" FROM finances WHERE group_id = g.id ORDER BY name`
 
 	var sqlStatement = fmt.Sprintf("SELECT g.id, g.name, %s AS finances	FROM finance_groups AS g ORDER BY g.name",
-		NestQuery(querFinance),
+		fyc.NestQuery(querFinance),
 	)
 
 	//	log.Print(sqlStatement)

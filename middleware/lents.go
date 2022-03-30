@@ -13,6 +13,7 @@ import (
 
 	"strconv"
 
+	"github.com/MasturFYC/fyc"
 	"github.com/gorilla/mux"
 )
 
@@ -181,10 +182,10 @@ func lent_get_item(order_id *int64) (lent_details, error) {
 	sb := strings.Builder{}
 
 	sb.WriteString("WITH RECURSIVE rs AS (")
-	sb.WriteString(" select order_id, id, payment_at, debt, descripts FROM lent_details WHERE order_id=$1")
+	sb.WriteString(" select order_id, id, payment_at, debt, descripts, cash_id FROM lent_details WHERE order_id=$1")
 	sb.WriteString(")\n")
 	sb.WriteString("SELECT")
-	sb.WriteString(" t2.order_id, t2.id, t2.payment_at, t2.debt, t2.descripts")
+	sb.WriteString(` t2.order_id as "OrderId", t2.id, t2.payment_at as "paymentAt", t2.debt, t2.descripts, t2.cash_id As "cashId"`)
 	sb.WriteString(" t3.bt_matel - t2.debt")
 	sb.WriteString(" OVER (ORDER BY t.payment_at, t.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as saldo")
 	sb.WriteString(" FROM rs as t2")
@@ -192,7 +193,7 @@ func lent_get_item(order_id *int64) (lent_details, error) {
 
 	sb.WriteString("SELECT")
 	sb.WriteString(" t.order_id, t.name, t.descripts, t.street, t.city, t.phone, t.cell, t.zip, ")
-	sb.WriteString(NestQuery(`SELECT order_id AS "orderId", id, payment_at AS "paymentAt", debt, descripts FROM lent_details WHERE order_id = t.order_id`))
+	sb.WriteString(fyc.NestQuery(`SELECT order_id AS "orderId", id, payment_at AS "paymentAt", debt, descripts, cash_id As "cashId" FROM lent_details WHERE order_id = t.order_id`))
 	sb.WriteString(" AS details")
 	sb.WriteString(" FROM lents AS t")
 	sb.WriteString(" LEFT JOIN rs AS r ON r.order_id = t.order_id")
@@ -313,7 +314,7 @@ func lent_create(lent *models.Lent) (int64, error) {
 
 func lent_update(id *int64, lent *models.Lent) (int64, error) {
 	sb := strings.Builder{}
-	sb.WriteString("UPDATE INTO SET")
+	sb.WriteString("UPDATE lents SET")
 	sb.WriteString(" name=$2, descripts=$3, street=$4, city=$5, phone=$6, cell=$7, zip=$8")
 	sb.WriteString(" WHERE order_id=$1")
 

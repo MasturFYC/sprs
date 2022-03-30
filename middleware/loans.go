@@ -13,19 +13,20 @@ import (
 
 	"strconv"
 
+	"github.com/MasturFYC/fyc"
 	"github.com/gorilla/mux"
 )
+
+type loan_all struct {
+	models.Loan
+	Debt  float64 `json:"debt"`
+	Cred  float64 `json:"cred"`
+	Saldo float64 `json:"saldo"`
+}
 
 type loan_details struct {
 	models.Loan
 	Details *json.RawMessage `json:"details,omitempty"`
-}
-
-type loan_all struct {
-	models.Loan
-	Debt   float64 `json:"debt"`
-	Cred   float64 `json:"cred"`
-	Remain float64 `json:"remain"`
 }
 
 func Loan_GetAll(w http.ResponseWriter, r *http.Request) {
@@ -114,13 +115,11 @@ func Loan_Create(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&loan)
 
 	if err != nil {
-		//log.Fatalf("Unable to decode the request body.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
 	id, err := loan_create(&loan)
-
 	if err != nil {
 		//log.Fatalf("Nama finance tidak boleh sama.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
@@ -183,16 +182,16 @@ func loan_get_item(id *int64) (loan_details, error) {
 	sb2 := strings.Builder{}
 
 	sb2.WriteString("WITH RECURSIVE rs AS (")
-	sb2.WriteString(" SELECT loan_id, payment_at, id, descripts, debt, cred FROM loan_details WHERE loan_id=$1")
+	sb2.WriteString(` SELECT loan_id, payment_at, id, descripts, debt, cred, cash_id FROM loan_details WHERE loan_id=$1`)
 	sb2.WriteString(")")
 	sb2.WriteString(" SELECT")
-	sb2.WriteString(" rs.loan_id, rs.payment_at, rs.id, rs.descripts, rs.debt, rs.cred, ")
+	sb2.WriteString(` rs.loan_id AS "loanId", rs.payment_at as "paymentAt", rs.id, rs.descripts, rs.debt, rs.cred, cash_id AS "cashId"`)
 	sb2.WriteString(" sum(rs.debt - rs.cred) OVER (ORDER BY rs.payment_at, rs.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as saldo")
 	sb2.WriteString(" FROM rs")
 
 	sb.WriteString("SELECT")
-	sb.WriteString(" t.id, t.name, t.street, t.city, t.phone, t.cell, t.zip, t.descripts, ")
-	sb.WriteString(NestQuery(sb2.String()))
+	sb.WriteString(" t.id, t.name, t.loan_at, t.street, t.city, t.phone, t.cell, t.zip, t.descripts, ")
+	sb.WriteString(fyc.NestQuery(sb2.String()))
 	sb.WriteString(" AS details")
 	sb.WriteString(" FROM loans AS t")
 	sb.WriteString(" WHERE t.id=$1")
@@ -202,6 +201,7 @@ func loan_get_item(id *int64) (loan_details, error) {
 	err := rs.Scan(
 		&p.ID,
 		&p.Name,
+		&p.LoanAt,
 		&p.Street,
 		&p.City,
 		&p.Phone,
@@ -231,10 +231,10 @@ func loan_get_all() ([]loan_all, error) {
 
 	sb := strings.Builder{}
 	sb.WriteString("WITH RECURSIVE rs AS (")
-	sb.WriteString(" select loan_id, sum(debt) debt, sum(cred) as cred FROM loan_details GROUP BY loan_id")
+	sb.WriteString(" select loan_id sum(debt) debt, sum(cred) as cred FROM loan_details GROUP BY loan_id")
 	sb.WriteString(")\n")
-	sb.WriteString("SELECT t.id, t.name, t.street, t.city, t.phone, t.cell, t.zip, t.descripts, ")
-	sb.WriteString(" r.debt, r.cred, r.debt - r.cred AS remain")
+	sb.WriteString("SELECT t.id, t.name, t.loan_at, t.street, t.city, t.phone, t.cell, t.zip, t.descripts, ")
+	sb.WriteString(" COALESCE(r.debt,0), COALESCE(r.cred,0), COALESCE(r.debt,0) - COALESCE(r.cred,0) AS saldo")
 	sb.WriteString(" FROM loans AS t")
 	sb.WriteString(" LEFT JOIN rs AS r ON r.loan_id = t.id")
 	sb.WriteString(" ORDER BY t.name")
@@ -254,6 +254,7 @@ func loan_get_all() ([]loan_all, error) {
 		err := rs.Scan(
 			&p.ID,
 			&p.Name,
+			&p.LoanAt,
 			&p.Street,
 			&p.City,
 			&p.Phone,
@@ -262,7 +263,7 @@ func loan_get_all() ([]loan_all, error) {
 			&p.Descripts,
 			&p.Debt,
 			&p.Cred,
-			&p.Remain,
+			&p.Saldo,
 		)
 
 		if err != nil {
@@ -289,15 +290,16 @@ func loan_create(loan *models.Loan) (int64, error) {
 
 	sb := strings.Builder{}
 	sb.WriteString("INSERT INTO loans")
-	sb.WriteString(" (name, street, city, phone, cell, zip, descripts)")
+	sb.WriteString(" (name, loan_at, street, city, phone, cell, zip, descripts)")
 	sb.WriteString(" VALUES")
-	sb.WriteString(" ($1, $2, $3, $4, $5, $6, $7)")
+	sb.WriteString(" ($1, $2, $3, $4, $5, $6, $7, $8)")
 	sb.WriteString(" RETURNING id")
 
 	var id int64
 
 	err := Sql().QueryRow(sb.String(),
 		loan.Name,
+		loan.LoanAt,
 		loan.Street,
 		loan.City,
 		loan.Phone,
@@ -311,13 +313,14 @@ func loan_create(loan *models.Loan) (int64, error) {
 
 func loan_update(id *int64, loan *models.Loan) (int64, error) {
 	sb := strings.Builder{}
-	sb.WriteString("UPDATE INTO SET")
-	sb.WriteString(" name=$2, street=$3, city=$4, phone=$5, cell=$6, zip=$7, descripts=$8")
+	sb.WriteString("UPDATE loans SET")
+	sb.WriteString(" name=$2, loan_at=$3, street=$4, city=$5, phone=$6, cell=$7, zip=$8, descripts=$9")
 	sb.WriteString(" WHERE id=$1")
 
 	res, err := Sql().Exec(sb.String(),
 		id,
 		loan.Name,
+		loan.LoanAt,
 		loan.Street,
 		loan.City,
 		loan.Phone,
