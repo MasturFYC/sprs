@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"strings"
 
-	convertion "fyc.com/sprs/Convertion"
 	"fyc.com/sprs/models"
+	"github.com/MasturFYC/fyc"
 	"github.com/gorilla/mux"
 	"github.com/jung-kurt/gofpdf"
 )
@@ -146,11 +146,11 @@ func clipan_create_invoice(w io.Writer, invoice_id *int64, inv *invoice_item, fi
 	p.SetLineWidth(0.15)
 	p.SetXY(x, y)
 	p.CellFormat(box1, lh, " No. Invoice", "1", 0, "LM", false, 0, "")
-	p.CellFormat(box2, lh, create_invoice_number(inv.ID, inv.InvoiceAt), "1", 1, "L", false, 0, "")
+	p.CellFormat(box2, lh, fyc.CreateInvoiceNumber(inv.ID, inv.InvoiceAt), "1", 1, "L", false, 0, "")
 
 	p.SetX(x)
 	p.CellFormat(box1, lh, " Tanggal", "1", 0, "LM", false, 0, "")
-	p.CellFormat(box2, lh, create_indonesian_date(inv.InvoiceAt, false), "1", 1, "L", false, 0, "")
+	p.CellFormat(box2, lh, fyc.CreateIndonesianDate(inv.InvoiceAt, false), "1", 1, "L", false, 0, "")
 
 	p.SetY(p.GetY() + 5)
 	p.CellFormat(box, lh, "Dengan hormat,", "0", 1, "L", false, 0, "")
@@ -217,7 +217,7 @@ func clipan_create_invoice(w io.Writer, invoice_id *int64, inv *invoice_item, fi
 	sw := p.GetStringWidth("Terbilang : ")
 	p.CellFormat(sw, lh, "Terbilang :", "0", 0, "L", false, 0, "")
 	p.SetFont(font2, "I", 12)
-	p.CellFormat(box-sw, lh, fmt.Sprintf("( ** %s Rupiah )", strings.TrimSpace(convertion.Terbilang(total))), "0", 1, "L", false, 0, "")
+	p.CellFormat(box-sw, lh, fmt.Sprintf("( ** %s Rupiah )", strings.TrimSpace(fyc.Terbilang(total))), "0", 1, "L", false, 0, "")
 	p.SetFont(font2, "", 12)
 	p.CellFormat(box, lh, fmt.Sprintf("Pembayaran ke Rekening %s %s", account.Name, account.Descriptions), "0", 1, "L", false, 0, "")
 

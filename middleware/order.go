@@ -13,6 +13,7 @@ import (
 
 	"strconv"
 
+	"github.com/MasturFYC/fyc"
 	"github.com/gorilla/mux"
 )
 
@@ -544,7 +545,7 @@ func create_new_token(p *st_order_create) string {
 
 	builder.WriteString(p.Name)
 	builder.WriteString(" ")
-	builder.WriteString(strings.Replace(create_indonesian_date(p.OrderAt, true), " ", "-", -1))
+	builder.WriteString(strings.Replace(fyc.CreateIndonesianDate(p.OrderAt, true), " ", "-", -1))
 	builder.WriteString(" finance ")
 	builder.WriteString(p.Finance.Name)
 	builder.WriteString(" ")
@@ -570,7 +571,7 @@ func create_token(p *st_order_update) string {
 
 	builder.WriteString(p.Name)
 	builder.WriteString(" ")
-	builder.WriteString(strings.Replace(create_indonesian_date(p.OrderAt, true), " ", "-", -1))
+	builder.WriteString(strings.Replace(fyc.CreateIndonesianDate(p.OrderAt, true), " ", "-", -1))
 	builder.WriteString(" finance ")
 	builder.WriteString(p.Finance.Name)
 	builder.WriteString(" ")
@@ -651,8 +652,8 @@ func create_order_query() *strings.Builder {
 		%s as wheel, %s as merk
 		FROM types t
 		WHERE t.id = u.type_id`,
-		NestQuerySingle(q_wheel),
-		NestQuerySingle(q_merk),
+		fyc.NestQuerySingle(q_wheel),
+		fyc.NestQuerySingle(q_merk),
 	)
 
 	q_warehouse := "SELECT id, name FROM warehouses WHERE id = u.warehouse_id"
@@ -660,18 +661,18 @@ func create_order_query() *strings.Builder {
 	u.machine_number AS "machineNumber", u.color, u.type_id AS "typeId", u.warehouse_id AS "warehouseId",
 	%s as type, %s as warehouse
 	FROM units AS u WHERE u.order_id = o.id`,
-		NestQuerySingle(q_type),
-		NestQuerySingle(q_warehouse))
+		fyc.NestQuerySingle(q_type),
+		fyc.NestQuerySingle(q_warehouse))
 
 	b.WriteString("SELECT")
 	b.WriteString(" o.id, o.name, o.order_at, o.printed_at, o.bt_finance, o.bt_percent, o.bt_matel,")
 	b.WriteString(" o.user_name, o.verified_by, o.finance_id, o.branch_id, o.is_stnk, o.stnk_price, o.matrix, ")
-	b.WriteString(NestQuerySingle(`SELECT id, name, short_name AS "shortName", street, city, phone, cell, zip, email, group_id AS "groupId" FROM finances WHERE id = o.finance_id`))
+	b.WriteString(fyc.NestQuerySingle(`SELECT id, name, short_name AS "shortName", street, city, phone, cell, zip, email, group_id AS "groupId" FROM finances WHERE id = o.finance_id`))
 	b.WriteString(" AS finance, ")
-	b.WriteString(NestQuerySingle(`SELECT id, name, head_branch AS "headBranch", street, city, phone, cell, zip, email FROM branchs WHERE id = o.branch_id`))
+	b.WriteString(fyc.NestQuerySingle(`SELECT id, name, head_branch AS "headBranch", street, city, phone, cell, zip, email FROM branchs WHERE id = o.branch_id`))
 	b.WriteString(" AS branch, ")
 	//b.WriteString(" COALESCE(")
-	b.WriteString(NestQuerySingle(q_unit))
+	b.WriteString(fyc.NestQuerySingle(q_unit))
 	//b.WriteString(", '{}') ")
 	b.WriteString(" AS unit ")
 	return &b
@@ -971,16 +972,16 @@ func order_get_invoiced(m *int, y *int, fid *int) ([]order_invoiced, error) {
 	var queryMerk = `SELECT name FROM merks WHERE id = t.merk_id`
 
 	var queryTye = fmt.Sprintf(`SELECT t.name, %s AS wheel, %s AS merk FROM types t WHERE t.id = u.type_id`,
-		NestQuerySingle(queryWheel),
-		NestQuerySingle(queryMerk))
+		fyc.NestQuerySingle(queryWheel),
+		fyc.NestQuerySingle(queryMerk))
 
-	var queryUnit = NestQuerySingle(fmt.Sprintf(`SELECT u.nopol, u.year,
+	var queryUnit = fyc.NestQuerySingle(fmt.Sprintf(`SELECT u.nopol, u.year,
 		%s AS type
 		FROM units u
 		WHERE u.order_id = t.id`,
-		NestQuerySingle(queryTye)))
+		fyc.NestQuerySingle(queryTye)))
 
-	var queryBranch = NestQuerySingle(`SELECT b.name FROM branchs AS b WHERE b.id = t.branch_id`)
+	var queryBranch = fyc.NestQuerySingle(`SELECT b.name FROM branchs AS b WHERE b.id = t.branch_id`)
 
 	b := strings.Builder{}
 
@@ -1030,7 +1031,7 @@ func order_get_invoiced(m *int, y *int, fid *int) ([]order_invoiced, error) {
 	b.WriteString(" AS branch, ")
 	b.WriteString(queryUnit)
 	b.WriteString(" AS unit, ")
-	b.WriteString(NestQuerySingle(q_finance))
+	b.WriteString(fyc.NestQuerySingle(q_finance))
 	b.WriteString(" AS finance ")
 	b.WriteString(" FROM rs AS t")
 	//b.WriteString(" WHERE t.id=1")

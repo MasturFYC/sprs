@@ -18,10 +18,12 @@ type LentDetail struct {
 	Descripts NullString `json:"descripts,omitempty"`
 	Debt      float64    `json:"debt"`
 	Cred      float64    `json:"cred"`
+	CashId    int32      `json:"cashId"`
 }
 
 type Loan struct {
 	ID        int64      `json:"id"`
+	LoanAt    string     `json:"loanAt"`
 	Name      string     `json:"name"`
 	Descripts NullString `json:"descripts,omitempty"`
 	Street    NullString `json:"street,omitempty"`
@@ -38,4 +40,5 @@ type LoanDetail struct {
 	Descripts NullString `json:"descripts,omitempty"`
 	Debt      float64    `json:"debt"`
 	Cred      float64    `json:"cred"`
+	CashId    int32      `json:"cashId"`
 }

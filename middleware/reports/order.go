@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"fyc.com/sprs/middleware"
+	"github.com/MasturFYC/fyc"
 	"github.com/gorilla/mux"
 )
 
@@ -265,21 +266,21 @@ func rptOrder(filter *report_order_request) ([]order_invoiced, error) {
 */
 func create_query() (string, string, string) {
 
-	var qWheel = middleware.NestQuerySingle(`SELECT name, short_name as "shortName" FROM wheels WHERE id = t.wheel_id`)
-	var qMerk = middleware.NestQuerySingle("SELECT name FROM merks WHERE id = t.merk_id")
+	var qWheel = fyc.NestQuerySingle(`SELECT name, short_name as "shortName" FROM wheels WHERE id = t.wheel_id`)
+	var qMerk = fyc.NestQuerySingle("SELECT name FROM merks WHERE id = t.merk_id")
 
-	var qTye = middleware.NestQuerySingle(fmt.Sprintf(`SELECT t.name, %s AS wheel, %s AS merk FROM types t WHERE t.id = u.type_id`,
+	var qTye = fyc.NestQuerySingle(fmt.Sprintf(`SELECT t.name, %s AS wheel, %s AS merk FROM types t WHERE t.id = u.type_id`,
 		qWheel, qMerk,
 	))
 
-	var qUnit = middleware.NestQuerySingle(fmt.Sprintf(`SELECT u.nopol, u.year,
+	var qUnit = fyc.NestQuerySingle(fmt.Sprintf(`SELECT u.nopol, u.year,
 		%s AS type
 		FROM units u
 		WHERE u.order_id = t.id`,
 		qTye))
 
-	var qFinance = middleware.NestQuerySingle(`SELECT f.name, f.short_name "shortName" FROM finances f WHERE f.id = t.finance_id`)
-	var qBranch = middleware.NestQuerySingle(`SELECT b.name FROM branchs AS b WHERE b.id = t.branch_id`)
+	var qFinance = fyc.NestQuerySingle(`SELECT f.name, f.short_name "shortName" FROM finances f WHERE f.id = t.finance_id`)
+	var qBranch = fyc.NestQuerySingle(`SELECT b.name FROM branchs AS b WHERE b.id = t.branch_id`)
 
 	return qBranch, qFinance, qUnit
 }

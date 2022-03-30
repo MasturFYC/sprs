@@ -13,6 +13,7 @@ import (
 
 	"strconv"
 
+	"github.com/MasturFYC/fyc"
 	"github.com/gorilla/mux"
 )
 
@@ -343,7 +344,7 @@ func getTransaction(id *int64) (local_trx, error) {
 	builder.WriteString("SELECT t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,")
 	//builder.WriteString(" (SELECT COALESCE(sum(s.debt),0) AS debt FROM trx_detail s WHERE s.trx_id = t.id)")
 	//builder.WriteString(" AS saldo, ")
-	builder.WriteString(NestQuery(get_query_details))
+	builder.WriteString(fyc.NestQuery(get_query_details))
 	builder.WriteString(" AS details ")
 	builder.WriteString(" FROM trx t")
 	builder.WriteString(" WHERE t.id=$1")
@@ -395,7 +396,7 @@ func get_all_transactions() ([]local_trx, error) {
 	builder.WriteString("SELECT t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,")
 	//builder.WriteString(" (SELECT COALESCE(sum(s.debt),0) AS debt FROM trx_detail s WHERE s.trx_id = t.id)")
 	//builder.WriteString(" AS saldo, ")
-	builder.WriteString(NestQuery(get_query_details))
+	builder.WriteString(fyc.NestQuery(get_query_details))
 	builder.WriteString(" AS details ")
 	builder.WriteString(" FROM trx t")
 	builder.WriteString(" ORDER BY t.id DESC")
@@ -549,7 +550,7 @@ func searchTransactions(txt *string) ([]local_trx, error) {
 	builder.WriteString("SELECT t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,")
 	//builder.WriteString(" (SELECT COALESCE(sum(s.debt),0) AS debt FROM trx_detail s WHERE s.trx_id = t.id)")
 	//builder.WriteString(" AS saldo, ")
-	builder.WriteString(NestQuery(get_query_details))
+	builder.WriteString(fyc.NestQuery(get_query_details))
 	builder.WriteString(" AS details ")
 	builder.WriteString(" FROM trx t")
 	builder.WriteString(" WHERE t.trx_token @@ to_tsquery('indonesian', $1)")
@@ -600,7 +601,7 @@ func getTransactionsByGroup(id *int64) ([]local_trx, error) {
 	builder.WriteString("SELECT t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,")
 	//builder.WriteString(" (SELECT COALESCE(sum(s.debt),0) AS debt FROM trx_detail s WHERE s.trx_id = t.id)")
 	//builder.WriteString(" AS saldo, ")
-	builder.WriteString(NestQuery(get_query_details))
+	builder.WriteString(fyc.NestQuery(get_query_details))
 	builder.WriteString(" AS details ")
 	builder.WriteString(" FROM trx t")
 	builder.WriteString(" INNER JOIN trx_detail d ON d.trx_id = d.id")
@@ -695,7 +696,7 @@ func get_trx_by_month(id *int) ([]local_trx, error) {
 	builder.WriteString("SELECT t.id, t.ref_id, t.division, t.trx_date, t.descriptions, t.memo,")
 	//builder.WriteString(" (SELECT COALESCE(sum(s.debt),0) AS debt FROM trx_detail s WHERE s.trx_id = t.id)")
 	//builder.WriteString(" AS saldo, ")
-	builder.WriteString(NestQuery(get_query_details))
+	builder.WriteString(fyc.NestQuery(get_query_details))
 	builder.WriteString(" AS details ")
 	builder.WriteString(" FROM trx t")
 	builder.WriteString(" WHERE EXTRACT(MONTH from t.trx_date)=$1")
