@@ -398,11 +398,18 @@ func loan_get_all() ([]loan_all, error) {
 	sb := strings.Builder{}
 	sb2 := strings.Builder{}
 
-	sb2.WriteString("SELECT sum(d.debt) as debt, sum(d.cred) as cred, sum(d.debt - d.cred) as saldo")
+	sb2.WriteString("SELECT ln.id")
+	sb2.WriteString(", sum(d.debt) as debt")
+	sb2.WriteString(", sum(d.cred) as cred")
+	sb2.WriteString(", sum(d.debt + (d.debt * (ln.persen / 100))) as piutang")
+	sb2.WriteString(", sum((d.debt + (d.debt * (ln.persen / 100))) - d.cred) as saldo")
 	sb2.WriteString(" FROM trx_detail AS d")
+	sb2.WriteString(" INNER JOIN trx r ON r.id = d.trx_id")
+	sb2.WriteString(" INNER JOIN loans ln ON ln.id = r.ref_id")
 	sb2.WriteString(" INNER JOIN acc_code AS c ON c.id = d.code_id")
 	sb2.WriteString(" INNER JOIN acc_type AS e ON e.id = c.type_id")
-	sb2.WriteString(" WHERE d.trx_id = x.id AND e.group_id != 1")
+	sb2.WriteString(" WHERE e.group_id != 1 and ln.id = t.id AND (r.division = 'trx-loan' or r.division = 'trx-angsuran')")
+	sb2.WriteString(" GROUP BY ln.id")
 
 	sb.WriteString("SELECT t.id id, t.name, t.street, t.city, t.phone, t.cell, t.zip, t.persen,")
 	sb.WriteString(" x.id as trx_id, x.division, x.descriptions, x.trx_date, x.memo, ")
@@ -457,13 +464,13 @@ func loan_delete(id *int64) (int64, error) {
 
 	//log.Printf("%d", id)
 	sqlStatement := `DELETE FROM loans WHERE id=$1`
-	res, err := Sql().Exec(sqlStatement, id)
+	_, err := Sql().Exec(sqlStatement, id)
 	if err != nil {
 		log.Fatal(err)
 		return 0, err
 	}
 	sqlStatement = `DELETE FROM trx WHERE ref_id=$1 AND (division='trx-loan' OR division='trx-angsuran')`
-	res, err = Sql().Exec(sqlStatement, id)
+	res, err := Sql().Exec(sqlStatement, id)
 	if err != nil {
 		log.Fatal(err)
 		return 0, err
