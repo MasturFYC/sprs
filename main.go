@@ -73,8 +73,6 @@ func loadRouter() {
 
 	routers.LoanRouter(mainRouter.PathPrefix("/api/loans").Subrouter())
 	routers.LentRouter(mainRouter.PathPrefix("/api/lents").Subrouter())
-	routers.LentDetailRouter(mainRouter.PathPrefix("/api/lentdetails").Subrouter())
-	routers.LoanDetailRouter(mainRouter.PathPrefix("/api/loandetails").Subrouter())
 }
 
 func runServer() {

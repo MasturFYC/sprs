@@ -17,18 +17,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type loan_all struct {
-	models.Loan
-	Debt  float64 `json:"debt"`
-	Cred  float64 `json:"cred"`
-	Saldo float64 `json:"saldo"`
-}
-
-type loan_details struct {
-	models.Loan
-	Details *json.RawMessage `json:"details,omitempty"`
-}
-
 func Loan_GetAll(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 
@@ -105,33 +93,65 @@ func Loan_Delete(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+type ts_loan_create struct {
+	Loan  models.Loan `json:"loan"`
+	Trx   models.Trx  `json:"trx"`
+	Token string      `json:"token"`
+}
+
 func Loan_Create(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 
 	w.Header().Set("Access-Control-Allow-Methods", "POST")
 
-	var loan models.Loan
+	var loan ts_loan_create
 
 	err := json.NewDecoder(r.Body).Decode(&loan)
 
 	if err != nil {
+		log.Fatalf("Fatal %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
-	id, err := loan_create(&loan)
+	id, err := loan_create(&loan.Loan)
 	if err != nil {
+		log.Fatalf("Fatal %v", err)
 		//log.Fatalf("Nama finance tidak boleh sama.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
 
-	res := Response{
-		ID:      id,
-		Message: "Loan was created succesfully",
+	loan.Trx.RefID = id
+	trxid, err := createTransaction(&loan.Trx, loan.Token)
+
+	if err != nil {
+		log.Fatalf("Fatal %v", err)
+		//log.Printf("(API) Unable to create transaction.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
 	}
 
-	json.NewEncoder(w).Encode(&res)
+	if len(loan.Trx.Details) > 0 {
+
+		err = bulkInsertDetails(loan.Trx.Details, &trxid)
+
+		if err != nil {
+			log.Fatalf("Fatal %v", err)
+			//log.Printf("Unable to insert transaction details.  %v", err)
+			//http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
+		}
+	}
+	if err != nil {
+		log.Fatalf("Fatal %v", err)
+		//log.Fatalf("Nama finance tidak boleh sama.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
+
+	loan.Trx.ID = trxid
+	json.NewEncoder(w).Encode(&loan)
 
 }
 
@@ -146,7 +166,7 @@ func Loan_Update(w http.ResponseWriter, r *http.Request) {
 
 	id, _ := strconv.ParseInt(params["id"], 10, 64)
 
-	var loan models.Loan
+	var loan ts_loan_create
 
 	err := json.NewDecoder(r.Body).Decode(&loan)
 
@@ -156,14 +176,43 @@ func Loan_Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatedRows, err := loan_update(&id, &loan)
+	_, err = loan_update(&id, &loan.Loan)
 
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
 
-	msg := fmt.Sprintf("Loand updated successfully. Total rows/record affected %v", updatedRows)
+	updatedRows, err := updateTransaction(&loan.Trx.ID, &loan.Trx, loan.Token)
+
+	if err != nil {
+		//log.Printf("Unable to update transaction.  %v", err)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
+
+	if len(loan.Trx.Details) > 0 {
+
+		_, err = deleteDetailsByOrder(&id)
+		if err != nil {
+			//log.Printf("Unable to delete all details by transaction.  %v", err)
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
+		}
+		//}
+
+		// 	var newId int64 = 0
+
+		err = bulkInsertDetails(loan.Trx.Details, &id)
+
+		if err != nil {
+			//log.Printf("Unable to insert transaction details (message from command).  %v", err)
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
+		}
+	}
+
+	msg := fmt.Sprintf("Loan updated successfully. Total rows/record affected %v", updatedRows)
 
 	// format the response message
 	res := Response{
@@ -175,24 +224,44 @@ func Loan_Update(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-func loan_get_item(id *int64) (loan_details, error) {
+type loan_item struct {
+	models.Loan
+	Trx *json.RawMessage `json:"trx,omitempty"`
+}
 
-	var p loan_details
+func loan_get_item(id *int64) (loan_item, error) {
+
+	var p loan_item
 	sb := strings.Builder{}
-	sb2 := strings.Builder{}
+	sbTrxDetail := strings.Builder{}
+	sbTrx := strings.Builder{}
 
-	sb2.WriteString("WITH RECURSIVE rs AS (")
-	sb2.WriteString(` SELECT loan_id, payment_at, id, descripts, debt, cred, cash_id FROM loan_details WHERE loan_id=$1`)
-	sb2.WriteString(")")
-	sb2.WriteString(" SELECT")
-	sb2.WriteString(` rs.loan_id AS "loanId", rs.payment_at as "paymentAt", rs.id, rs.descripts, rs.debt, rs.cred, cash_id AS "cashId"`)
-	sb2.WriteString(" sum(rs.debt - rs.cred) OVER (ORDER BY rs.payment_at, rs.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as saldo")
-	sb2.WriteString(" FROM rs")
+	sbTrxDetail.WriteString("WITH RECURSIVE rs AS (")
+	sbTrxDetail.WriteString(" SELECT 1 as group, d.trx_id, d.id, d.code_id, d.debt, d.cred")
+	sbTrxDetail.WriteString(" FROM trx_detail AS d")
+	sbTrxDetail.WriteString(" INNER JOIN acc_code AS c ON c.id = d.code_id")
+	sbTrxDetail.WriteString(" INNER JOIN acc_type AS e ON e.id = c.type_id")
+	sbTrxDetail.WriteString(" WHERE e.group_id != 1")
+	sbTrxDetail.WriteString(")\n")
+
+	sbTrxDetail.WriteString(`SELECT rs.group AS "groupId", rs.id, rs.trx_id AS "trxId", rs.code_id AS "codeId", rs.debt, rs.cred`)
+	sbTrxDetail.WriteString(", sum(rs.debt - rs.cred) OVER (ORDER BY rs.group, rs.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as saldo")
+	sbTrxDetail.WriteString(" FROM rs")
+	sbTrxDetail.WriteString(" WHERE rs.trx_id = x.id")
+
+	sbTrx.WriteString(`SELECT x.id, x.ref_id, x.division, x.descriptions, x.trx_date AS "trxDate", x.memo`)
+	sbTrx.WriteString(", ")
+	sbTrx.WriteString(fyc.NestQuerySingle(sbTrxDetail.String()))
+	sbTrx.WriteString(" AS detail")
+	sbTrx.WriteString(" FROM trx AS x")
+	sbTrx.WriteString(" WHERE x.ref_id = t.id AND (x.division ='trx-loan' OR x.division ='trx-angsuran')")
+	sbTrx.WriteString(" ORDER BY x.id")
 
 	sb.WriteString("SELECT")
-	sb.WriteString(" t.id, t.name, t.loan_at, t.street, t.city, t.phone, t.cell, t.zip, t.descripts, ")
-	sb.WriteString(fyc.NestQuery(sb2.String()))
-	sb.WriteString(" AS details")
+	sb.WriteString(" t.id, t.name, t.street, t.city, t.phone, t.cell, t.zip, t.persen")
+	sb.WriteString(",")
+	sb.WriteString(fyc.NestQuery(sbTrx.String()))
+	sb.WriteString(" AS trx")
 	sb.WriteString(" FROM loans AS t")
 	sb.WriteString(" WHERE t.id=$1")
 
@@ -201,28 +270,46 @@ func loan_get_item(id *int64) (loan_details, error) {
 	err := rs.Scan(
 		&p.ID,
 		&p.Name,
-		&p.LoanAt,
 		&p.Street,
 		&p.City,
 		&p.Phone,
 		&p.Cell,
 		&p.Zip,
-		&p.Descripts,
-		&p.Details,
+		&p.Persen,
+		&p.Trx,
 	)
 
 	switch err {
 	case sql.ErrNoRows:
 		fmt.Println("No rows were returned!")
-		return p, nil
+		return p, err
 	case nil:
 		return p, nil
 	default:
 		log.Fatalf("Unable to scan the row. %v", err)
 	}
 
-	// return empty user on error
+	// return empty on error
 	return p, err
+}
+
+type loan_all struct {
+	ID     int64             `json:"id"`
+	Name   string            `json:"name"`
+	Street models.NullString `json:"street,omitempty"`
+	City   models.NullString `json:"city,omitempty"`
+	Phone  models.NullString `json:"phone,omitempty"`
+	Cell   models.NullString `json:"cell,omitempty"`
+	Zip    models.NullString `json:"zip,omitempty"`
+	Persen float32           `json:"persen"`
+
+	TrxID        int64             `json:"trxId"`
+	Division     string            `json:"division"`
+	Descriptions models.NullString `json:"descriptions"`
+	TrxDate      string            `json:"trxDate"`
+	Memo         models.NullString `json:"memo"`
+
+	Loan *json.RawMessage `json:"loan,omitempty"`
 }
 
 func loan_get_all() ([]loan_all, error) {
@@ -230,19 +317,28 @@ func loan_get_all() ([]loan_all, error) {
 	var loans []loan_all
 
 	sb := strings.Builder{}
-	sb.WriteString("WITH RECURSIVE rs AS (")
-	sb.WriteString(" select loan_id sum(debt) debt, sum(cred) as cred FROM loan_details GROUP BY loan_id")
-	sb.WriteString(")\n")
-	sb.WriteString("SELECT t.id, t.name, t.loan_at, t.street, t.city, t.phone, t.cell, t.zip, t.descripts, ")
-	sb.WriteString(" COALESCE(r.debt,0), COALESCE(r.cred,0), COALESCE(r.debt,0) - COALESCE(r.cred,0) AS saldo")
+	sb2 := strings.Builder{}
+
+	sb2.WriteString("SELECT sum(d.debt) as debt, sum(d.cred) as cred, sum(d.debt - d.cred) as saldo")
+	sb2.WriteString(" FROM trx_detail AS d")
+	sb2.WriteString(" INNER JOIN acc_code AS c ON c.id = d.code_id")
+	sb2.WriteString(" INNER JOIN acc_type AS e ON e.id = c.type_id")
+	sb2.WriteString(" WHERE d.trx_id = x.id AND e.group_id != 1")
+
+	sb.WriteString("SELECT t.id id, t.name, t.street, t.city, t.phone, t.cell, t.zip, t.persen,")
+	sb.WriteString(" x.id as trx_id, x.division, x.descriptions, x.trx_date, x.memo, ")
+	sb.WriteString(fyc.NestQuerySingle(sb2.String()))
+	sb.WriteString(" AS details")
 	sb.WriteString(" FROM loans AS t")
-	sb.WriteString(" LEFT JOIN rs AS r ON r.loan_id = t.id")
-	sb.WriteString(" ORDER BY t.name")
+	sb.WriteString(" INNER JOIN trx AS x on x.ref_id = t.id AND x.division = 'trx-loan'")
+	sb.WriteString(" ORDER BY x.trx_date")
+
+	//log.Println(sb.String())
 
 	rs, err := Sql().Query(sb.String())
 
 	if err != nil {
-		// log.Fatalf("Unable to execute finances query %v", err)
+		log.Fatalf("Unable to execute finances query %v", err)
 		return loans, err
 	}
 
@@ -254,16 +350,18 @@ func loan_get_all() ([]loan_all, error) {
 		err := rs.Scan(
 			&p.ID,
 			&p.Name,
-			&p.LoanAt,
 			&p.Street,
 			&p.City,
 			&p.Phone,
 			&p.Cell,
 			&p.Zip,
-			&p.Descripts,
-			&p.Debt,
-			&p.Cred,
-			&p.Saldo,
+			&p.Persen,
+			&p.TrxID,
+			&p.Division,
+			&p.Descriptions,
+			&p.TrxDate,
+			&p.Memo,
+			&p.Loan,
 		)
 
 		if err != nil {
@@ -290,22 +388,21 @@ func loan_create(loan *models.Loan) (int64, error) {
 
 	sb := strings.Builder{}
 	sb.WriteString("INSERT INTO loans")
-	sb.WriteString(" (name, loan_at, street, city, phone, cell, zip, descripts)")
+	sb.WriteString(" (name, street, city, phone, cell, zip, persen)")
 	sb.WriteString(" VALUES")
-	sb.WriteString(" ($1, $2, $3, $4, $5, $6, $7, $8)")
+	sb.WriteString(" ($1, $2, $3, $4, $5, $6, $7)")
 	sb.WriteString(" RETURNING id")
 
 	var id int64
 
 	err := Sql().QueryRow(sb.String(),
 		loan.Name,
-		loan.LoanAt,
 		loan.Street,
 		loan.City,
 		loan.Phone,
 		loan.Cell,
 		loan.Zip,
-		loan.Descripts,
+		loan.Persen,
 	).Scan(&id)
 
 	return id, err
@@ -314,19 +411,18 @@ func loan_create(loan *models.Loan) (int64, error) {
 func loan_update(id *int64, loan *models.Loan) (int64, error) {
 	sb := strings.Builder{}
 	sb.WriteString("UPDATE loans SET")
-	sb.WriteString(" name=$2, loan_at=$3, street=$4, city=$5, phone=$6, cell=$7, zip=$8, descripts=$9")
+	sb.WriteString(" name=$2, street=$3, city=$4, phone=$5, cell=$6, zip=$7, persen=$8")
 	sb.WriteString(" WHERE id=$1")
 
 	res, err := Sql().Exec(sb.String(),
 		id,
 		loan.Name,
-		loan.LoanAt,
 		loan.Street,
 		loan.City,
 		loan.Phone,
 		loan.Cell,
 		loan.Zip,
-		loan.Descripts,
+		loan.Persen,
 	)
 	if err != nil {
 		return 0, err

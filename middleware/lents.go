@@ -185,7 +185,7 @@ func lent_get_item(order_id *int64) (lent_details, error) {
 	sb.WriteString(" select order_id, id, payment_at, debt, descripts, cash_id FROM lent_details WHERE order_id=$1")
 	sb.WriteString(")\n")
 	sb.WriteString("SELECT")
-	sb.WriteString(` t2.order_id as "OrderId", t2.id, t2.payment_at as "paymentAt", t2.debt, t2.descripts, t2.cash_id As "cashId"`)
+	sb.WriteString(` t2.order_id as "OrderId", t2.id, t2.payment_at as "paymentAt", t2.debt, t2.cash_id As "cashId"`)
 	sb.WriteString(" t3.bt_matel - t2.debt")
 	sb.WriteString(" OVER (ORDER BY t.payment_at, t.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as saldo")
 	sb.WriteString(" FROM rs as t2")
@@ -204,7 +204,6 @@ func lent_get_item(order_id *int64) (lent_details, error) {
 	err := rs.Scan(
 		&p.OrderID,
 		&p.Name,
-		&p.Descripts,
 		&p.Street,
 		&p.City,
 		&p.Phone,
@@ -257,7 +256,6 @@ func lent_get_all() ([]lent_all, error) {
 		err := rs.Scan(
 			&p.OrderID,
 			&p.Name,
-			&p.Descripts,
 			&p.Street,
 			&p.City,
 			&p.Phone,
@@ -291,13 +289,12 @@ func lent_create(lent *models.Lent) (int64, error) {
 
 	sb := strings.Builder{}
 	sb.WriteString("INSERT INTO lents")
-	sb.WriteString(" (order_id, name, descripts, street, city, phone, cell, zip)")
+	sb.WriteString(" (order_id, name, street, city, phone, cell, zip)")
 	sb.WriteString(" VALUES")
-	sb.WriteString(" ($1, $2, $3, $4, $5, $6, $7, $8)")
+	sb.WriteString(" ($1, $2, $3, $4, $5, $6, $7)")
 
 	rs, err := Sql().Exec(sb.String(),
 		lent.Name,
-		lent.Descripts,
 		lent.Street,
 		lent.City,
 		lent.Phone,
@@ -315,13 +312,12 @@ func lent_create(lent *models.Lent) (int64, error) {
 func lent_update(id *int64, lent *models.Lent) (int64, error) {
 	sb := strings.Builder{}
 	sb.WriteString("UPDATE lents SET")
-	sb.WriteString(" name=$2, descripts=$3, street=$4, city=$5, phone=$6, cell=$7, zip=$8")
+	sb.WriteString(" name=$2, street=$4, city=$5, phone=$6, cell=$7, zip=$8")
 	sb.WriteString(" WHERE order_id=$1")
 
 	rs, err := Sql().Exec(sb.String(),
 		id,
 		lent.Name,
-		lent.Descripts,
 		lent.Street,
 		lent.City,
 		lent.Phone,

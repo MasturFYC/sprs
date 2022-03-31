@@ -2,13 +2,13 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.10 (Ubuntu 12.10-1.pgdg20.04+1)
--- Dumped by pg_dump version 14.2 (Ubuntu 14.2-1.pgdg20.04+1)
+-- Dumped from database version 13.5 (Debian 13.5-0+deb11u1)
+-- Dumped by pg_dump version 13.5 (Debian 13.5-0+deb11u1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
+SET client_encoding = 'SQL_ASCII';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
@@ -404,14 +404,13 @@ ALTER SEQUENCE public.loan_details_id_seq OWNED BY public.loan_details.id;
 
 CREATE TABLE public.loans (
     id integer NOT NULL,
-    descripts character varying(128),
     name character varying(50) NOT NULL,
     street character varying(128),
     city character varying(50),
     phone character varying(25),
     cell character varying(25),
     zip character varying(6),
-    loan_at date DEFAULT now() NOT NULL
+    persen numeric(8,2)
 );
 
 
@@ -893,6 +892,9 @@ COPY public.acc_code (id, name, type_id, descriptions, token_name, is_active, is
 5211	Kasbon Cabang JTB	52	Biaya yg dikeluarkan untuk penarikan kendaraan yg tidak ada STNK	'ada':12 'arik':8 'biaya':4 'cabang':2 'jtb':3 'kasbon':1 'keluar':6 'ndara':9 'stnk':13 'tidak':11 'untuk':7 'yg':5,10	t	t	3
 2211	BNI	22	\N	'bni':1	t	t	2
 2212	SAMSAT	22	\N	'samsat':1	t	t	2
+5512	Piutang Pelanggan	55	\N	'langgan':2 'piutang':1	t	f	3
+4112	Angsuran Piutang	41	\N	'angsur':1 'piutang':2	t	f	2
+4113	Cicilan Kendaraan	41	\N	'cicil':1 'ndara':2	t	f	2
 \.
 
 
@@ -1084,9 +1086,8 @@ COPY public.loan_details (loan_id, payment_at, id, descripts, debt, cred, cash_i
 -- Data for Name: loans; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.loans (id, descripts, name, street, city, phone, cell, zip, loan_at) FROM stdin;
-4	\N	Junaedi	\N	\N	\N	\N	\N	2022-03-30
-5	\N	Dony Armadi	\N	\N	\N	\N	\N	2022-03-30
+COPY public.loans (id, name, street, city, phone, cell, zip, persen) FROM stdin;
+8	Junaedi	\N	\N	\N	\N	\N	0.00
 \.
 
 
@@ -1316,6 +1317,7 @@ COPY public.trx (id, ref_id, division, descriptions, trx_date, memo, trx_token) 
 151	9	trx-invoice	Pendapatan jasa dari Auto Discret Finance Invoice #9	2022-03-24	\N	'/id-0':2 '3351':12 '3430':17 '6871':8 '9':26 'adira':6 'auto':3,22 'b':11,16 'beat':14 'beatpendapat':19 'cm':9 'dari':21 'discret':4,23 'dony':1 'e':7 'ejx':18 'finance':5,24 'invoice':25 'jasa':20 'kuh':13 'mio':10 'pop':15
 152	10	trx-invoice	Pendapatan jasa dari Mandiri Tunas Finance Semarang Invoice #10	2022-03-24	\N	'/id-10':2 '1000':16,21,26 '1340000006105':11 '8715':13 '9049':18 '9086':28 '9442':23 'agya':30 'bank':9 'brio':15,20,25 'finance':5 'gp':14 'h':12,17,22,27 'mandir':3,10 'mtf':7 'ng':24 's':8 'se':19 'semarang':6 'te':29 'tunas':4 'udin':1
 153	11	trx-invoice	Pendapatan jasa dari Clipan Karawang\n Invoice #11	2022-03-26	\N	'/id-0':2 '1000':15 '11':33 '1184':12 '1312':8 '1412':21 '1788':17 '8936':25 'b':24 'bc':18 'brio':14 'carry':23 'clip':5 'clipan':3,30 'd':7 'dari':29 'ga':13 'invoice':32 'jasa':28 'jazzpendapat':27 'k':6 'karawang':4,31 'km':22 'mobilio':19 'no':26 't':11,16,20 'wf':9 'wulan':1 'xenia':10
+156	8	trx-loan	wwwwwwwwwwww	2022-03-31	\N	'junaed':2 'wwwwwwwwwwww':1
 \.
 
 
@@ -1478,6 +1480,8 @@ COPY public.trx_detail (id, code_id, trx_id, debt, cred) FROM stdin;
 2	1113	152	95550000.00	0.00
 1	4111	153	0.00	96070000.00
 2	1113	153	96070000.00	0.00
+1	5512	156	15000000.00	0.00
+2	1113	156	0.00	15000000.00
 \.
 
 
@@ -1712,7 +1716,7 @@ SELECT pg_catalog.setval('public.loan_details_id_seq', 1, false);
 -- Name: loans_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.loans_id_seq', 5, true);
+SELECT pg_catalog.setval('public.loans_id_seq', 8, true);
 
 
 --
@@ -1747,7 +1751,7 @@ SELECT pg_catalog.setval('public.trx_detail_seq', 1, false);
 -- Name: trx_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.trx_seq', 153, true);
+SELECT pg_catalog.setval('public.trx_seq', 156, true);
 
 
 --
@@ -2277,6 +2281,13 @@ CREATE INDEX ix_trx_detail_acc_code ON public.trx_detail USING btree (code_id);
 --
 
 CREATE INDEX ix_trx_detail_trx ON public.trx_detail USING btree (trx_id);
+
+
+--
+-- Name: ix_trx_division; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_trx_division ON public.trx USING btree (division);
 
 
 --
