@@ -114,7 +114,7 @@ func Loan_Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := loan_create(&loan.Loan)
+	newLoanId, err := loan_create(&loan.Loan)
 	if err != nil {
 		log.Fatalf("Fatal %v", err)
 		//log.Fatalf("Nama finance tidak boleh sama.  %v", err)
@@ -122,7 +122,8 @@ func Loan_Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	loan.Trx.RefID = id
+	loan.Loan.ID = newLoanId
+	loan.Trx.RefID = newLoanId
 	trxid, err := createTransaction(&loan.Trx, loan.Token)
 
 	if err != nil {
@@ -155,6 +156,81 @@ func Loan_Create(w http.ResponseWriter, r *http.Request) {
 
 }
 
+type ts_loan_payment struct {
+	Trx   models.Trx `json:"trx"`
+	Token string     `json:"token"`
+}
+
+func Loan_Payment(w http.ResponseWriter, r *http.Request) {
+
+	EnableCors(&w)
+	w.Header().Set("Access-Control-Allow-Methods", "PUT")
+
+	params := mux.Vars(r)
+
+	trxid, _ := strconv.ParseInt(params["id"], 10, 64)
+
+	var data ts_loan_payment
+
+	err := json.NewDecoder(r.Body).Decode(&data)
+
+	if err != nil {
+		log.Fatalf("Unable to decode trx from body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	var updatedRows int64 = 0
+
+	if trxid == 0 {
+		trxid, err = createTransaction(&data.Trx, data.Token)
+	} else {
+		_, err = updateTransaction(&trxid, &data.Trx, data.Token)
+
+	}
+
+	if err != nil {
+		//log.Printf("Unable to update transaction.  %v", err)
+		log.Fatalf("Unable to update transaction %v", err)
+		//http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
+
+	if len(data.Trx.Details) > 0 {
+
+		_, err = deleteDetailsByOrder(&trxid)
+		if err != nil {
+			log.Fatalf("Unable to delete trx detail query %v", err)
+			//http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
+		}
+		//}
+
+		// 	var newId int64 = 0
+
+		err = bulkInsertDetails(data.Trx.Details, &trxid)
+
+		if err != nil {
+			log.Fatalf("Unable to execute finances query %v", err)
+			//log.Printf("Unable to insert transaction details (message from command).  %v", err)
+			//http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
+		}
+	}
+
+	msg := fmt.Sprintf("Loan updated successfully. Total rows/record affected %v", updatedRows)
+
+	// format the response message
+	res := Response{
+		ID:      trxid,
+		Message: msg,
+	}
+
+	// send the response
+	json.NewEncoder(w).Encode(res)
+
+}
+
 func Loan_Update(w http.ResponseWriter, r *http.Request) {
 
 	EnableCors(&w)
@@ -171,7 +247,7 @@ func Loan_Update(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&loan)
 
 	if err != nil {
-		//log.Fatalf("Unable to decode the request body.  %v", err)
+		log.Fatalf("Unable to decode loan from body.  %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -179,6 +255,7 @@ func Loan_Update(w http.ResponseWriter, r *http.Request) {
 	_, err = loan_update(&id, &loan.Loan)
 
 	if err != nil {
+		log.Fatalf("Loan update error.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -187,7 +264,8 @@ func Loan_Update(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		//log.Printf("Unable to update transaction.  %v", err)
-		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		log.Fatalf("Unable to update transaction %v", err)
+		//http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -195,19 +273,20 @@ func Loan_Update(w http.ResponseWriter, r *http.Request) {
 
 		_, err = deleteDetailsByOrder(&id)
 		if err != nil {
-			//log.Printf("Unable to delete all details by transaction.  %v", err)
-			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			log.Fatalf("Unable to delete trx detail query %v", err)
+			//http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return
 		}
 		//}
 
 		// 	var newId int64 = 0
 
-		err = bulkInsertDetails(loan.Trx.Details, &id)
+		err = bulkInsertDetails(loan.Trx.Details, &loan.Trx.ID)
 
 		if err != nil {
+			log.Fatalf("Unable to execute finances query %v", err)
 			//log.Printf("Unable to insert transaction details (message from command).  %v", err)
-			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			//http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return
 		}
 	}
@@ -226,7 +305,7 @@ func Loan_Update(w http.ResponseWriter, r *http.Request) {
 
 type loan_item struct {
 	models.Loan
-	Trx *json.RawMessage `json:"trx,omitempty"`
+	Trxs *json.RawMessage `json:"trxs,omitempty"`
 }
 
 func loan_get_item(id *int64) (loan_item, error) {
@@ -241,7 +320,7 @@ func loan_get_item(id *int64) (loan_item, error) {
 	sbTrxDetail.WriteString(" FROM trx_detail AS d")
 	sbTrxDetail.WriteString(" INNER JOIN acc_code AS c ON c.id = d.code_id")
 	sbTrxDetail.WriteString(" INNER JOIN acc_type AS e ON e.id = c.type_id")
-	sbTrxDetail.WriteString(" WHERE e.group_id != 1")
+	sbTrxDetail.WriteString(" WHERE e.group_id = 1")
 	sbTrxDetail.WriteString(")\n")
 
 	sbTrxDetail.WriteString(`SELECT rs.group AS "groupId", rs.id, rs.trx_id AS "trxId", rs.code_id AS "codeId", rs.debt, rs.cred`)
@@ -249,7 +328,7 @@ func loan_get_item(id *int64) (loan_item, error) {
 	sbTrxDetail.WriteString(" FROM rs")
 	sbTrxDetail.WriteString(" WHERE rs.trx_id = x.id")
 
-	sbTrx.WriteString(`SELECT x.id, x.ref_id, x.division, x.descriptions, x.trx_date AS "trxDate", x.memo`)
+	sbTrx.WriteString(`SELECT x.id, x.ref_id AS "refId", x.division, x.descriptions, x.trx_date AS "trxDate", x.memo`)
 	sbTrx.WriteString(", ")
 	sbTrx.WriteString(fyc.NestQuerySingle(sbTrxDetail.String()))
 	sbTrx.WriteString(" AS detail")
@@ -276,7 +355,7 @@ func loan_get_item(id *int64) (loan_item, error) {
 		&p.Cell,
 		&p.Zip,
 		&p.Persen,
-		&p.Trx,
+		&p.Trxs,
 	)
 
 	switch err {
@@ -331,7 +410,7 @@ func loan_get_all() ([]loan_all, error) {
 	sb.WriteString(" AS details")
 	sb.WriteString(" FROM loans AS t")
 	sb.WriteString(" INNER JOIN trx AS x on x.ref_id = t.id AND x.division = 'trx-loan'")
-	sb.WriteString(" ORDER BY x.trx_date")
+	sb.WriteString(" ORDER BY x.trx_date, t.id")
 
 	//log.Println(sb.String())
 
@@ -375,9 +454,18 @@ func loan_get_all() ([]loan_all, error) {
 }
 
 func loan_delete(id *int64) (int64, error) {
+
+	//log.Printf("%d", id)
 	sqlStatement := `DELETE FROM loans WHERE id=$1`
 	res, err := Sql().Exec(sqlStatement, id)
 	if err != nil {
+		log.Fatal(err)
+		return 0, err
+	}
+	sqlStatement = `DELETE FROM trx WHERE ref_id=$1 AND (division='trx-loan' OR division='trx-angsuran')`
+	res, err = Sql().Exec(sqlStatement, id)
+	if err != nil {
+		log.Fatal(err)
 		return 0, err
 	}
 	rowsAffected, err := res.RowsAffected()

@@ -2,13 +2,13 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 13.5 (Debian 13.5-0+deb11u1)
--- Dumped by pg_dump version 13.5 (Debian 13.5-0+deb11u1)
+-- Dumped from database version 12.10 (Ubuntu 12.10-1.pgdg20.04+1)
+-- Dumped by pg_dump version 14.2 (Ubuntu 14.2-1.pgdg20.04+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'SQL_ASCII';
+SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
@@ -1087,7 +1087,9 @@ COPY public.loan_details (loan_id, payment_at, id, descripts, debt, cred, cash_i
 --
 
 COPY public.loans (id, name, street, city, phone, cell, zip, persen) FROM stdin;
-8	Junaedi	\N	\N	\N	\N	\N	0.00
+24	Mastur s	Jl. Jend. Sudirman No. 11/A-4 weqwe	Indramayu	+62234572275	\N	45215	10.00
+23	Junaedi	Jl. Jend. Sudirman No. 155 Kel. Lemahmekar	Indramayu	0234275572	\N	45215	10.00
+33	Doni	\N	\N	\N	\N	\N	10.00
 \.
 
 
@@ -1317,7 +1319,16 @@ COPY public.trx (id, ref_id, division, descriptions, trx_date, memo, trx_token) 
 151	9	trx-invoice	Pendapatan jasa dari Auto Discret Finance Invoice #9	2022-03-24	\N	'/id-0':2 '3351':12 '3430':17 '6871':8 '9':26 'adira':6 'auto':3,22 'b':11,16 'beat':14 'beatpendapat':19 'cm':9 'dari':21 'discret':4,23 'dony':1 'e':7 'ejx':18 'finance':5,24 'invoice':25 'jasa':20 'kuh':13 'mio':10 'pop':15
 152	10	trx-invoice	Pendapatan jasa dari Mandiri Tunas Finance Semarang Invoice #10	2022-03-24	\N	'/id-10':2 '1000':16,21,26 '1340000006105':11 '8715':13 '9049':18 '9086':28 '9442':23 'agya':30 'bank':9 'brio':15,20,25 'finance':5 'gp':14 'h':12,17,22,27 'mandir':3,10 'mtf':7 'ng':24 's':8 'se':19 'semarang':6 'te':29 'tunas':4 'udin':1
 153	11	trx-invoice	Pendapatan jasa dari Clipan Karawang\n Invoice #11	2022-03-26	\N	'/id-0':2 '1000':15 '11':33 '1184':12 '1312':8 '1412':21 '1788':17 '8936':25 'b':24 'bc':18 'brio':14 'carry':23 'clip':5 'clipan':3,30 'd':7 'dari':29 'ga':13 'invoice':32 'jasa':28 'jazzpendapat':27 'k':6 'karawang':4,31 'km':22 'mobilio':19 'no':26 't':11,16,20 'wf':9 'wulan':1 'xenia':10
-156	8	trx-loan	wwwwwwwwwwww	2022-03-31	\N	'junaed':2 'wwwwwwwwwwww':1
+171	23	trx-loan	sssssssssssssssss	2022-03-31	\N	'junaed':2 'sssssssssssssssss':1
+156	8	trx-loan	Welcome	2022-03-31	\N	'junaed':2 'welcome':1
+157	9	trx-loan		2022-03-31	\N	'sumard':1
+158	10	trx-loan		2022-03-31	\N	'mastur':1
+176	24	trx-angsuran	Angsuran 2	2022-03-31	Ansuran Mastur	'2':2 'angsur':1 'ansur':3 'mastur':4
+193	33	trx-loan	drrrr	2022-03-31	\N	'doni':2 'drrrr':1
+175	24	trx-angsuran	Welcome	2022-03-31	Ansuran Mastur	'ansur':2 'mastur':3 'welcome':1
+194	33	trx-angsuran	angsuran 1	2022-03-31	Ansuran Doni	'1':2 'angsur':1
+195	33	trx-angsuran	5wewewe	2022-03-31	Ansuran Doni	'5wewewe':1
+172	24	trx-loan	ssssssssssssss	2022-03-31	\N	'mastur':2 's':3 'ssssssssssssss':1
 \.
 
 
@@ -1480,8 +1491,26 @@ COPY public.trx_detail (id, code_id, trx_id, debt, cred) FROM stdin;
 2	1113	152	95550000.00	0.00
 1	4111	153	0.00	96070000.00
 2	1113	153	96070000.00	0.00
-1	5512	156	15000000.00	0.00
-2	1113	156	0.00	15000000.00
+1	1112	175	2500000.00	0.00
+2	4112	175	0.00	2500000.00
+1	1113	176	3500000.00	0.00
+2	4112	176	0.00	3500000.00
+1	5512	172	5500000.00	0.00
+2	1113	172	0.00	5500000.00
+1	5512	171	3000000.00	0.00
+2	1113	171	0.00	3000000.00
+1	5512	156	18000000.00	0.00
+2	1113	156	0.00	18000000.00
+1	5512	157	0.00	0.00
+2	1113	157	0.00	0.00
+1	5512	158	0.00	0.00
+2	1113	158	0.00	0.00
+1	5512	193	25000000.00	0.00
+2	1113	193	0.00	25000000.00
+1	1113	194	2500000.00	0.00
+2	4112	194	0.00	2500000.00
+1	1113	195	1500000.00	0.00
+2	4112	195	0.00	1500000.00
 \.
 
 
@@ -1716,7 +1745,7 @@ SELECT pg_catalog.setval('public.loan_details_id_seq', 1, false);
 -- Name: loans_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.loans_id_seq', 8, true);
+SELECT pg_catalog.setval('public.loans_id_seq', 33, true);
 
 
 --
@@ -1751,7 +1780,7 @@ SELECT pg_catalog.setval('public.trx_detail_seq', 1, false);
 -- Name: trx_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.trx_seq', 156, true);
+SELECT pg_catalog.setval('public.trx_seq', 195, true);
 
 
 --
