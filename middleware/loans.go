@@ -144,12 +144,6 @@ func Loan_Create(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if err != nil {
-		log.Fatalf("Fatal %v", err)
-		//log.Fatalf("Nama finance tidak boleh sama.  %v", err)
-		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-		return
-	}
 
 	loan.Trx.ID = trxid
 	json.NewEncoder(w).Encode(&loan)
