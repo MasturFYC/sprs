@@ -506,17 +506,17 @@ func trxGetOrder(orderId *int64) (int64, error) {
 
 func trxMoveToLent(id *int64, p *models.Trx, token string) (int64, error) {
 
-	sqlStatement := `UPDATE trx SET division='trx-lent', 
-	trx_date=$2,
-	descriptions=$3,
-	memo=$4,
-	trx_token=to_tsvector('indonesian', $5)
-	WHERE id=$1`
+	sb := strings.Builder{}
+	sb.WriteString("UPDATE trx SET")
+	sb.WriteString(" division='trx-lent'")
+	sb.WriteString(", descriptions=$2, memo=$3")
+	sb.WriteString(", trx_token=to_tsvector('indonesian', $4)")
+	sb.WriteString(" WHERE id=$1")
 
 	//var trxid int64
 
-	res, err := Sql().Exec(sqlStatement,
-		id, p.TrxDate, p.Descriptions, p.Memo, token,
+	res, err := Sql().Exec(sb.String(),
+		id, p.Descriptions, p.Memo, token,
 	)
 
 	if err != nil {

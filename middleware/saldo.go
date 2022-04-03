@@ -55,7 +55,7 @@ func get_remain_saldo() ([]remain_saldo, error) {
 	b.WriteString("	FROM trx_detail AS d")
 	b.WriteString("	RIGHT JOIN acc_code AS c on c.id = d.code_id")
 	b.WriteString("	INNER JOIN acc_type AS t on t.id = c.type_id")
-	b.WriteString("	WHERE t.group_id = 1")
+	b.WriteString("	WHERE t.id = 11")
 	b.WriteString("	GROUP BY t.group_id, c.id)\n")
 	b.WriteString("SELECT	t.id, t.name, t.debt, t.cred,")
 	b.WriteString("	t.debt - t.cred AS saldo")

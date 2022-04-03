@@ -312,15 +312,20 @@ func loan_get_item(id *int64) (loan_item, error) {
 	sbTrxDetail.WriteString("WITH RECURSIVE rs AS (")
 	sbTrxDetail.WriteString(" SELECT 1 as group, d.trx_id, d.id, d.code_id, d.debt, d.cred")
 	sbTrxDetail.WriteString(" FROM trx_detail AS d")
+	sbTrxDetail.WriteString(" INNER JOIN trx ON trx.id = d.trx_id")
 	sbTrxDetail.WriteString(" INNER JOIN acc_code AS c ON c.id = d.code_id")
-	sbTrxDetail.WriteString(" INNER JOIN acc_type AS e ON e.id = c.type_id")
-	sbTrxDetail.WriteString(" WHERE e.group_id = 1")
+	//	sbTrxDetail.WriteString(" INNER JOIN acc_type AS e ON e.id = c.type_id")
+	sbTrxDetail.WriteString(" WHERE c.type_id = 11")
 	sbTrxDetail.WriteString(")\n")
 
 	sbTrxDetail.WriteString(`SELECT rs.group AS "groupId", rs.id, rs.trx_id AS "trxId", rs.code_id AS "codeId", rs.debt, rs.cred`)
 	sbTrxDetail.WriteString(", sum(rs.debt - rs.cred) OVER (ORDER BY rs.group, rs.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as saldo")
 	sbTrxDetail.WriteString(" FROM rs")
+	sbTrxDetail.WriteString(" INNER JOIN trx ON trx.id = rs.trx_id")
 	sbTrxDetail.WriteString(" WHERE rs.trx_id = x.id")
+	sbTrxDetail.WriteString(" AND (trx.division ='trx-loan' OR trx.division ='trx-angsuran')")
+
+	//log.Printf("%s", sbTrxDetail.String())
 
 	sbTrx.WriteString(`SELECT x.id, x.ref_id AS "refId", x.division, x.descriptions, x.trx_date AS "trxDate", x.memo`)
 	sbTrx.WriteString(", ")
@@ -334,7 +339,7 @@ func loan_get_item(id *int64) (loan_item, error) {
 	sb.WriteString(" t.id, t.name, t.street, t.city, t.phone, t.cell, t.zip, t.persen")
 	sb.WriteString(",")
 	sb.WriteString(fyc.NestQuery(sbTrx.String()))
-	sb.WriteString(" AS trx")
+	sb.WriteString(" AS trxs")
 	sb.WriteString(" FROM loans AS t")
 	sb.WriteString(" WHERE t.id=$1")
 
@@ -398,11 +403,11 @@ func loan_get_all() ([]loan_all, error) {
 	sb2.WriteString(", sum(d.debt + (d.debt * (ln.persen / 100))) as piutang")
 	sb2.WriteString(", sum((d.debt + (d.debt * (ln.persen / 100))) - d.cred) as saldo")
 	sb2.WriteString(" FROM trx_detail AS d")
+	sb2.WriteString(" INNER JOIN acc_code AS c ON c.id = d.code_id")
+	//sb2.WriteString(" INNER JOIN acc_type AS e ON e.id = c.type_id")
 	sb2.WriteString(" INNER JOIN trx r ON r.id = d.trx_id")
 	sb2.WriteString(" INNER JOIN loans ln ON ln.id = r.ref_id")
-	sb2.WriteString(" INNER JOIN acc_code AS c ON c.id = d.code_id")
-	sb2.WriteString(" INNER JOIN acc_type AS e ON e.id = c.type_id")
-	sb2.WriteString(" WHERE e.group_id != 1 and ln.id = t.id AND (r.division = 'trx-loan' or r.division = 'trx-angsuran')")
+	sb2.WriteString(" WHERE c.type_id != 11 and ln.id = t.id AND (r.division = 'trx-loan' OR r.division='trx-angsuran')")
 	sb2.WriteString(" GROUP BY ln.id")
 
 	sb.WriteString("SELECT t.id id, t.name, t.street, t.city, t.phone, t.cell, t.zip, t.persen,")
@@ -411,9 +416,9 @@ func loan_get_all() ([]loan_all, error) {
 	sb.WriteString(" AS details")
 	sb.WriteString(" FROM loans AS t")
 	sb.WriteString(" INNER JOIN trx AS x on x.ref_id = t.id AND x.division = 'trx-loan'")
-	sb.WriteString(" ORDER BY x.trx_date, t.id")
+	sb.WriteString(" ORDER BY t.serial_num")
 
-	//log.Println(sb.String())
+	//	log.Println(sb.String())
 
 	rs, err := Sql().Query(sb.String())
 

@@ -265,7 +265,7 @@ func Lent_Update(w http.ResponseWriter, r *http.Request) {
 
 	updatedRows, err := lent_update(&id, &data)
 
-	log.Printf("\n\n%v\n\n", data)
+	// log.Printf("\n\n%v\n\n", data)
 
 	if err != nil {
 		log.Fatalf("Loan update error.  %v", err)
@@ -342,9 +342,9 @@ func lent_create_trx_detail_query() *strings.Builder {
 	b.WriteString(", sum(d.debt - d.cred) OVER (ORDER BY d.trx_id, d.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as saldo")
 	b.WriteString(" FROM trx_detail AS d")
 	b.WriteString(" INNER JOIN acc_code AS c ON c.id = d.code_id")
-	b.WriteString(" INNER JOIN acc_type AS e ON e.id = c.type_id")
+	//	b.WriteString(" INNER JOIN acc_type AS e ON e.id = c.type_id")
 	b.WriteString(" WHERE d.trx_id=x.id")
-	b.WriteString(" AND e.group_id = 1 ")
+	b.WriteString(" AND c.type_id = 11 ")
 
 	sb := strings.Builder{}
 
@@ -356,6 +356,7 @@ func lent_create_trx_detail_query() *strings.Builder {
 	sb.WriteString(" AND (x.division='trx-lent' OR x.division='trx-cicilan')")
 	sb.WriteString(" ORDER BY x.id")
 
+	//log.Printf("%s", sb.String())
 	return &sb
 }
 
@@ -499,8 +500,8 @@ func lent_get_all() ([]ts_lent_all, error) {
 	sbPayment.WriteString(" INNER JOIN lents ln ON ln.order_id = r.ref_id")
 	sbPayment.WriteString(" INNER JOIN orders t3 ON t3.id = ln.order_id")
 	sbPayment.WriteString(" INNER JOIN acc_code AS c ON c.id = d.code_id")
-	sbPayment.WriteString(" INNER JOIN acc_type AS e ON e.id = c.type_id")
-	sbPayment.WriteString(" WHERE e.group_id != 1 and ln.order_id = t.order_id AND (r.division = 'trx-lent' or r.division = 'trx-cicilan')")
+	//sbPayment.WriteString(" INNER JOIN acc_type AS e ON e.id = c.type_id")
+	sbPayment.WriteString(" WHERE c.type_id != 11 and ln.order_id = t.order_id AND (r.division = 'trx-lent' or r.division = 'trx-cicilan')")
 	sbPayment.WriteString(" GROUP BY ln.order_id, t3.bt_finance")
 
 	sb.WriteString("SELECT t.order_id, t.name, t.street, t.city, t.phone, t.cell, t.zip, ")
@@ -510,7 +511,7 @@ func lent_get_all() ([]ts_lent_all, error) {
 	sb.WriteString(" AS unit ")
 	sb.WriteString(" FROM lents AS t")
 	sb.WriteString(" INNER JOIN orders AS o ON o.id = t.order_id")
-	sb.WriteString(" ORDER BY o.order_at")
+	sb.WriteString(" ORDER BY t.serial_num")
 
 	rs, err := Sql().Query(sb.String())
 
