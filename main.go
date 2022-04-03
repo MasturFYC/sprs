@@ -78,19 +78,19 @@ func loadRouter() {
 func runServer() {
 	cor := cors.New(cors.Options{
 		AllowedOrigins: []string{
-			"http://localhost:8081",
-			"http://localhost:3000",
-			"http://192.168.100.2:3000",
-			"http://103.179.56.180",
+			"http://localhost:8181",
+			//"http://localhost:3000",
+			//"http://192.168.100.2:3000",
+			//"http://103.179.56.180",
 			"http://ya2yo.com",
-			"http://localhost:3000",
-			"http://192.168.100.3:3000",
+			//"http://localhost:3000",
+			//"http://192.168.100.3:3000",
 		},
 
 		AllowedMethods: []string{"POST", "GET", "OPTIONS", "PUT", "DELETE"},
 		AllowedHeaders: []string{"Accept", "Accept-Language", "Content-Type"},
 		//AllowCredentials: true,
-		Debug: true,
+		Debug: false,
 	})
 
 	handler := cor.Handler(mainRouter)

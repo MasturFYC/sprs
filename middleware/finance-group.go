@@ -18,6 +18,7 @@ import (
 
 func FinanceGroup_GetFinances(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
+	w.Header().Set("Access-Control-Allow-Methods", "DELETE")
 
 	fgs, err := fg_get_finances()
 
