@@ -483,6 +483,53 @@ func createTransaction(p *models.Trx, token string) (int64, error) {
 	return id, err
 }
 
+func trxGetOrder(orderId *int64) (int64, error) {
+
+	var id int64
+
+	rs := Sql().QueryRow("SELECT t.id FROM trx t WHERE t.ref_id=$1 AND division='trx-order'", orderId)
+
+	err := rs.Scan(&id)
+
+	switch err {
+	case sql.ErrNoRows:
+		fmt.Println("No rows were returned!")
+		return id, err
+	case nil:
+		return id, nil
+	default:
+		log.Fatalf("Unable to scan the row. %v", err)
+	}
+
+	return id, err
+}
+
+func trxMoveToLent(id *int64, p *models.Trx, token string) (int64, error) {
+
+	sqlStatement := `UPDATE trx SET division='trx-lent', 
+	trx_date=$2,
+	descriptions=$3,
+	memo=$4,
+	trx_token=to_tsvector('indonesian', $5)
+	WHERE id=$1`
+
+	//var trxid int64
+
+	res, err := Sql().Exec(sqlStatement,
+		id, p.TrxDate, p.Descriptions, p.Memo, token,
+	)
+
+	if err != nil {
+		log.Printf("Unable move trx to lent. %v", err)
+		return 0, err
+	}
+
+	// // check how many rows affected
+	rowsAffected, err := res.RowsAffected()
+
+	return rowsAffected, err
+}
+
 func updateTransaction(id *int64, p *models.Trx, token string) (int64, error) {
 
 	sqlStatement := `UPDATE trx SET 

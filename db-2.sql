@@ -2,13 +2,13 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.10 (Ubuntu 12.10-1.pgdg20.04+1)
--- Dumped by pg_dump version 14.2 (Ubuntu 14.2-1.pgdg20.04+1)
+-- Dumped from database version 13.5 (Debian 13.5-0+deb11u1)
+-- Dumped by pg_dump version 13.5 (Debian 13.5-0+deb11u1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
+SET client_encoding = 'SQL_ASCII';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
@@ -303,52 +303,12 @@ CREATE TABLE public.ktp_addresses (
 ALTER TABLE public.ktp_addresses OWNER TO postgres;
 
 --
--- Name: lent_details; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.lent_details (
-    order_id integer NOT NULL,
-    payment_at date DEFAULT now() NOT NULL,
-    id integer NOT NULL,
-    descripts character varying(256),
-    debt numeric(12,2) DEFAULT 0 NOT NULL,
-    cred numeric(12,2) DEFAULT 0 NOT NULL,
-    cash_id smallint DEFAULT 0 NOT NULL
-);
-
-
-ALTER TABLE public.lent_details OWNER TO postgres;
-
---
--- Name: lent_details_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
---
-
-CREATE SEQUENCE public.lent_details_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.lent_details_id_seq OWNER TO postgres;
-
---
--- Name: lent_details_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
-
-ALTER SEQUENCE public.lent_details_id_seq OWNED BY public.lent_details.id;
-
-
---
 -- Name: lents; Type: TABLE; Schema: public; Owner: postgres
 --
 
 CREATE TABLE public.lents (
     order_id integer NOT NULL,
     name character varying(50) NOT NULL,
-    descripts character varying(256),
     street character varying(128),
     city character varying(50),
     phone character varying(25),
@@ -358,45 +318,6 @@ CREATE TABLE public.lents (
 
 
 ALTER TABLE public.lents OWNER TO postgres;
-
---
--- Name: loan_details; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.loan_details (
-    loan_id integer NOT NULL,
-    payment_at date DEFAULT now() NOT NULL,
-    id integer NOT NULL,
-    descripts character varying(128),
-    debt numeric(12,2) DEFAULT 0 NOT NULL,
-    cred numeric(12,2) DEFAULT 0 NOT NULL,
-    cash_id smallint DEFAULT 0 NOT NULL
-);
-
-
-ALTER TABLE public.loan_details OWNER TO postgres;
-
---
--- Name: loan_details_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
---
-
-CREATE SEQUENCE public.loan_details_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.loan_details_id_seq OWNER TO postgres;
-
---
--- Name: loan_details_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
-
-ALTER SEQUENCE public.loan_details_id_seq OWNED BY public.loan_details.id;
-
 
 --
 -- Name: loans; Type: TABLE; Schema: public; Owner: postgres
@@ -829,20 +750,6 @@ ALTER TABLE ONLY public.invoices ALTER COLUMN id SET DEFAULT nextval('public.inv
 
 
 --
--- Name: lent_details id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.lent_details ALTER COLUMN id SET DEFAULT nextval('public.lent_details_id_seq'::regclass);
-
-
---
--- Name: loan_details id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.loan_details ALTER COLUMN id SET DEFAULT nextval('public.loan_details_id_seq'::regclass);
-
-
---
 -- Name: loans id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -892,9 +799,10 @@ COPY public.acc_code (id, name, type_id, descriptions, token_name, is_active, is
 5211	Kasbon Cabang JTB	52	Biaya yg dikeluarkan untuk penarikan kendaraan yg tidak ada STNK	'ada':12 'arik':8 'biaya':4 'cabang':2 'jtb':3 'kasbon':1 'keluar':6 'ndara':9 'stnk':13 'tidak':11 'untuk':7 'yg':5,10	t	t	3
 2211	BNI	22	\N	'bni':1	t	t	2
 2212	SAMSAT	22	\N	'samsat':1	t	t	2
-5512	Piutang Pelanggan	55	\N	'langgan':2 'piutang':1	t	f	3
 4112	Angsuran Piutang	41	\N	'angsur':1 'piutang':2	t	f	2
 4113	Cicilan Kendaraan	41	\N	'cicil':1 'ndara':2	t	f	2
+5512	Piutang Pelanggan	55	\N	'langgan':2 'piutang':1	t	f	3
+5513	Pinjaman Unit	55	\N	'pinjam':1 'unit':2	t	f	3
 \.
 
 
@@ -1059,26 +967,29 @@ COPY public.ktp_addresses (order_id, street, region, city, phone, zip) FROM stdi
 
 
 --
--- Data for Name: lent_details; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-COPY public.lent_details (order_id, payment_at, id, descripts, debt, cred, cash_id) FROM stdin;
-\.
-
-
---
 -- Data for Name: lents; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.lents (order_id, name, descripts, street, city, phone, cell, zip) FROM stdin;
-\.
-
-
---
--- Data for Name: loan_details; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-COPY public.loan_details (loan_id, payment_at, id, descripts, debt, cred, cash_id) FROM stdin;
+COPY public.lents (order_id, name, street, city, phone, cell, zip) FROM stdin;
+3	Welcome	\N	\N	\N	\N	\N
+2	eqwe qweqwe qweqwee	 qwe qwe qwewqel;asdkas da;slkda;slkdasd as;da;slk	ddeeeqweqwe	dddqweqwe qweqwe	ddd qweqwewqe	ddeeee
+27	qqwe qweqwe qwe	\N	\N	\N	\N	\N
+5	eqweq e	\N	\N	\N	\N	\N
+1	Junaedi qweqwe	\N	\N	\N	\N	\N
+70	qwe qwe qwe we	\N	\N	\N	\N	\N
+6	xxxxxxxxxxxxxxxxxxx	\N	\N	\N	\N	\N
+14	Welcome	\N	\N	\N	\N	\N
+36	Sanadi	\N	\N	\N	\N	\N
+15	qqweq qweqwe qwe qwe qwe	\N	\N	\N	\N	\N
+18	qreqwewqe	\N	\N	\N	\N	\N
+22	xxxxxxxxxxxxxxx	\N	\N	\N	\N	\N
+7	zzzzzzzzzzzz	\N	\N	\N	\N	\N
+8	asdasd	\N	\N	\N	\N	\N
+4	qeqewqe	\N	\N	\N	\N	\N
+16	erqweqwe	\N	\N	\N	\N	\N
+65	x2ss	\N	\N	\N	\N	\N
+75	7979879 qwewqewqe	\N	\N	\N	\N	\N
+12	Yakul	\N	\N	\N	\N	\N
 \.
 
 
@@ -1087,9 +998,9 @@ COPY public.loan_details (loan_id, payment_at, id, descripts, debt, cred, cash_i
 --
 
 COPY public.loans (id, name, street, city, phone, cell, zip, persen) FROM stdin;
-24	Mastur s	Jl. Jend. Sudirman No. 11/A-4 weqwe	Indramayu	+62234572275	\N	45215	10.00
 23	Junaedi	Jl. Jend. Sudirman No. 155 Kel. Lemahmekar	Indramayu	0234275572	\N	45215	10.00
-33	Doni	\N	\N	\N	\N	\N	10.00
+34	Doni	\N	\N	\N	\N	\N	10.00
+24	Mastur s	\N	\N	\N	\N	\N	10.00
 \.
 
 
@@ -1147,7 +1058,6 @@ COPY public.orders (id, name, order_at, printed_at, bt_finance, bt_percent, bt_m
 8	000000008	2022-03-17	2022-03-17	1700000.00	20.00	1360000.00	Mastur	test	2	3	t	0.00	1700000.00	'-15':21 '-2022':4 '-6277':17 '000000008':1 '17':2 '2018':19 'ada':15 'adira':9 'auto':6 'cabang':10 'discret':7 'e':16 'finance':5,8 'gudang':22 'indramayu':12 'jatibarang':23 'mar':3 'paz':18 'pusat':11 'r':20 'r2':25 'stnk':14 'stnk-ada':13 'yamaha':24
 10	000000010	2022-03-19	2022-03-19	850000.00	20.00	680000.00	Mastur	test	2	3	t	0.00	850000.00	'-2022':4 '-5474':17 '000000010':1 '19':2 '2013':19 'ada':15 'adira':9 'auto':6 'beat':20 'cabang':10 'discret':7 'e':16 'finance':5,8 'gudang':21 'honda':23 'indramayu':12 'mar':3 'pusat':11,22 'q':18 'r2':24 'stnk':14 'stnk-ada':13
 11	000000011	2021-09-27	2021-09-27	900000.00	20.00	720000.00	Mastur	test	8	1	t	0.00	900000.00	'-2021':4 '-4892':15 '000000011':1 '2012':17 '27':2 'ada':13 'cabang':9 'e':14 'fif':6,8 'finance':5 'group':7 'gudang':19,20 'jatibarang':10 'jupiter':18 'r2':22 'sep':3 'stnk':12 'stnk-ada':11 'tk':16 'yamaha':21
-16	000000016	2022-01-14	2022-01-14	1100000.00	20.00	880000.00	Mastur	test	5	1	t	0.00	1100000.00	'-2022':4 '-3848':16 '000000016':1 '14':2 '2016':18 'ada':14 'beat':19 'cabang':10 'e':15 'finance':5 'gudang':20,21 'honda':22 'jan':3 'jatibarang':11 'kredit':7 'motor':8 'oto':6 'otto':9 'r2':23 'stnk':13 'stnk-ada':12 'ub':17
 17	000000017	2022-01-14	2022-01-14	750000.00	20.00	600000.00	Mastur	test	10	1	t	0.00	750000.00	'-125':21 '-2022':4 '-3828':16 '000000017':1 '14':2 '2008':18 'ada':14 'cabang':10 'company':8 'finance':5,7 'fw':17 'gudang':22 'honda':24 'jan':3 'jatibarang':11 'pusat':23 'r2':25 'stnk':13 'stnk-ada':12 'supra':19 't':15 'tfc':9 'top':6 'x':20
 31	000000031	2022-03-12	2022-03-12	1800000.00	20.00	1440000.00	Mastur	test	2	1	t	0.00	1800000.00	'-15':20 '-2022':4 '-2391':16 '000000031':1 '12':2 '2017':18 'ada':14 'adira':9 'auto':6 'cabang':10 'discret':7 'e':15 'finance':5,8 'gudang':21 'jatibarang':11,22 'jm':17 'mar':3 'r':19 'r2':24 'stnk':13 'stnk-ada':12 'yamaha':23
 29	000000029	2022-03-09	2022-03-09	1450000.00	20.00	1160000.00	Mastur	test	13	1	t	0.00	1450000.00	'-2022':4 '-4544':14 '000000029':1 '09':2 '2015':16 'ada':12 'cabang':8 'e':13 'finance':5 'gapara':6 'gudang':18,19 'jatibarang':9 'jd':15 'mar':3 'mio':17 'mpr':7 'r2':21 'stnk':11 'stnk-ada':10 'yamaha':20
@@ -1197,7 +1107,6 @@ COPY public.orders (id, name, order_at, printed_at, bt_finance, bt_percent, bt_m
 61	000000061	2021-12-29	2021-12-29	1500000.00	20.00	1200000.00	Mastur	test	7	3	t	0.00	1500000.00	'-2021':4 '-3310':17 '000000061':1 '2015':19 '29':2 'ada':15 'cabang':10 'des':3 'e':16 'finance':5,8 'gudang':21 'indramayu':12 'mandir':6 'muf':9 'pusat':11,22 'qr':18 'r2':24 'stnk':14 'stnk-ada':13 'utama':7 'vixion':20 'yamaha':23
 60	000000060	2021-09-30	2021-09-30	920000.00	0.00	920000.00	Mastur	test	2	3	t	0.00	920000.00	'-2021':4 '-6181':17 '000000060':1 '2018':19 '30':2 'ada':15 'adira':9 'auto':6 'beat':20 'cabang':10 'discret':7 'f':16 'fch':18 'finance':5,8 'gudang':21 'honda':23 'indramayu':12 'pusat':11,22 'r2':24 'sep':3 'stnk':14 'stnk-ada':13
 89	000000153	2022-03-28	2022-03-28	1500000.00	20.00	1200000.00	Opick	\N	8	1	t	0.00	1500000.00	'-2022':4 '-5690':15 '000000153':1 '2022':17 '28':2 'ada':13 'cabang':9 'e':14 'ff':16 'fif':6,8 'finance':5 'genio':18 'group':7 'gudang':19 'honda':21 'jatibarang':10,20 'mar':3 'r2':22 'stnk':12 'stnk-ada':11
-87	000000130	2022-03-28	2022-03-28	2500000.00	20.00	2000000.00	Opick	\N	15	1	t	0.00	2500000.00	'-2022':4 '000000130':1 '2022':16 '28':2 'ada':14 'cabang':10 'clip':8 'clipan':6 'finance':5 'genio':17 'gudang':18 'honda':20 'jatibarang':11,19 'mar':3 'p':9 'palembang':7 'r2':21 'stnk':13 'stnk-ada':12 'www34434':15
 91	000000155	2022-03-28	2022-03-28	1500000.00	20.00	1200000.00	Opick	\N	8	1	t	0.00	1500000.00	'-2022':4 '-2563':15 '000000155':1 '125':19 '2022':17 '28':2 'ada':13 'cabang':9 'e':14 'ff':16 'fif':6,8 'finance':5 'fino':18 'group':7 'gudang':20 'jatibarang':10 'mar':3 'pusat':21 'r2':23 'stnk':12 'stnk-ada':11 'yamaha':22
 90	000000154	2022-03-28	2022-03-28	1250000.00	20.00	1000000.00	Opick	\N	15	4	t	0.00	1250000.00	'-2022':4 '000000154':1 '2022':16 '28':2 'ada':14 'cabang':10 'clip':8 'clipan':6 'daihatsu':21 'e569546ff':15 'finance':5 'gudang':19 'hitamgrand':17 'karawang':11 'mar':3 'max':18 'p':9 'palembang':7 'pusat':20 'r4':22 'stnk':13 'stnk-ada':12
 80	000000103	2022-03-25	2022-03-25	5000000.00	16.00	4200000.00	Opick	\N	8	4	t	0.00	5000000.00	'-2022':4 '-2569':15 '000000103':1 '2022':17 '25':2 'ada':13 'cabang':9 'e':14 'fif':6,8 'finance':5 'group':7 'gudang':21 'hitamagya':20 'jk':16 'karawang':10 'mar':3 'pusat':22 'qwewewe':18 'r4':24 'stnk':12 'stnk-ada':11 'toyota':23 'wewewe':19
@@ -1209,6 +1118,8 @@ COPY public.orders (id, name, order_at, printed_at, bt_finance, bt_percent, bt_m
 33	000000033	2022-03-16	2022-03-16	1500000.00	20.00	1200000.00	Mastur	test	2	1	t	0.00	1500000.00	'-2022':4 '-5856':16 '000000033':1 '16':2 '2019':18 'ada':14 'adira':9 'auto':6 'cabang':10 'discret':7 'finance':5,8 'genio':19 'gudang':20 'honda':22 'jatibarang':11,21 'mar':3 'r2':23 'stnk':13 'stnk-ada':12 't':15 'zt':17
 71	000000071	2021-09-21	2021-09-21	1300000.00	20.00	1040000.00	Mastur	test	7	1	t	0.00	1300000.00	'-2021':4 '-4261':16 '000000071':1 '2017':18 '21':2 'ada':14 'cabang':10 'finance':5,8 'gudang':22 'jatibarang':11,23 'king':21 'mandir':6 'muf':9 'mx':20 'mx-king':19 'r2':25 'sep':3 'stnk':13 'stnk-ada':12 't':15 'utama':7 'yamaha':24 'yq':17
 81	000000104es	2022-03-25	2022-03-25	1176000.00	20.00	980000.00	Opick	\N	2	1	t	0.00	1500000.00	'-2022':4 '000000104es':1 '2022':16 '25':2 'ada':14 'adira':9 'auto':6 'cabang':10 'discret':7 'ertiga':19 'finance':5,8 'gudang':20 'jatibarang':11 'mar':3 'pusat':21 'qewqe':17 'qweweqwe':18 'r4':23 'stnk':13 'stnk-ada':12 'suzuk':22 'wwwwwww':15
+87	000000130	2022-03-28	2022-03-28	2500000.00	20.00	2000000.00	Opick	\N	15	1	t	0.00	2500000.00	'-2022':4 '000000130':1 '2022':16 '28':2 'ada':14 'cabang':10 'clip':8 'clipan':6 'finance':5 'genio':17 'gudang':18 'honda':20 'jatibarang':11,19 'mar':3 'p':9 'palembang':7 'r2':21 'stnk':13 'stnk-ada':12 'www34434':15
+16	000000016	2022-01-14	2022-01-14	1100000.00	20.00	880000.00	Mastur	test	5	1	t	0.00	1100000.00	'-2022':4 '-3848':17 '000000016':1 '14':2 '2':26 '2016':23 'ada':15 'beat':19 'cabang':10 'e':16 'finance':5 'gudang':20,21 'honda':24 'jan':3 'jatibarang':11 'kredit':7 'motor':8 'oto':6 'otto':9 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':22 'ub':18
 \.
 
 
@@ -1242,80 +1153,17 @@ COPY public.tasks (order_id, descriptions, period_from, period_to, recipient_nam
 --
 
 COPY public.trx (id, ref_id, division, descriptions, trx_date, memo, trx_token) FROM stdin;
-83	12	TRX-Order	Piutang jasa COLLECTIUS (COL) Order SPK: /000000012	2022-03-22	Kendaraan R2 Yamaha Mio M3 , Nopol B 3479 UJU	'/000000012':1 '/ref-12':13 '3479':7 'b':6 'col':10 'collectius':9 'jatibarang':11 'm3':5 'mio':4 'order':16 'r2':2 'syaenudin':12 'trx':15 'trx-order':14 'uju':8 'yamaha':3
-72	1	TRX-Order	Piutang jasa OTO Kredit Motor (OTTO) Order SPK: /000000001	2022-03-22	Kendaraan R2 Yamaha Mio Z , Nopol E 5605 PAS	'/000000001':1 '/ref-1':17 '5605':7 'deddy':15 'e':6 'indramayu':14 'kredit':10 'mio':4 'motor':11 'order':20 'oto':9 'otto':12 'pas':8 'pranoto':16 'pusat':13 'r2':2 'trx':19 'trx-order':18 'yamaha':3 'z':5
-73	2	TRX-Order	Piutang jasa COLLECTIUS (COL) Order SPK: /000000002	2022-03-22	Kendaraan R2 Yamaha Mio , Nopol E 3977 PAC	'/000000002':1 '/ref-2':14 '3977':6 'col':9 'collectius':8 'deddy':12 'e':5 'indramayu':11 'mio':4 'order':17 'pac':7 'pranoto':13 'pusat':10 'r2':2 'trx':16 'trx-order':15 'yamaha':3
-74	3	TRX-Order	Piutang jasa Bussan Auto Finance (BAF) Order SPK: /000000003	2022-03-22	Kendaraan R2 Yamaha Mio M3 , Nopol E 5125 PBC	'/000000003':1 '/ref-3':17 '5125':7 'auto':10 'baf':12 'bussan':9 'deddy':15 'e':6 'finance':11 'indramayu':14 'm3':5 'mio':4 'order':20 'pbc':8 'pranoto':16 'pusat':13 'r2':2 'trx':19 'trx-order':18 'yamaha':3
-75	4	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000004	2022-03-22	Kendaraan R2 Yamaha Vixion , Nopol BR 5080 PY	'/000000004':1 '/ref-4':16 '5080':6 'adira':11 'auto':8 'br':5 'deddy':14 'discret':9 'finance':10 'indramayu':13 'order':19 'pranoto':15 'pusat':12 'py':7 'r2':2 'trx':18 'trx-order':17 'vixion':4 'yamaha':3
-76	5	TRX-Order	Piutang jasa Mandiri Utama Finance (MUF) Order SPK: /000000005	2022-03-22	Kendaraan R2 Yamaha Fino 125  , Nopol E 4096 PAQ	'/000000005':1 '/ref-5':17 '125':5 '4096':7 'deddy':15 'e':6 'finance':11 'fino':4 'indramayu':14 'mandir':9 'muf':12 'order':20 'paq':8 'pranoto':16 'pusat':13 'r2':2 'trx':19 'trx-order':18 'utama':10 'yamaha':3
-77	6	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000006	2022-03-22	Kendaraan R2 Honda BEAT , Nopol E 2633 PAC	'/000000006':1 '/ref-6':16 '2633':6 'adira':11 'auto':8 'beat':4 'deddy':14 'discret':9 'e':5 'finance':10 'honda':3 'indramayu':13 'order':19 'pac':7 'pranoto':15 'pusat':12 'r2':2 'trx':18 'trx-order':17
-78	7	TRX-Order	Piutang jasa Bussan Auto Finance (BAF) Order SPK: /000000007	2022-03-22	Kendaraan R2 Yamaha Fino 125  , Nopol E 2033 PBJ	'/000000007':1 '/ref-7':17 '125':5 '2033':7 'auto':10 'baf':12 'bussan':9 'deddy':15 'e':6 'finance':11 'fino':4 'indramayu':14 'order':20 'pbj':8 'pranoto':16 'pusat':13 'r2':2 'trx':19 'trx-order':18 'yamaha':3
-79	8	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000008	2022-03-22	Kendaraan R2 Yamaha R-15 , Nopol E 6277 PAZ	'-15':5 '/000000008':1 '/ref-8':17 '6277':7 'adira':12 'auto':9 'deddy':15 'discret':10 'e':6 'finance':11 'indramayu':14 'order':20 'paz':8 'pranoto':16 'pusat':13 'r':4 'r2':2 'trx':19 'trx-order':18 'yamaha':3
-80	9	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000009	2022-03-22	Kendaraan R2 Honda BEAT , Nopol E 6053 PAM	'/000000009':1 '/ref-9':16 '6053':6 'adira':11 'auto':8 'beat':4 'deddy':14 'discret':9 'e':5 'finance':10 'honda':3 'indramayu':13 'order':19 'pam':7 'pranoto':15 'pusat':12 'r2':2 'trx':18 'trx-order':17
-81	10	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000010	2022-03-22	Kendaraan R2 Honda BEAT , Nopol E 5474 Q	'/000000010':1 '/ref-10':16 '5474':6 'adira':11 'auto':8 'beat':4 'deddy':14 'discret':9 'e':5 'finance':10 'honda':3 'indramayu':13 'order':19 'pranoto':15 'pusat':12 'q':7 'r2':2 'trx':18 'trx-order':17
-82	11	TRX-Order	Piutang jasa FIF Group (FIF) Order SPK: /000000011	2022-03-22	Kendaraan R2 Yamaha Jupiter , Nopol E 4892 TK	'/000000011':1 '/ref-11':13 '4892':6 'e':5 'fif':8,10 'group':9 'jatibarang':11 'jupiter':4 'order':16 'r2':2 'syaenudin':12 'tk':7 'trx':15 'trx-order':14 'yamaha':3
-84	13	TRX-Order	Piutang jasa COLLECTIUS (COL) Order SPK: /000000013	2022-03-22	Kendaraan R2 Yamaha Mio M3 , Nopol E 2417 PAO	'/000000013':1 '/ref-13':13 '2417':7 'col':10 'collectius':9 'e':6 'jatibarang':11 'm3':5 'mio':4 'order':16 'pao':8 'r2':2 'syaenudin':12 'trx':15 'trx-order':14 'yamaha':3
-85	14	TRX-Order	Piutang jasa Mitra Pinasthika Mustika Finance (MPMF) Order SPK: /000000014	2022-03-22	Kendaraan R2 Suzuki Satria FU , Nopol T 3521 KL	'/000000014':1 '/ref-14':16 '3521':7 'finance':12 'fu':5 'jatibarang':14 'kl':8 'mitra':9 'mpmf':13 'mustika':11 'order':19 'pinasthika':10 'r2':2 'satria':4 'suzuk':3 'syaenudin':15 't':6 'trx':18 'trx-order':17
-86	15	TRX-Order	Piutang jasa OTO Kredit Motor (OTTO) Order SPK: /000000015	2022-03-22	Kendaraan R2 Yamaha Jupiter MX , Nopol T 4146 KO	'/000000015':1 '/ref-15':15 '4146':7 'jatibarang':13 'jupiter':4 'ko':8 'kredit':10 'motor':11 'mx':5 'order':18 'oto':9 'otto':12 'r2':2 'syaenudin':14 't':6 'trx':17 'trx-order':16 'yamaha':3
-87	16	TRX-Order	Piutang jasa OTO Kredit Motor (OTTO) Order SPK: /000000016	2022-03-22	Kendaraan R2 Honda BEAT , Nopol E 3848 UB	'/000000016':1 '/ref-16':14 '3848':6 'beat':4 'e':5 'honda':3 'jatibarang':12 'kredit':9 'motor':10 'order':17 'oto':8 'otto':11 'r2':2 'syaenudin':13 'trx':16 'trx-order':15 'ub':7
-88	17	TRX-Order	Piutang jasa Top Finance Company (TFC) Order SPK: /000000017	2022-03-22	Kendaraan R2 Honda Supra X-125 , Nopol T 3828 FW	'-125':6 '/000000017':1 '/ref-17':16 '3828':8 'company':12 'finance':11 'fw':9 'honda':3 'jatibarang':14 'order':19 'r2':2 'supra':4 'syaenudin':15 't':7 'tfc':13 'top':10 'trx':18 'trx-order':17 'x':5
-89	18	TRX-Order	Piutang jasa OTO Kredit Motor (OTTO) Order SPK: /000000018	2022-03-22	Kendaraan R2 Yamaha Mio M3 , Nopol E 6716 IX	'/000000018':1 '/ref-18':15 '6716':7 'e':6 'ix':8 'jatibarang':13 'kredit':10 'm3':5 'mio':4 'motor':11 'order':18 'oto':9 'otto':12 'r2':2 'syaenudin':14 'trx':17 'trx-order':16 'yamaha':3
-90	19	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000019	2022-03-22	Kendaraan R2 Honda Revo , Nopol E 5638 PAV	'/000000019':1 '/ref-19':14 '5638':6 'adira':11 'auto':8 'discret':9 'e':5 'finance':10 'honda':3 'jatibarang':12 'order':17 'pav':7 'r2':2 'revo':4 'syaenudin':13 'trx':16 'trx-order':15
-91	20	TRX-Order	Piutang jasa Kredit Plus (KP+) Order SPK: /000000020	2022-03-22	Kendaraan R2 Honda Vario 125 , Nopol E 5253 TY	'/000000020':1 '/ref-20':14 '125':5 '5253':7 'e':6 'honda':3 'jatibarang':12 'kp':11 'kredit':9 'order':17 'plus':10 'r2':2 'syaenudin':13 'trx':16 'trx-order':15 'ty':8 'vario':4
-92	21	TRX-Order	Piutang jasa Bussan Auto Finance (BAF) Order SPK: /000000021	2022-03-22	Kendaraan R2 Yamaha Mio M3 , Nopol B 6262 VKY	'/000000021':1 '/ref-21':15 '6262':7 'auto':10 'b':6 'baf':12 'bussan':9 'finance':11 'jatibarang':13 'm3':5 'mio':4 'order':18 'r2':2 'syaenudin':14 'trx':17 'trx-order':16 'vky':8 'yamaha':3
-94	24	TRX-Order	Piutang jasa Bussan Auto Finance (BAF) Order SPK: /000000024	2022-03-22	Kendaraan R2 Yamaha Mio S , Nopol E 2146 QAF	'/000000024':1 '/ref-24':15 '2146':7 'auto':10 'baf':12 'bussan':9 'e':6 'finance':11 'jatibarang':13 'mio':4 'order':18 'qaf':8 'r2':2 's':5 'syaenudin':14 'trx':17 'trx-order':16 'yamaha':3
-97	27	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000027	2022-03-22	Kendaraan R2 Yamaha Xeon , Nopol B 6819 PZI	'/000000027':1 '/ref-27':14 '6819':6 'adira':11 'auto':8 'b':5 'discret':9 'finance':10 'jatibarang':12 'order':17 'pzi':7 'r2':2 'syaenudin':13 'trx':16 'trx-order':15 'xeon':4 'yamaha':3
-98	28	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000028	2022-03-22	Kendaraan R2 Yamaha Mio Z , Nopol T 4487 PJ	'/000000028':1 '/ref-28':15 '4487':7 'adira':12 'auto':9 'discret':10 'finance':11 'jatibarang':13 'mio':4 'order':18 'pj':8 'r2':2 'syaenudin':14 't':6 'trx':17 'trx-order':16 'yamaha':3 'z':5
-99	29	TRX-Order	Piutang jasa MEGAPARA (MPR) Order SPK: /000000029	2022-03-22	Kendaraan R2 Yamaha Mio , Nopol E 4544 JD	'/000000029':1 '/ref-29':12 '4544':6 'e':5 'gapara':8 'jatibarang':10 'jd':7 'mio':4 'mpr':9 'order':15 'r2':2 'syaenudin':11 'trx':14 'trx-order':13 'yamaha':3
-102	32	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000032	2022-03-22	Kendaraan R2 Honda BEAT , Nopol T 2191 YS	'/000000032':1 '/ref-32':14 '2191':6 'adira':11 'auto':8 'beat':4 'discret':9 'finance':10 'honda':3 'jatibarang':12 'order':17 'r2':2 'syaenudin':13 't':5 'trx':16 'trx-order':15 'ys':7
-93	22	TRX-Order	Piutang jasa Bussan Auto Finance (BAF) Order SPK: /000000022	2022-03-22	Kendaraan R2 Yamaha Mio M3 , Nopol E 2830 QR	'/000000022':1 '/ref-22':15 '2830':7 'auto':10 'baf':12 'bussan':9 'e':6 'finance':11 'jatibarang':13 'm3':5 'mio':4 'order':18 'qr':8 'r2':2 'syaenudin':14 'trx':17 'trx-order':16 'yamaha':3
-95	25	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000025	2022-03-22	Kendaraan R2 Honda Vario 150 , Nopol B 3812 UJY	'/000000025':1 '/ref-25':15 '150':5 '3812':7 'adira':12 'auto':9 'b':6 'discret':10 'finance':11 'honda':3 'jatibarang':13 'order':18 'r2':2 'syaenudin':14 'trx':17 'trx-order':16 'ujy':8 'vario':4
-100	30	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000030	2022-03-22	Kendaraan R2 Honda Verza , Nopol T 3615 ZD	'/000000030':1 '/ref-30':14 '3615':6 'adira':11 'auto':8 'discret':9 'finance':10 'honda':3 'jatibarang':12 'order':17 'r2':2 'syaenudin':13 't':5 'trx':16 'trx-order':15 'verza':4 'zd':7
-101	31	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000031	2022-03-22	Kendaraan R2 Yamaha R-15 , Nopol E 2391 JM	'-15':5 '/000000031':1 '/ref-31':15 '2391':7 'adira':12 'auto':9 'discret':10 'e':6 'finance':11 'jatibarang':13 'jm':8 'order':18 'r':4 'r2':2 'syaenudin':14 'trx':17 'trx-order':16 'yamaha':3
-105	35	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000035	2022-03-22	Kendaraan R2 Yamaha R-15 , Nopol T 2110 YV	'-15':5 '/000000035':1 '/ref-35':15 '2110':7 'adira':12 'auto':9 'discret':10 'finance':11 'jatibarang':13 'order':18 'r':4 'r2':2 'syaenudin':14 't':6 'trx':17 'trx-order':16 'yamaha':3 'yv':8
-96	26	TRX-Order	Piutang jasa Kredit Plus (KP+) Order SPK: /000000026	2022-03-22	Kendaraan R2 Honda Vario 150 , Nopol T 2891 WP	'/000000026':1 '/ref-26':14 '150':5 '2891':7 'honda':3 'jatibarang':12 'kp':11 'kredit':9 'order':17 'plus':10 'r2':2 'syaenudin':13 't':6 'trx':16 'trx-order':15 'vario':4 'wp':8
-103	33	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000033	2022-03-22	Kendaraan R2 Honda GENIO , Nopol T 5856 ZT	'/000000033':1 '/ref-33':14 '5856':6 'adira':11 'auto':8 'discret':9 'finance':10 'genio':4 'honda':3 'jatibarang':12 'order':17 'r2':2 'syaenudin':13 't':5 'trx':16 'trx-order':15 'zt':7
-104	34	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000034	2022-03-22	Kendaraan R2 Yamaha Jupiter , Nopol E 4593 TQ	'/000000034':1 '/ref-34':14 '4593':6 'adira':11 'auto':8 'discret':9 'e':5 'finance':10 'jatibarang':12 'jupiter':4 'order':17 'r2':2 'syaenudin':13 'tq':7 'trx':16 'trx-order':15 'yamaha':3
-106	36	TRX-Order	Piutang jasa Bussan Auto Finance (BAF) Order SPK: /000000036	2022-03-22	Kendaraan R2 Yamaha Mio M3 , Nopol E 5713 PAV	'/000000036':1 '/ref-36':15 '5713':7 'auto':10 'baf':12 'bussan':9 'e':6 'finance':11 'jatibarang':13 'm3':5 'mio':4 'order':18 'pav':8 'r2':2 'syaenudin':14 'trx':17 'trx-order':16 'yamaha':3
-107	37	TRX-Order	Piutang jasa Clipan Karawang\n (CLIP K) Order SPK: /000000037	2022-03-22	Kendaraan R4 Honda Jazz , Nopol B 8936 NO	'/000000037':1 '/ref-37':16 '8936':6 'b':5 'clip':10 'clipan':8 'deddy':14 'honda':3 'indramayu':13 'jazz':4 'k':11 'karawang':9 'no':7 'order':19 'pranoto':15 'pusat':12 'r4':2 'trx':18 'trx-order':17
-108	38	TRX-Order	Piutang jasa Clipan Karawang\n (CLIP K) Order SPK: /000000038	2022-03-22	Kendaraan R4 Suzuki Carry , Nopol T 1412 KM	'/000000038':1 '/ref-38':16 '1412':6 'carry':4 'clip':10 'clipan':8 'deddy':14 'indramayu':13 'k':11 'karawang':9 'km':7 'order':19 'pranoto':15 'pusat':12 'r4':2 'suzuk':3 't':5 'trx':18 'trx-order':17
-109	39	TRX-Order	Piutang jasa Mandiri Tunas Finance Semarang (MTF S) Order SPK: /000000039	2022-03-22	Kendaraan R4 Honda Brio 1000 , Nopol H 8715 GP	'/000000039':1 '/ref-39':19 '1000':5 '8715':7 'brio':4 'deddy':17 'finance':11 'gp':8 'h':6 'honda':3 'indramayu':16 'mandir':9 'mtf':13 'order':22 'pranoto':18 'pusat':15 'r4':2 's':14 'semarang':12 'trx':21 'trx-order':20 'tunas':10
-110	40	TRX-Order	Piutang jasa Clipan Karawang\n (CLIP K) Order SPK: /000000040	2022-03-22	Kendaraan R4 Suzuki ER-3 , Nopol T 1164 FQ	'-3':5 '/000000040':1 '/ref-40':17 '1164':7 'clip':11 'clipan':9 'deddy':15 'er':4 'fq':8 'indramayu':14 'k':12 'karawang':10 'order':20 'pranoto':16 'pusat':13 'r4':2 'suzuk':3 't':6 'trx':19 'trx-order':18
-111	41	TRX-Order	Piutang jasa Clipan Karawang\n (CLIP K) Order SPK: /000000041	2022-03-22	Kendaraan R4 Honda Mobilio , Nopol T 1788 BC	'/000000041':1 '/ref-41':16 '1788':6 'bc':7 'clip':10 'clipan':8 'deddy':14 'honda':3 'indramayu':13 'k':11 'karawang':9 'mobilio':4 'order':19 'pranoto':15 'pusat':12 'r4':2 't':5 'trx':18 'trx-order':17
-112	42	TRX-Order	Piutang jasa Mandiri Tunas Finance Semarang (MTF S) Order SPK: /000000042	2022-03-22	Kendaraan R4 Honda Brio 1000 , Nopol H 9049 SE	'/000000042':1 '/ref-42':19 '1000':5 '9049':7 'brio':4 'deddy':17 'finance':11 'h':6 'honda':3 'indramayu':16 'mandir':9 'mtf':13 'order':22 'pranoto':18 'pusat':15 'r4':2 's':14 'se':8 'semarang':12 'trx':21 'trx-order':20 'tunas':10
-113	43	TRX-Order	Piutang jasa Safron Finance Karawang (SFI K) Order SPK: /000000043	2022-03-22	Kendaraan R4 Suzuki Carry , Nopol T 8060 EG	'/000000043':1 '/ref-43':17 '8060':6 'carry':4 'deddy':15 'eg':7 'finance':9 'indramayu':14 'k':12 'karawang':10 'order':20 'pranoto':16 'pusat':13 'r4':2 'safron':8 'sfi':11 'suzuk':3 't':5 'trx':19 'trx-order':18
-114	44	TRX-Order	Piutang jasa BFI Finance (BFI) Order SPK: /000000044	2022-03-22	Kendaraan R4 Suzuki Carry , Nopol E 8903 PP	'/000000044':1 '/ref-44':15 '8903':6 'bfi':8,10 'carry':4 'deddy':13 'e':5 'finance':9 'indramayu':12 'order':18 'pp':7 'pranoto':14 'pusat':11 'r4':2 'suzuk':3 'trx':17 'trx-order':16
-115	45	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000045	2022-03-22	Kendaraan R4 Mitsubishi Pickup , Nopol E 8013 QA	'/000000045':1 '/ref-45':16 '8013':6 'adira':11 'auto':8 'deddy':14 'discret':9 'e':5 'finance':10 'indramayu':13 'mitsubish':3 'order':19 'pickup':4 'pranoto':15 'pusat':12 'qa':7 'r4':2 'trx':18 'trx-order':17
-116	46	TRX-Order	Piutang jasa Safron Finance Karawang (SFI K) Order SPK: /000000046	2022-03-22	Kendaraan R4 Suzuki XL-7 , Nopol T 1052 UL	'-7':5 '/000000046':1 '/ref-46':18 '1052':7 'deddy':16 'finance':10 'indramayu':15 'k':13 'karawang':11 'order':21 'pranoto':17 'pusat':14 'r4':2 'safron':9 'sfi':12 'suzuk':3 't':6 'trx':20 'trx-order':19 'ul':8 'xl':4
-117	47	TRX-Order	Piutang jasa Clipan Palembang (CLIP P) Order SPK: /000000047	2022-03-22	Kendaraan R4 Honda Jazz , Nopol BG 1623 PF	'/000000047':1 '/ref-47':16 '1623':6 'bg':5 'clip':10 'clipan':8 'deddy':14 'honda':3 'indramayu':13 'jazz':4 'order':19 'p':11 'palembang':9 'pf':7 'pranoto':15 'pusat':12 'r4':2 'trx':18 'trx-order':17
-118	48	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000048	2022-03-22	Kendaraan R4 Mitsubishi Expander , Nopol E 938 XY	'/000000048':1 '/ref-48':16 '938':6 'adira':11 'auto':8 'deddy':14 'discret':9 'e':5 'expander':4 'finance':10 'indramayu':13 'mitsubish':3 'order':19 'pranoto':15 'pusat':12 'r4':2 'trx':18 'trx-order':17 'xy':7
-119	59	TRX-Order	Piutang jasa Clipan Karawang\n (CLIP K) Order SPK: /000000059	2022-03-22	Kendaraan R4 Suzuki ERTIGA , Nopol T 1305 DL	'/000000059':1 '/ref-59':16 '1305':6 'clip':10 'clipan':8 'deddy':14 'dl':7 'ertiga':4 'indramayu':13 'k':11 'karawang':9 'order':19 'pranoto':15 'pusat':12 'r4':2 'suzuk':3 't':5 'trx':18 'trx-order':17
-120	58	TRX-Order	Piutang jasa Clipan Bekasi (CLIP B) Order SPK: /000000058	2022-03-22	Kendaraan R4 Toyota Terios , Nopol B 2281 SBT	'/000000058':1 '/ref-58':16 '2281':6 'b':5,11 'bekasi':9 'clip':10 'clipan':8 'deddy':14 'indramayu':13 'ios':4 'order':19 'pranoto':15 'pusat':12 'r4':2 'sbt':7 'toyota':3 'trx':18 'trx-order':17
-121	57	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000057	2022-03-22	Kendaraan R4 Daihatsu Grand Max , Nopol E 1256 QD	'/000000057':1 '/ref-57':17 '1256':7 'adira':12 'auto':9 'daihatsu':3 'deddy':15 'discret':10 'e':6 'finance':11 'grand':4 'indramayu':14 'max':5 'order':20 'pranoto':16 'pusat':13 'qd':8 'r4':2 'trx':19 'trx-order':18
-122	56	TRX-Order	Piutang jasa Mandiri Tunas Finance Semarang (MTF S) Order SPK: /000000056	2022-03-22	Kendaraan R4 Toyota AGYA , Nopol H 9086 TE	'/000000056':1 '/ref-56':18 '9086':6 'agya':4 'deddy':16 'finance':10 'h':5 'indramayu':15 'mandir':8 'mtf':12 'order':21 'pranoto':17 'pusat':14 'r4':2 's':13 'semarang':11 'te':7 'toyota':3 'trx':20 'trx-order':19 'tunas':9
-123	55	TRX-Order	Piutang jasa Clipan Karawang\n (CLIP K) Order SPK: /000000055	2022-03-22	Kendaraan R4 Honda BRV , Nopol T 1729 BF	'/000000055':1 '/ref-55':16 '1729':6 'bf':7 'brv':4 'clip':10 'clipan':8 'deddy':14 'honda':3 'indramayu':13 'k':11 'karawang':9 'order':19 'pranoto':15 'pusat':12 'r4':2 't':5 'trx':18 'trx-order':17
-124	54	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000054	2022-03-22	Kendaraan R4 Toyota Vios , Nopol D 1242 OU	'/000000054':1 '/ref-54':16 '1242':6 'adira':11 'auto':8 'd':5 'deddy':14 'discret':9 'finance':10 'indramayu':13 'order':19 'ou':7 'pranoto':15 'pusat':12 'r4':2 'toyota':3 'trx':18 'trx-order':17 'vios':4
-125	53	TRX-Order	Piutang jasa Clipan Karawang\n (CLIP K) Order SPK: /000000053	2022-03-22	Kendaraan R4 Daihatsu Xenia , Nopol D 1312 WF	'/000000053':1 '/ref-53':16 '1312':6 'clip':10 'clipan':8 'd':5 'daihatsu':3 'deddy':14 'indramayu':13 'k':11 'karawang':9 'order':19 'pranoto':15 'pusat':12 'r4':2 'trx':18 'trx-order':17 'wf':7 'xenia':4
-126	52	TRX-Order	Piutang jasa Clipan Karawang\n (CLIP K) Order SPK: /000000052	2022-03-22	Kendaraan R4 Honda Brio 1000 , Nopol T 1184 GA	'/000000052':1 '/ref-52':17 '1000':5 '1184':7 'brio':4 'clip':11 'clipan':9 'deddy':15 'ga':8 'honda':3 'indramayu':14 'k':12 'karawang':10 'order':20 'pranoto':16 'pusat':13 'r4':2 't':6 'trx':19 'trx-order':18
-127	51	TRX-Order	Piutang jasa CLIPAN (CLIP) Order SPK: /000000051	2022-03-22	Kendaraan R4 Toyota Terios , Nopol T 1250 DU	'/000000051':1 '/ref-51':14 '1250':6 'clip':9 'clipan':8 'deddy':12 'du':7 'indramayu':11 'ios':4 'order':17 'pranoto':13 'pusat':10 'r4':2 't':5 'toyota':3 'trx':16 'trx-order':15
-128	50	TRX-Order	Piutang jasa Mandiri Tunas Finance Semarang (MTF S) Order SPK: /000000050	2022-03-22	Kendaraan R4 Honda Brio 1000 , Nopol H 9442 NG	'/000000050':1 '/ref-50':19 '1000':5 '9442':7 'brio':4 'deddy':17 'finance':11 'h':6 'honda':3 'indramayu':16 'mandir':9 'mtf':13 'ng':8 'order':22 'pranoto':18 'pusat':15 'r4':2 's':14 'semarang':12 'trx':21 'trx-order':20 'tunas':10
-129	49	TRX-Order	Piutang jasa BFI Finance (BFI) Order SPK: /000000049	2022-03-22	Kendaraan R4 Honda Jazz , Nopol H 8630 PP	'/000000049':1 '/ref-49':15 '8630':6 'bfi':8,10 'deddy':13 'finance':9 'h':5 'honda':3 'indramayu':12 'jazz':4 'order':18 'pp':7 'pranoto':14 'pusat':11 'r4':2 'trx':17 'trx-order':16
-130	75	TRX-Order	Piutang jasa MEGAPARA (MPR) Order SPK: /000000075	2022-03-22	Kendaraan R2 Yamaha Mio M3 , Nopol E 4080 UO	'/000000075':1 '/ref-75':13 '4080':7 'e':6 'gapara':9 'jatibarang':11 'm3':5 'mio':4 'mpr':10 'order':16 'r2':2 'syaenudin':12 'trx':15 'trx-order':14 'uo':8 'yamaha':3
-131	74	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000074	2022-03-22	Kendaraan R2 Yamaha Mio , Nopol E 6871 CM	'/000000074':1 '/ref-74':14 '6871':6 'adira':11 'auto':8 'cm':7 'discret':9 'e':5 'finance':10 'jatibarang':12 'mio':4 'order':17 'r2':2 'syaenudin':13 'trx':16 'trx-order':15 'yamaha':3
-132	73	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000073	2022-03-22	Kendaraan R2 Honda Beat Pop , Nopol B 3351 KUH	'/000000073':1 '/ref-73':15 '3351':7 'adira':12 'auto':9 'b':6 'beat':4 'discret':10 'finance':11 'honda':3 'jatibarang':13 'kuh':8 'order':18 'pop':5 'r2':2 'syaenudin':14 'trx':17 'trx-order':16
-133	72	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000072	2022-03-22	Kendaraan R2 Honda BEAT , Nopol B 3430 EJX	'/000000072':1 '/ref-72':14 '3430':6 'adira':11 'auto':8 'b':5 'beat':4 'discret':9 'ejx':7 'finance':10 'honda':3 'jatibarang':12 'order':17 'r2':2 'syaenudin':13 'trx':16 'trx-order':15
-134	71	TRX-Order	Piutang jasa Mandiri Utama Finance (MUF) Order SPK: /000000071	2022-03-22	Kendaraan R2 Yamaha MX-King , Nopol T 4261 YQ	'/000000071':1 '/ref-71':16 '4261':8 'finance':12 'jatibarang':14 'king':6 'mandir':10 'muf':13 'mx':5 'mx-king':4 'order':19 'r2':2 'syaenudin':15 't':7 'trx':18 'trx-order':17 'utama':11 'yamaha':3 'yq':9
-135	70	TRX-Order	Piutang jasa OTO Kredit Motor (OTTO) Order SPK: /000000070	2022-03-22	Kendaraan R2 Honda BEAT , Nopol B 4654 FSG	'/000000070':1 '/ref-70':14 '4654':6 'b':5 'beat':4 'fsg':7 'honda':3 'jatibarang':12 'kredit':9 'motor':10 'order':17 'oto':8 'otto':11 'r2':2 'syaenudin':13 'trx':16 'trx-order':15
-136	69	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000069	2022-03-22	Kendaraan R2 Honda BEAT , Nopol B 3433 USN	'/000000069':1 '/ref-69':14 '3433':6 'adira':11 'auto':8 'b':5 'beat':4 'discret':9 'finance':10 'honda':3 'jatibarang':12 'order':17 'r2':2 'syaenudin':13 'trx':16 'trx-order':15 'usn':7
-137	68	TRX-Order	Piutang jasa Radana Finance (RAD) Order SPK: /000000068	2022-03-22	Kendaraan R2 Honda BEAT , Nopol B 3256  PWY	'/000000068':1 '/ref-68':13 '3256':6 'b':5 'beat':4 'finance':9 'honda':3 'jatibarang':11 'order':16 'pwy':7 'r2':2 'rad':10 'radana':8 'syaenudin':12 'trx':15 'trx-order':14
-138	67	TRX-Order	Piutang jasa Mega Auto Central Finance (MACF) Order SPK: /000000067	2022-03-22	Kendaraan R2 Yamaha NMax , Nopol T 4845 IQ	'/000000067':1 '/ref-67':15 '4845':6 'auto':9 'central':10 'finance':11 'iq':7 'jatibarang':13 'macf':12 'mega':8 'nmax':4 'order':18 'r2':2 'syaenudin':14 't':5 'trx':17 'trx-order':16 'yamaha':3
-139	66	TRX-Order	Piutang jasa WOM Finance (WOMF) Order SPK: /000000066	2022-03-22	Kendaraan R2 Honda BEAT , Nopol T 6934 YQ	'/000000066':1 '/ref-66':13 '6934':6 'beat':4 'finance':9 'honda':3 'jatibarang':11 'order':16 'r2':2 'syaenudin':12 't':5 'trx':15 'trx-order':14 'wom':8 'womf':10 'yq':7
-140	65	TRX-Order	Piutang jasa Bussan Auto Finance (BAF) Order SPK: /000000065	2022-03-22	Kendaraan R2 Yamaha NMax , Nopol E 2676 UX	'/000000065':1 '/ref-65':14 '2676':6 'auto':9 'baf':11 'bussan':8 'e':5 'finance':10 'jatibarang':12 'nmax':4 'order':17 'r2':2 'syaenudin':13 'trx':16 'trx-order':15 'ux':7 'yamaha':3
-141	64	TRX-Order	Piutang jasa Mandiri Utama Finance (MUF) Order SPK: /000000064	2022-03-22	Kendaraan R2 Honda Vario 150 , Nopol T 5097 ZB	'/000000064':1 '/ref-64':15 '150':5 '5097':7 'finance':11 'honda':3 'jatibarang':13 'mandir':9 'muf':12 'order':18 'r2':2 'syaenudin':14 't':6 'trx':17 'trx-order':16 'utama':10 'vario':4 'zb':8
-142	63	TRX-Order	Piutang jasa OTO Kredit Motor (OTTO) Order SPK: /000000063	2022-03-22	Kendaraan R2 Honda PCX , Nopol E 2113 PBM	'/000000063':1 '/ref-63':16 '2113':6 'deddy':14 'e':5 'honda':3 'indramayu':13 'kredit':9 'motor':10 'order':19 'oto':8 'otto':11 'pbm':7 'pcx':4 'pranoto':15 'pusat':12 'r2':2 'trx':18 'trx-order':17
-143	62	TRX-Order	Piutang jasa Bussan Auto Finance (BAF) Order SPK: /000000062	2022-03-22	Kendaraan R2 Yamaha NMax , Nopol E 3217 PAR	'/000000062':1 '/ref-62':16 '3217':6 'auto':9 'baf':11 'bussan':8 'deddy':14 'e':5 'finance':10 'indramayu':13 'nmax':4 'order':19 'par':7 'pranoto':15 'pusat':12 'r2':2 'trx':18 'trx-order':17 'yamaha':3
-144	61	TRX-Order	Piutang jasa Mandiri Utama Finance (MUF) Order SPK: /000000061	2022-03-22	Kendaraan R2 Yamaha Vixion , Nopol E 3310 QR	'/000000061':1 '/ref-61':16 '3310':6 'deddy':14 'e':5 'finance':10 'indramayu':13 'mandir':8 'muf':11 'order':19 'pranoto':15 'pusat':12 'qr':7 'r2':2 'trx':18 'trx-order':17 'utama':9 'vixion':4 'yamaha':3
-145	60	TRX-Order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000060	2022-03-22	Kendaraan R2 Honda BEAT , Nopol F 6181 FCH	'/000000060':1 '/ref-60':16 '6181':6 'adira':11 'auto':8 'beat':4 'deddy':14 'discret':9 'f':5 'fch':7 'finance':10 'honda':3 'indramayu':13 'order':19 'pranoto':15 'pusat':12 'r2':2 'trx':18 'trx-order':17
+247	16	trx-lent	qwewqe	2022-04-02	\N	'erqweqwe':2 'qwewqe':1
+130	75	trx-lent	465465465 eqweqwe	2022-04-03	\N	'465465465':1 '7979879':3 'eqweqwe':2 'qwewqewqe':4
+212	36	trx-cicilan	wwwwwwww	2022-04-02	Cicilan Sanadi	'cicil':2 'sanad':3 'wwwwwwww':1
+248	4	trx-cicilan	eqwewe	2022-04-02	Cicilan qeqewqe	'eqwewe':1
+249	65	trx-cicilan	sssssssss	2022-04-02	Cicilan x2ss	'sssssssss':1
+250	65	trx-cicilan	cicilan 2	2022-04-02	Cicilan x2ss	'2':2 'cicil':1
+213	14	trx-cicilan	9879879	2022-04-02	Cicilan Welcome	'9879879':1
+251	65	trx-cicilan	eqweqwe	2022-04-03	Cicilan x2ss	'eqweqwe':1
+208	1	trx-cicilan	cicilan 1	2022-04-02	Cicilan Junaedi	'1':2 'cicil':1
+214	15	trx-cicilan	qweqw wqe	2022-04-02	Cicilan qqweq qweqwe qwe qwe qwe	'qweqw':1 'wqe':2
+252	12	trx-cicilan	eqweqwe	2022-04-03	Cicilan Yakul	'eqweqwe':1
 151	9	trx-invoice	Pendapatan jasa dari Auto Discret Finance Invoice #9	2022-03-24	\N	'/id-0':2 '3351':12 '3430':17 '6871':8 '9':26 'adira':6 'auto':3,22 'b':11,16 'beat':14 'beatpendapat':19 'cm':9 'dari':21 'discret':4,23 'dony':1 'e':7 'ejx':18 'finance':5,24 'invoice':25 'jasa':20 'kuh':13 'mio':10 'pop':15
 152	10	trx-invoice	Pendapatan jasa dari Mandiri Tunas Finance Semarang Invoice #10	2022-03-24	\N	'/id-10':2 '1000':16,21,26 '1340000006105':11 '8715':13 '9049':18 '9086':28 '9442':23 'agya':30 'bank':9 'brio':15,20,25 'finance':5 'gp':14 'h':12,17,22,27 'mandir':3,10 'mtf':7 'ng':24 's':8 'se':19 'semarang':6 'te':29 'tunas':4 'udin':1
 153	11	trx-invoice	Pendapatan jasa dari Clipan Karawang\n Invoice #11	2022-03-26	\N	'/id-0':2 '1000':15 '11':33 '1184':12 '1312':8 '1412':21 '1788':17 '8936':25 'b':24 'bc':18 'brio':14 'carry':23 'clip':5 'clipan':3,30 'd':7 'dari':29 'ga':13 'invoice':32 'jasa':28 'jazzpendapat':27 'k':6 'karawang':4,31 'km':22 'mobilio':19 'no':26 't':11,16,20 'wf':9 'wulan':1 'xenia':10
@@ -1324,11 +1172,89 @@ COPY public.trx (id, ref_id, division, descriptions, trx_date, memo, trx_token) 
 157	9	trx-loan		2022-03-31	\N	'sumard':1
 158	10	trx-loan		2022-03-31	\N	'mastur':1
 176	24	trx-angsuran	Angsuran 2	2022-03-31	Ansuran Mastur	'2':2 'angsur':1 'ansur':3 'mastur':4
-193	33	trx-loan	drrrr	2022-03-31	\N	'doni':2 'drrrr':1
+201	91	trx-order	Unit dipinjamkan	2022-04-01	\N	'junaed':3 'pinjam':2 'unit':1
 175	24	trx-angsuran	Welcome	2022-03-31	Ansuran Mastur	'ansur':2 'mastur':3 'welcome':1
-194	33	trx-angsuran	angsuran 1	2022-03-31	Ansuran Doni	'1':2 'angsur':1
-195	33	trx-angsuran	5wewewe	2022-03-31	Ansuran Doni	'5wewewe':1
+202	87	trx-order	Pinjaman Unit 	2022-04-02	\N	'armad':4 'doni':3 'pinjam':1 'unit':2
+196	24	trx-angsuran	Angsuran 3	2022-03-31	Ansuran Mastur s	'3':2 'angsur':1 'ansur':3 'mastur':4 's':5
+197	34	trx-loan	Utang baru Doni	2022-03-31	\N	'baru':2 'doni':3,4 'utang':1
+199	23	trx-angsuran	Angsuran 1	2022-04-01	Ansuran Junaedi	'1':2 'angsur':1
+200	23	trx-angsuran	Angsuran 2	2022-04-01	Ansuran Junaedi	'2':2 'angsur':1
 172	24	trx-loan	ssssssssssssss	2022-03-31	\N	'mastur':2 's':3 'ssssssssssssss':1
+72	1	trx-lent	Test 55	2022-04-02	\N	'55':2 'junaed':3 'test':1
+209	1	trx-cicilan	cicilan 2	2022-04-02	Cicilan Junaedi	'2':2 'cicil':1
+74	3	trx-lent	to the jungle	2022-04-02	\N	'jungle':3 'the':2 'to':1 'welcome':4
+80	9	trx-order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000009	2022-03-22	Kendaraan R2 Honda BEAT , Nopol E 6053 PAM	'/000000009':1 '/ref-9':16 '6053':6 'adira':11 'auto':8 'beat':4 'deddy':14 'discret':9 'e':5 'finance':10 'honda':3 'indramayu':13 'order':19 'pam':7 'pranoto':15 'pusat':12 'r2':2 'trx':18 'trx-order':17
+73	2	trx-lent	qwe qweqwe	2022-04-02	\N	'eqwe':3 'qwe':1 'qweqwe':2,4
+76	5	trx-lent	wqeqweqw qweqweqweeqwe	2022-04-02	\N	'e':4 'eqweq':3 'qweqweqweeqwe':2 'wqeqweqw':1
+77	6	trx-lent	xxxxxxxxxxxxxxxxxxxxxxxxxxxx	2022-04-02	\N	'xxxxxxxxxxxxxxxxxxx':2 'xxxxxxxxxxxxxxxxxxxxxxxxxxxx':1
+78	7	trx-lent	zzzzzzzzzz	2022-04-02	\N	'zzzzzzzzzz':1 'zzzzzzzzzzzz':2
+79	8	trx-lent	asdasdasd	2022-04-02	\N	'asdasd':2 'asdasdasd':1
+75	4	trx-lent	qweqwe	2022-04-02	\N	'qeqewqe':2 'qweqwe':1
+198	34	trx-angsuran	Angsuran 1	2022-03-31	Angsuran Doni	'1':2 'angsur':1 'ansur':3 'doni':4
+83	12	trx-lent	qwewqeqwe	2022-04-03	\N	'qwewqeqwe':1 'yakul':2
+81	10	trx-order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000010	2022-03-22	Kendaraan R2 Honda BEAT , Nopol E 5474 Q	'/000000010':1 '/ref-10':16 '5474':6 'adira':11 'auto':8 'beat':4 'deddy':14 'discret':9 'e':5 'finance':10 'honda':3 'indramayu':13 'order':19 'pranoto':15 'pusat':12 'q':7 'r2':2 'trx':18 'trx-order':17
+82	11	trx-order	Piutang jasa FIF Group (FIF) Order SPK: /000000011	2022-03-22	Kendaraan R2 Yamaha Jupiter , Nopol E 4892 TK	'/000000011':1 '/ref-11':13 '4892':6 'e':5 'fif':8,10 'group':9 'jatibarang':11 'jupiter':4 'order':16 'r2':2 'syaenudin':12 'tk':7 'trx':15 'trx-order':14 'yamaha':3
+84	13	trx-order	Piutang jasa COLLECTIUS (COL) Order SPK: /000000013	2022-03-22	Kendaraan R2 Yamaha Mio M3 , Nopol E 2417 PAO	'/000000013':1 '/ref-13':13 '2417':7 'col':10 'collectius':9 'e':6 'jatibarang':11 'm3':5 'mio':4 'order':16 'pao':8 'r2':2 'syaenudin':12 'trx':15 'trx-order':14 'yamaha':3
+88	17	trx-order	Piutang jasa Top Finance Company (TFC) Order SPK: /000000017	2022-03-22	Kendaraan R2 Honda Supra X-125 , Nopol T 3828 FW	'-125':6 '/000000017':1 '/ref-17':16 '3828':8 'company':12 'finance':11 'fw':9 'honda':3 'jatibarang':14 'order':19 'r2':2 'supra':4 'syaenudin':15 't':7 'tfc':13 'top':10 'trx':18 'trx-order':17 'x':5
+90	19	trx-order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000019	2022-03-22	Kendaraan R2 Honda Revo , Nopol E 5638 PAV	'/000000019':1 '/ref-19':14 '5638':6 'adira':11 'auto':8 'discret':9 'e':5 'finance':10 'honda':3 'jatibarang':12 'order':17 'pav':7 'r2':2 'revo':4 'syaenudin':13 'trx':16 'trx-order':15
+91	20	trx-order	Piutang jasa Kredit Plus (KP+) Order SPK: /000000020	2022-03-22	Kendaraan R2 Honda Vario 125 , Nopol E 5253 TY	'/000000020':1 '/ref-20':14 '125':5 '5253':7 'e':6 'honda':3 'jatibarang':12 'kp':11 'kredit':9 'order':17 'plus':10 'r2':2 'syaenudin':13 'trx':16 'trx-order':15 'ty':8 'vario':4
+92	21	trx-order	Piutang jasa Bussan Auto Finance (BAF) Order SPK: /000000021	2022-03-22	Kendaraan R2 Yamaha Mio M3 , Nopol B 6262 VKY	'/000000021':1 '/ref-21':15 '6262':7 'auto':10 'b':6 'baf':12 'bussan':9 'finance':11 'jatibarang':13 'm3':5 'mio':4 'order':18 'r2':2 'syaenudin':14 'trx':17 'trx-order':16 'vky':8 'yamaha':3
+98	28	trx-order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000028	2022-03-22	Kendaraan R2 Yamaha Mio Z , Nopol T 4487 PJ	'/000000028':1 '/ref-28':15 '4487':7 'adira':12 'auto':9 'discret':10 'finance':11 'jatibarang':13 'mio':4 'order':18 'pj':8 'r2':2 'syaenudin':14 't':6 'trx':17 'trx-order':16 'yamaha':3 'z':5
+102	32	trx-order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000032	2022-03-22	Kendaraan R2 Honda BEAT , Nopol T 2191 YS	'/000000032':1 '/ref-32':14 '2191':6 'adira':11 'auto':8 'beat':4 'discret':9 'finance':10 'honda':3 'jatibarang':12 'order':17 'r2':2 'syaenudin':13 't':5 'trx':16 'trx-order':15 'ys':7
+95	25	trx-order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000025	2022-03-22	Kendaraan R2 Honda Vario 150 , Nopol B 3812 UJY	'/000000025':1 '/ref-25':15 '150':5 '3812':7 'adira':12 'auto':9 'b':6 'discret':10 'finance':11 'honda':3 'jatibarang':13 'order':18 'r2':2 'syaenudin':14 'trx':17 'trx-order':16 'ujy':8 'vario':4
+100	30	trx-order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000030	2022-03-22	Kendaraan R2 Honda Verza , Nopol T 3615 ZD	'/000000030':1 '/ref-30':14 '3615':6 'adira':11 'auto':8 'discret':9 'finance':10 'honda':3 'jatibarang':12 'order':17 'r2':2 'syaenudin':13 't':5 'trx':16 'trx-order':15 'verza':4 'zd':7
+99	29	trx-order	Batal dipiutangkan	2022-04-02	\N	'pinjam':1 'unit':2 'wasmin':4 'xeon':3
+94	24	trx-order	Batal dipiutangkan	2022-04-02	\N	'mastur':3 'pinam':2 'unit':1
+210	3	trx-cicilan	cicilan 1	2022-04-02	Cicilan Welcome	'1':2 'cicil':1
+97	27	trx-lent	eqwe qwe  qwe	2022-04-02	\N	'eqwe':1 'qqwe':4 'qwe':2,3,6 'qweqwe':5
+85	14	trx-lent	jungle	2022-04-02	\N	'jungle':1 'welcome':2
+86	15	trx-lent	qwe qwe qweqwe	2022-04-02	\N	'qqweq':4 'qwe':1,2,6,7,8 'qweqwe':3,5
+89	18	trx-lent	qweqweqwe	2022-04-02	\N	'qreqwewqe':2 'qweqweqwe':1
+93	22	trx-lent	qweqwewqe	2022-04-02	\N	'qweqwewqe':1 'xxxxxxxxxxxxxxx':2
+101	31	trx-order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000031	2022-03-22	Kendaraan R2 Yamaha R-15 , Nopol E 2391 JM	'-15':5 '/000000031':1 '/ref-31':15 '2391':7 'adira':12 'auto':9 'discret':10 'e':6 'finance':11 'jatibarang':13 'jm':8 'order':18 'r':4 'r2':2 'syaenudin':14 'trx':17 'trx-order':16 'yamaha':3
+105	35	trx-order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000035	2022-03-22	Kendaraan R2 Yamaha R-15 , Nopol T 2110 YV	'-15':5 '/000000035':1 '/ref-35':15 '2110':7 'adira':12 'auto':9 'discret':10 'finance':11 'jatibarang':13 'order':18 'r':4 'r2':2 'syaenudin':14 't':6 'trx':17 'trx-order':16 'yamaha':3 'yv':8
+96	26	trx-order	Piutang jasa Kredit Plus (KP+) Order SPK: /000000026	2022-03-22	Kendaraan R2 Honda Vario 150 , Nopol T 2891 WP	'/000000026':1 '/ref-26':14 '150':5 '2891':7 'honda':3 'jatibarang':12 'kp':11 'kredit':9 'order':17 'plus':10 'r2':2 'syaenudin':13 't':6 'trx':16 'trx-order':15 'vario':4 'wp':8
+103	33	trx-order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000033	2022-03-22	Kendaraan R2 Honda GENIO , Nopol T 5856 ZT	'/000000033':1 '/ref-33':14 '5856':6 'adira':11 'auto':8 'discret':9 'finance':10 'genio':4 'honda':3 'jatibarang':12 'order':17 'r2':2 'syaenudin':13 't':5 'trx':16 'trx-order':15 'zt':7
+104	34	trx-order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000034	2022-03-22	Kendaraan R2 Yamaha Jupiter , Nopol E 4593 TQ	'/000000034':1 '/ref-34':14 '4593':6 'adira':11 'auto':8 'discret':9 'e':5 'finance':10 'jatibarang':12 'jupiter':4 'order':17 'r2':2 'syaenudin':13 'tq':7 'trx':16 'trx-order':15 'yamaha':3
+107	37	trx-order	Piutang jasa Clipan Karawang\n (CLIP K) Order SPK: /000000037	2022-03-22	Kendaraan R4 Honda Jazz , Nopol B 8936 NO	'/000000037':1 '/ref-37':16 '8936':6 'b':5 'clip':10 'clipan':8 'deddy':14 'honda':3 'indramayu':13 'jazz':4 'k':11 'karawang':9 'no':7 'order':19 'pranoto':15 'pusat':12 'r4':2 'trx':18 'trx-order':17
+108	38	trx-order	Piutang jasa Clipan Karawang\n (CLIP K) Order SPK: /000000038	2022-03-22	Kendaraan R4 Suzuki Carry , Nopol T 1412 KM	'/000000038':1 '/ref-38':16 '1412':6 'carry':4 'clip':10 'clipan':8 'deddy':14 'indramayu':13 'k':11 'karawang':9 'km':7 'order':19 'pranoto':15 'pusat':12 'r4':2 'suzuk':3 't':5 'trx':18 'trx-order':17
+109	39	trx-order	Piutang jasa Mandiri Tunas Finance Semarang (MTF S) Order SPK: /000000039	2022-03-22	Kendaraan R4 Honda Brio 1000 , Nopol H 8715 GP	'/000000039':1 '/ref-39':19 '1000':5 '8715':7 'brio':4 'deddy':17 'finance':11 'gp':8 'h':6 'honda':3 'indramayu':16 'mandir':9 'mtf':13 'order':22 'pranoto':18 'pusat':15 'r4':2 's':14 'semarang':12 'trx':21 'trx-order':20 'tunas':10
+110	40	trx-order	Piutang jasa Clipan Karawang\n (CLIP K) Order SPK: /000000040	2022-03-22	Kendaraan R4 Suzuki ER-3 , Nopol T 1164 FQ	'-3':5 '/000000040':1 '/ref-40':17 '1164':7 'clip':11 'clipan':9 'deddy':15 'er':4 'fq':8 'indramayu':14 'k':12 'karawang':10 'order':20 'pranoto':16 'pusat':13 'r4':2 'suzuk':3 't':6 'trx':19 'trx-order':18
+111	41	trx-order	Piutang jasa Clipan Karawang\n (CLIP K) Order SPK: /000000041	2022-03-22	Kendaraan R4 Honda Mobilio , Nopol T 1788 BC	'/000000041':1 '/ref-41':16 '1788':6 'bc':7 'clip':10 'clipan':8 'deddy':14 'honda':3 'indramayu':13 'k':11 'karawang':9 'mobilio':4 'order':19 'pranoto':15 'pusat':12 'r4':2 't':5 'trx':18 'trx-order':17
+112	42	trx-order	Piutang jasa Mandiri Tunas Finance Semarang (MTF S) Order SPK: /000000042	2022-03-22	Kendaraan R4 Honda Brio 1000 , Nopol H 9049 SE	'/000000042':1 '/ref-42':19 '1000':5 '9049':7 'brio':4 'deddy':17 'finance':11 'h':6 'honda':3 'indramayu':16 'mandir':9 'mtf':13 'order':22 'pranoto':18 'pusat':15 'r4':2 's':14 'se':8 'semarang':12 'trx':21 'trx-order':20 'tunas':10
+113	43	trx-order	Piutang jasa Safron Finance Karawang (SFI K) Order SPK: /000000043	2022-03-22	Kendaraan R4 Suzuki Carry , Nopol T 8060 EG	'/000000043':1 '/ref-43':17 '8060':6 'carry':4 'deddy':15 'eg':7 'finance':9 'indramayu':14 'k':12 'karawang':10 'order':20 'pranoto':16 'pusat':13 'r4':2 'safron':8 'sfi':11 'suzuk':3 't':5 'trx':19 'trx-order':18
+114	44	trx-order	Piutang jasa BFI Finance (BFI) Order SPK: /000000044	2022-03-22	Kendaraan R4 Suzuki Carry , Nopol E 8903 PP	'/000000044':1 '/ref-44':15 '8903':6 'bfi':8,10 'carry':4 'deddy':13 'e':5 'finance':9 'indramayu':12 'order':18 'pp':7 'pranoto':14 'pusat':11 'r4':2 'suzuk':3 'trx':17 'trx-order':16
+115	45	trx-order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000045	2022-03-22	Kendaraan R4 Mitsubishi Pickup , Nopol E 8013 QA	'/000000045':1 '/ref-45':16 '8013':6 'adira':11 'auto':8 'deddy':14 'discret':9 'e':5 'finance':10 'indramayu':13 'mitsubish':3 'order':19 'pickup':4 'pranoto':15 'pusat':12 'qa':7 'r4':2 'trx':18 'trx-order':17
+116	46	trx-order	Piutang jasa Safron Finance Karawang (SFI K) Order SPK: /000000046	2022-03-22	Kendaraan R4 Suzuki XL-7 , Nopol T 1052 UL	'-7':5 '/000000046':1 '/ref-46':18 '1052':7 'deddy':16 'finance':10 'indramayu':15 'k':13 'karawang':11 'order':21 'pranoto':17 'pusat':14 'r4':2 'safron':9 'sfi':12 'suzuk':3 't':6 'trx':20 'trx-order':19 'ul':8 'xl':4
+118	48	trx-order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000048	2022-03-22	Kendaraan R4 Mitsubishi Expander , Nopol E 938 XY	'/000000048':1 '/ref-48':16 '938':6 'adira':11 'auto':8 'deddy':14 'discret':9 'e':5 'expander':4 'finance':10 'indramayu':13 'mitsubish':3 'order':19 'pranoto':15 'pusat':12 'r4':2 'trx':18 'trx-order':17 'xy':7
+117	47	trx-order	Batal dipiutangkan	2022-04-02	\N	'lama':2 'pinjam':1 'warmin':3
+106	36	trx-lent	kljlkaj alkj alkjlka	2022-04-02	\N	'alkj':2 'alkjlka':3 'kljlkaj':1 'sanad':4
+119	59	trx-order	Piutang jasa Clipan Karawang\n (CLIP K) Order SPK: /000000059	2022-03-22	Kendaraan R4 Suzuki ERTIGA , Nopol T 1305 DL	'/000000059':1 '/ref-59':16 '1305':6 'clip':10 'clipan':8 'deddy':14 'dl':7 'ertiga':4 'indramayu':13 'k':11 'karawang':9 'order':19 'pranoto':15 'pusat':12 'r4':2 'suzuk':3 't':5 'trx':18 'trx-order':17
+120	58	trx-order	Piutang jasa Clipan Bekasi (CLIP B) Order SPK: /000000058	2022-03-22	Kendaraan R4 Toyota Terios , Nopol B 2281 SBT	'/000000058':1 '/ref-58':16 '2281':6 'b':5,11 'bekasi':9 'clip':10 'clipan':8 'deddy':14 'indramayu':13 'ios':4 'order':19 'pranoto':15 'pusat':12 'r4':2 'sbt':7 'toyota':3 'trx':18 'trx-order':17
+121	57	trx-order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000057	2022-03-22	Kendaraan R4 Daihatsu Grand Max , Nopol E 1256 QD	'/000000057':1 '/ref-57':17 '1256':7 'adira':12 'auto':9 'daihatsu':3 'deddy':15 'discret':10 'e':6 'finance':11 'grand':4 'indramayu':14 'max':5 'order':20 'pranoto':16 'pusat':13 'qd':8 'r4':2 'trx':19 'trx-order':18
+122	56	trx-order	Piutang jasa Mandiri Tunas Finance Semarang (MTF S) Order SPK: /000000056	2022-03-22	Kendaraan R4 Toyota AGYA , Nopol H 9086 TE	'/000000056':1 '/ref-56':18 '9086':6 'agya':4 'deddy':16 'finance':10 'h':5 'indramayu':15 'mandir':8 'mtf':12 'order':21 'pranoto':17 'pusat':14 'r4':2 's':13 'semarang':11 'te':7 'toyota':3 'trx':20 'trx-order':19 'tunas':9
+123	55	trx-order	Piutang jasa Clipan Karawang\n (CLIP K) Order SPK: /000000055	2022-03-22	Kendaraan R4 Honda BRV , Nopol T 1729 BF	'/000000055':1 '/ref-55':16 '1729':6 'bf':7 'brv':4 'clip':10 'clipan':8 'deddy':14 'honda':3 'indramayu':13 'k':11 'karawang':9 'order':19 'pranoto':15 'pusat':12 'r4':2 't':5 'trx':18 'trx-order':17
+124	54	trx-order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000054	2022-03-22	Kendaraan R4 Toyota Vios , Nopol D 1242 OU	'/000000054':1 '/ref-54':16 '1242':6 'adira':11 'auto':8 'd':5 'deddy':14 'discret':9 'finance':10 'indramayu':13 'order':19 'ou':7 'pranoto':15 'pusat':12 'r4':2 'toyota':3 'trx':18 'trx-order':17 'vios':4
+125	53	trx-order	Piutang jasa Clipan Karawang\n (CLIP K) Order SPK: /000000053	2022-03-22	Kendaraan R4 Daihatsu Xenia , Nopol D 1312 WF	'/000000053':1 '/ref-53':16 '1312':6 'clip':10 'clipan':8 'd':5 'daihatsu':3 'deddy':14 'indramayu':13 'k':11 'karawang':9 'order':19 'pranoto':15 'pusat':12 'r4':2 'trx':18 'trx-order':17 'wf':7 'xenia':4
+126	52	trx-order	Piutang jasa Clipan Karawang\n (CLIP K) Order SPK: /000000052	2022-03-22	Kendaraan R4 Honda Brio 1000 , Nopol T 1184 GA	'/000000052':1 '/ref-52':17 '1000':5 '1184':7 'brio':4 'clip':11 'clipan':9 'deddy':15 'ga':8 'honda':3 'indramayu':14 'k':12 'karawang':10 'order':20 'pranoto':16 'pusat':13 'r4':2 't':6 'trx':19 'trx-order':18
+127	51	trx-order	Piutang jasa CLIPAN (CLIP) Order SPK: /000000051	2022-03-22	Kendaraan R4 Toyota Terios , Nopol T 1250 DU	'/000000051':1 '/ref-51':14 '1250':6 'clip':9 'clipan':8 'deddy':12 'du':7 'indramayu':11 'ios':4 'order':17 'pranoto':13 'pusat':10 'r4':2 't':5 'toyota':3 'trx':16 'trx-order':15
+128	50	trx-order	Piutang jasa Mandiri Tunas Finance Semarang (MTF S) Order SPK: /000000050	2022-03-22	Kendaraan R4 Honda Brio 1000 , Nopol H 9442 NG	'/000000050':1 '/ref-50':19 '1000':5 '9442':7 'brio':4 'deddy':17 'finance':11 'h':6 'honda':3 'indramayu':16 'mandir':9 'mtf':13 'ng':8 'order':22 'pranoto':18 'pusat':15 'r4':2 's':14 'semarang':12 'trx':21 'trx-order':20 'tunas':10
+129	49	trx-order	Piutang jasa BFI Finance (BFI) Order SPK: /000000049	2022-03-22	Kendaraan R4 Honda Jazz , Nopol H 8630 PP	'/000000049':1 '/ref-49':15 '8630':6 'bfi':8,10 'deddy':13 'finance':9 'h':5 'honda':3 'indramayu':12 'jazz':4 'order':18 'pp':7 'pranoto':14 'pusat':11 'r4':2 'trx':17 'trx-order':16
+131	74	trx-order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000074	2022-03-22	Kendaraan R2 Yamaha Mio , Nopol E 6871 CM	'/000000074':1 '/ref-74':14 '6871':6 'adira':11 'auto':8 'cm':7 'discret':9 'e':5 'finance':10 'jatibarang':12 'mio':4 'order':17 'r2':2 'syaenudin':13 'trx':16 'trx-order':15 'yamaha':3
+132	73	trx-order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000073	2022-03-22	Kendaraan R2 Honda Beat Pop , Nopol B 3351 KUH	'/000000073':1 '/ref-73':15 '3351':7 'adira':12 'auto':9 'b':6 'beat':4 'discret':10 'finance':11 'honda':3 'jatibarang':13 'kuh':8 'order':18 'pop':5 'r2':2 'syaenudin':14 'trx':17 'trx-order':16
+133	72	trx-order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000072	2022-03-22	Kendaraan R2 Honda BEAT , Nopol B 3430 EJX	'/000000072':1 '/ref-72':14 '3430':6 'adira':11 'auto':8 'b':5 'beat':4 'discret':9 'ejx':7 'finance':10 'honda':3 'jatibarang':12 'order':17 'r2':2 'syaenudin':13 'trx':16 'trx-order':15
+134	71	trx-order	Piutang jasa Mandiri Utama Finance (MUF) Order SPK: /000000071	2022-03-22	Kendaraan R2 Yamaha MX-King , Nopol T 4261 YQ	'/000000071':1 '/ref-71':16 '4261':8 'finance':12 'jatibarang':14 'king':6 'mandir':10 'muf':13 'mx':5 'mx-king':4 'order':19 'r2':2 'syaenudin':15 't':7 'trx':18 'trx-order':17 'utama':11 'yamaha':3 'yq':9
+136	69	trx-order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000069	2022-03-22	Kendaraan R2 Honda BEAT , Nopol B 3433 USN	'/000000069':1 '/ref-69':14 '3433':6 'adira':11 'auto':8 'b':5 'beat':4 'discret':9 'finance':10 'honda':3 'jatibarang':12 'order':17 'r2':2 'syaenudin':13 'trx':16 'trx-order':15 'usn':7
+137	68	trx-order	Piutang jasa Radana Finance (RAD) Order SPK: /000000068	2022-03-22	Kendaraan R2 Honda BEAT , Nopol B 3256  PWY	'/000000068':1 '/ref-68':13 '3256':6 'b':5 'beat':4 'finance':9 'honda':3 'jatibarang':11 'order':16 'pwy':7 'r2':2 'rad':10 'radana':8 'syaenudin':12 'trx':15 'trx-order':14
+135	70	trx-lent	eqwwwwww wwwwwwwwwwwwwww	2022-04-02	\N	'eqwwwwww':1 'qwe':3,4,5 'wwwwwwwwwwwwwww':2
+138	67	trx-order	Piutang jasa Mega Auto Central Finance (MACF) Order SPK: /000000067	2022-03-22	Kendaraan R2 Yamaha NMax , Nopol T 4845 IQ	'/000000067':1 '/ref-67':15 '4845':6 'auto':9 'central':10 'finance':11 'iq':7 'jatibarang':13 'macf':12 'mega':8 'nmax':4 'order':18 'r2':2 'syaenudin':14 't':5 'trx':17 'trx-order':16 'yamaha':3
+139	66	trx-order	Piutang jasa WOM Finance (WOMF) Order SPK: /000000066	2022-03-22	Kendaraan R2 Honda BEAT , Nopol T 6934 YQ	'/000000066':1 '/ref-66':13 '6934':6 'beat':4 'finance':9 'honda':3 'jatibarang':11 'order':16 'r2':2 'syaenudin':12 't':5 'trx':15 'trx-order':14 'wom':8 'womf':10 'yq':7
+141	64	trx-order	Piutang jasa Mandiri Utama Finance (MUF) Order SPK: /000000064	2022-03-22	Kendaraan R2 Honda Vario 150 , Nopol T 5097 ZB	'/000000064':1 '/ref-64':15 '150':5 '5097':7 'finance':11 'honda':3 'jatibarang':13 'mandir':9 'muf':12 'order':18 'r2':2 'syaenudin':14 't':6 'trx':17 'trx-order':16 'utama':10 'vario':4 'zb':8
+142	63	trx-order	Piutang jasa OTO Kredit Motor (OTTO) Order SPK: /000000063	2022-03-22	Kendaraan R2 Honda PCX , Nopol E 2113 PBM	'/000000063':1 '/ref-63':16 '2113':6 'deddy':14 'e':5 'honda':3 'indramayu':13 'kredit':9 'motor':10 'order':19 'oto':8 'otto':11 'pbm':7 'pcx':4 'pranoto':15 'pusat':12 'r2':2 'trx':18 'trx-order':17
+143	62	trx-order	Piutang jasa Bussan Auto Finance (BAF) Order SPK: /000000062	2022-03-22	Kendaraan R2 Yamaha NMax , Nopol E 3217 PAR	'/000000062':1 '/ref-62':16 '3217':6 'auto':9 'baf':11 'bussan':8 'deddy':14 'e':5 'finance':10 'indramayu':13 'nmax':4 'order':19 'par':7 'pranoto':15 'pusat':12 'r2':2 'trx':18 'trx-order':17 'yamaha':3
+144	61	trx-order	Piutang jasa Mandiri Utama Finance (MUF) Order SPK: /000000061	2022-03-22	Kendaraan R2 Yamaha Vixion , Nopol E 3310 QR	'/000000061':1 '/ref-61':16 '3310':6 'deddy':14 'e':5 'finance':10 'indramayu':13 'mandir':8 'muf':11 'order':19 'pranoto':15 'pusat':12 'qr':7 'r2':2 'trx':18 'trx-order':17 'utama':9 'vixion':4 'yamaha':3
+145	60	trx-order	Piutang jasa Auto Discret Finance (Adira) Order SPK: /000000060	2022-03-22	Kendaraan R2 Honda BEAT , Nopol F 6181 FCH	'/000000060':1 '/ref-60':16 '6181':6 'adira':11 'auto':8 'beat':4 'deddy':14 'discret':9 'f':5 'fch':7 'finance':10 'honda':3 'indramayu':13 'order':19 'pranoto':15 'pusat':12 'r2':2 'trx':18 'trx-order':17
+140	65	trx-lent	qweqwe	2022-04-02	\N	'qweqwe':1 'x2ss':2
 \.
 
 
@@ -1367,16 +1293,12 @@ COPY public.trx_detail (id, code_id, trx_id, debt, cred) FROM stdin;
 2	1113	85	0.00	1200000.00
 1	5511	86	900000.00	0.00
 2	1113	86	0.00	900000.00
-1	5511	87	880000.00	0.00
-2	1113	87	0.00	880000.00
 1	5511	88	600000.00	0.00
 2	1113	88	0.00	600000.00
 1	5511	89	800000.00	0.00
 2	1113	89	0.00	800000.00
 1	5511	90	800000.00	0.00
 2	1113	90	0.00	800000.00
-1	5511	91	720000.00	0.00
-2	1113	91	0.00	720000.00
 1	5511	92	760000.00	0.00
 2	1113	92	0.00	760000.00
 1	5511	93	760000.00	0.00
@@ -1495,8 +1417,6 @@ COPY public.trx_detail (id, code_id, trx_id, debt, cred) FROM stdin;
 2	4112	175	0.00	2500000.00
 1	1113	176	3500000.00	0.00
 2	4112	176	0.00	3500000.00
-1	5512	172	5500000.00	0.00
-2	1113	172	0.00	5500000.00
 1	5512	171	3000000.00	0.00
 2	1113	171	0.00	3000000.00
 1	5512	156	18000000.00	0.00
@@ -1505,12 +1425,46 @@ COPY public.trx_detail (id, code_id, trx_id, debt, cred) FROM stdin;
 2	1113	157	0.00	0.00
 1	5512	158	0.00	0.00
 2	1113	158	0.00	0.00
-1	5512	193	25000000.00	0.00
-2	1113	193	0.00	25000000.00
-1	1113	194	2500000.00	0.00
-2	4112	194	0.00	2500000.00
-1	1113	195	1500000.00	0.00
-2	4112	195	0.00	1500000.00
+1	1113	196	50000.00	0.00
+2	4112	196	0.00	50000.00
+1	5512	197	20000000.00	0.00
+2	1113	197	0.00	20000000.00
+1	1113	199	3000000.00	0.00
+2	4112	199	0.00	3000000.00
+1	1113	200	250000.00	0.00
+2	4112	200	0.00	250000.00
+1	5512	172	6500000.00	0.00
+2	1113	172	0.00	6500000.00
+1	5513	201	1200000.00	0.00
+2	1113	201	0.00	1200000.00
+1	5512	202	2000000.00	0.00
+2	1113	202	0.00	2000000.00
+1	1113	208	300000.00	0.00
+2	4113	208	0.00	300000.00
+1	1113	209	500000.00	0.00
+2	4113	209	0.00	500000.00
+1	1113	210	500000.00	0.00
+2	4113	210	0.00	500000.00
+1	1113	213	6500.00	0.00
+2	4113	213	0.00	6500.00
+1	1113	212	125410.00	0.00
+2	4113	212	0.00	125410.00
+1	1113	214	65000.00	0.00
+2	4113	214	0.00	65000.00
+1	5511	247	880000.00	0.00
+2	1113	247	0.00	880000.00
+1	1113	248	10000.00	0.00
+2	4113	248	0.00	10000.00
+1	1113	249	200000.00	0.00
+2	4113	249	0.00	200000.00
+1	1113	250	1500000.00	0.00
+2	4113	250	0.00	1500000.00
+1	1113	251	250000.00	0.00
+2	4113	251	0.00	250000.00
+1	1113	198	12000000.00	0.00
+2	4112	198	0.00	12000000.00
+1	1113	252	2500.00	0.00
+2	4113	252	0.00	2500.00
 \.
 
 
@@ -1728,24 +1682,10 @@ SELECT pg_catalog.setval('public.invoices_id_seq', 11, true);
 
 
 --
--- Name: lent_details_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
---
-
-SELECT pg_catalog.setval('public.lent_details_id_seq', 1, false);
-
-
---
--- Name: loan_details_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
---
-
-SELECT pg_catalog.setval('public.loan_details_id_seq', 1, false);
-
-
---
 -- Name: loans_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.loans_id_seq', 33, true);
+SELECT pg_catalog.setval('public.loans_id_seq', 34, true);
 
 
 --
@@ -1780,7 +1720,7 @@ SELECT pg_catalog.setval('public.trx_detail_seq', 1, false);
 -- Name: trx_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.trx_seq', 195, true);
+SELECT pg_catalog.setval('public.trx_seq', 252, true);
 
 
 --
@@ -1940,27 +1880,11 @@ ALTER TABLE ONLY public.ktp_addresses
 
 
 --
--- Name: lent_details lent_details_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.lent_details
-    ADD CONSTRAINT lent_details_pkey PRIMARY KEY (id);
-
-
---
 -- Name: lents lents_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.lents
     ADD CONSTRAINT lents_pkey PRIMARY KEY (order_id);
-
-
---
--- Name: loan_details loan_details_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.loan_details
-    ADD CONSTRAINT loan_details_pkey PRIMARY KEY (id);
 
 
 --
@@ -2257,38 +2181,10 @@ CREATE INDEX ix_invoice_finance ON public.invoices USING btree (finance_id);
 
 
 --
--- Name: ix_lent_detail_date; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX ix_lent_detail_date ON public.lent_details USING btree (payment_at);
-
-
---
--- Name: ix_lent_detail_lent; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX ix_lent_detail_lent ON public.lent_details USING btree (order_id);
-
-
---
 -- Name: ix_lent_order; Type: INDEX; Schema: public; Owner: postgres
 --
 
 CREATE INDEX ix_lent_order ON public.lents USING btree (order_id);
-
-
---
--- Name: ix_loan_detail_date; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX ix_loan_detail_date ON public.loan_details USING btree (payment_at);
-
-
---
--- Name: ix_loan_detail_loan; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX ix_loan_detail_loan ON public.loan_details USING btree (loan_id);
 
 
 --
@@ -2424,27 +2320,11 @@ ALTER TABLE ONLY public.ktp_addresses
 
 
 --
--- Name: lent_details lent_details_order_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.lent_details
-    ADD CONSTRAINT lent_details_order_fkey FOREIGN KEY (order_id) REFERENCES public.lents(order_id) ON DELETE CASCADE;
-
-
---
 -- Name: lents lents_order_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.lents
     ADD CONSTRAINT lents_order_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id);
-
-
---
--- Name: loan_details loan_details_loan_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.loan_details
-    ADD CONSTRAINT loan_details_loan_fkey FOREIGN KEY (loan_id) REFERENCES public.loans(id) ON DELETE CASCADE;
 
 
 --

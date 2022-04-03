@@ -17,6 +17,76 @@ import (
 	"github.com/gorilla/mux"
 )
 
+func Lent_Payment(w http.ResponseWriter, r *http.Request) {
+
+	EnableCors(&w)
+	w.Header().Set("Access-Control-Allow-Methods", "PUT")
+
+	params := mux.Vars(r)
+
+	trxid, _ := strconv.ParseInt(params["id"], 10, 64)
+
+	var data ts_loan_payment
+
+	err := json.NewDecoder(r.Body).Decode(&data)
+
+	if err != nil {
+		log.Fatalf("Unable to decode trx from body.  %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	var updatedRows int64 = 0
+
+	if trxid == 0 {
+		trxid, err = createTransaction(&data.Trx, data.Token)
+	} else {
+		_, err = updateTransaction(&trxid, &data.Trx, data.Token)
+
+	}
+
+	if err != nil {
+		//log.Printf("Unable to update transaction.  %v", err)
+		log.Fatalf("Unable to update transaction %v", err)
+		//http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
+
+	if len(data.Trx.Details) > 0 {
+
+		_, err = deleteDetailsByOrder(&trxid)
+		if err != nil {
+			log.Fatalf("Unable to delete trx detail query %v", err)
+			//http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
+		}
+		//}
+
+		// 	var newId int64 = 0
+
+		err = bulkInsertDetails(data.Trx.Details, &trxid)
+
+		if err != nil {
+			log.Fatalf("Unable to execute finances query %v", err)
+			//log.Printf("Unable to insert transaction details (message from command).  %v", err)
+			//http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
+		}
+	}
+
+	msg := fmt.Sprintf("Loan updated successfully. Total rows/record affected %v", updatedRows)
+
+	// format the response message
+	res := Response{
+		ID:      trxid,
+		Message: msg,
+	}
+
+	// send the response
+	json.NewEncoder(w).Encode(res)
+
+}
+
 func Lent_GetUnits(w http.ResponseWriter, r *http.Request) {
 	EnableCors(&w)
 
@@ -136,24 +206,37 @@ func Lent_Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	trxid, err := createTransaction(&data.Trx, data.Token)
+	trxid, err := trxGetOrder(&data.Lent.OrderID)
 
 	if err != nil {
-		log.Fatalf("Tidak bsia membuat transaksi baru %v", err)
+		log.Fatalf("Tidak bisa membuat pinjaman baru %v", err)
+		//log.Printf("(API) Unable to create transaction.  %v", err)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+
+	//if(data.unit.verified_by != nil) {
+	_, err = trxMoveToLent(&trxid, &data.Trx, data.Token)
+	//trxid, err := createTransaction(&data.Trx, data.Token)
+	//	trxid, err := updateTransaction(&data.Trx.ID, &data.Trx, data.Token)
+	//}
+
+	if err != nil {
+		log.Fatalf("Tidak bisa membuat pinjaman baru %v", err)
 		//log.Printf("(API) Unable to create transaction.  %v", err)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
 
-	if len(data.Trx.Details) > 0 {
+	// if len(data.Trx.Details) > 0 {
 
-		err = bulkInsertDetails(data.Trx.Details, &trxid)
+	// 	err = bulkInsertDetails(data.Trx.Details, &trxid)
 
-		if err != nil {
-			log.Fatalf("Fatal %v", err)
-			return
-		}
-	}
+	// 	if err != nil {
+	// 		log.Fatalf("Fatal %v", err)
+	// 		return
+	// 	}
+	// }
 
 	data.Trx.ID = trxid
 	json.NewEncoder(w).Encode(&data)
@@ -262,8 +345,6 @@ func lent_create_trx_detail_query() *strings.Builder {
 	b.WriteString(" INNER JOIN acc_type AS e ON e.id = c.type_id")
 	b.WriteString(" WHERE d.trx_id=x.id")
 	b.WriteString(" AND e.group_id = 1 ")
-	//	b.WriteString(" AND (t1.division='trx-lent' AND t1.division='trx-cicilan')")
-	b.WriteString(" ORDER BY d.trx_id, d.id")
 
 	sb := strings.Builder{}
 
@@ -272,6 +353,8 @@ func lent_create_trx_detail_query() *strings.Builder {
 	sb.WriteString(" AS detail ")
 	sb.WriteString(" FROM trx x")
 	sb.WriteString(" WHERE x.ref_id=$1")
+	sb.WriteString(" AND (x.division='trx-lent' OR x.division='trx-cicilan')")
+	sb.WriteString(" ORDER BY x.id")
 
 	return &sb
 }
@@ -330,8 +413,8 @@ func lent_get_item(order_id *int64) (ts_lent_item, error) {
 
 type ts_lent_all struct {
 	models.Lent
-	Payment *json.RawMessage `json:"payment"`
-	Unit    *json.RawMessage `json:"unit"`
+	Payment *json.RawMessage `json:"payment,omitempty"`
+	Unit    *json.RawMessage `json:"unit,omitempty"`
 }
 
 type lent_all_unit struct {
@@ -353,8 +436,12 @@ func lent_get_units() ([]lent_all_unit, error) {
 	var units []lent_all_unit
 
 	qunit := lent_create_unit_query()
-	qunit.WriteString(" WHERE o.verified_by IS NULL")
+
+	qunit.WriteString(" INNER JOIN trx ON trx.ref_id = o.id")
+	qunit.WriteString(" WHERE o.verified_by IS NOT NULL")
 	qunit.WriteString(" AND o.id NOT IN (SELECT order_id FROM invoice_details)")
+	qunit.WriteString(" AND o.id NOT IN (SELECT order_id FROM lents)")
+	qunit.WriteString(" AND trx.division = 'trx-order'")
 
 	rs, err := Sql().Query(qunit.String())
 
@@ -400,24 +487,24 @@ func lent_get_all() ([]ts_lent_all, error) {
 	qunit := lent_create_unit_query()
 	qunit.WriteString(" WHERE o.id = t.order_id")
 	sb := strings.Builder{}
-	sb2 := strings.Builder{}
+	sbPayment := strings.Builder{}
 
-	sb2.WriteString(`SELECT ln.order_id as "orderId"`)
-	sb2.WriteString(", sum(d.debt) as debt")
-	sb2.WriteString(", sum(d.cred) as cred")
-	sb2.WriteString(", sum(t3.bt_finance) as piutang")
-	sb2.WriteString(", sum(t3.bt_finance - d.cred) as saldo")
-	sb2.WriteString(" FROM trx_detail AS d")
-	sb2.WriteString(" INNER JOIN trx r ON r.id = d.trx_id")
-	sb2.WriteString(" INNER JOIN lents ln ON ln.order_id = r.ref_id")
-	sb2.WriteString(" INNER JOIN orders t3 ON t3.id = ln.order_id")
-	sb2.WriteString(" INNER JOIN acc_code AS c ON c.id = d.code_id")
-	sb2.WriteString(" INNER JOIN acc_type AS e ON e.id = c.type_id")
-	sb2.WriteString(" WHERE e.group_id != 1 and ln.order_id = o.id AND (r.division = 'trx-lent' or r.division = 'trx-cicilan')")
-	sb2.WriteString(" GROUP BY ln.order_id")
+	sbPayment.WriteString(`SELECT ln.order_id as "orderId"`)
+	sbPayment.WriteString(", sum(d.debt) as debt")
+	sbPayment.WriteString(", sum(d.cred) as cred")
+	sbPayment.WriteString(", t3.bt_finance as piutang")
+	sbPayment.WriteString(", t3.bt_finance - sum(d.cred) as saldo")
+	sbPayment.WriteString(" FROM trx_detail AS d")
+	sbPayment.WriteString(" INNER JOIN trx r ON r.id = d.trx_id")
+	sbPayment.WriteString(" INNER JOIN lents ln ON ln.order_id = r.ref_id")
+	sbPayment.WriteString(" INNER JOIN orders t3 ON t3.id = ln.order_id")
+	sbPayment.WriteString(" INNER JOIN acc_code AS c ON c.id = d.code_id")
+	sbPayment.WriteString(" INNER JOIN acc_type AS e ON e.id = c.type_id")
+	sbPayment.WriteString(" WHERE e.group_id != 1 and ln.order_id = t.order_id AND (r.division = 'trx-lent' or r.division = 'trx-cicilan')")
+	sbPayment.WriteString(" GROUP BY ln.order_id, t3.bt_finance")
 
 	sb.WriteString("SELECT t.order_id, t.name, t.street, t.city, t.phone, t.cell, t.zip, ")
-	sb.WriteString(fyc.NestQuerySingle(sb2.String()))
+	sb.WriteString(fyc.NestQuerySingle(sbPayment.String()))
 	sb.WriteString(" AS payment, ")
 	sb.WriteString(fyc.NestQuerySingle(qunit.String()))
 	sb.WriteString(" AS unit ")
@@ -462,18 +549,27 @@ func lent_get_all() ([]ts_lent_all, error) {
 func lent_delete(id *int64) (int64, error) {
 
 	//log.Printf("%d", id)
-	sqlStatement := `DELETE FROM lents WHERE id=$1`
+	sqlStatement := `DELETE FROM lents WHERE order_id=$1`
 	_, err := Sql().Exec(sqlStatement, id)
 	if err != nil {
 		log.Fatal(err)
 		return 0, err
 	}
-	sqlStatement = `DELETE FROM trx WHERE ref_id=$1 AND (division='trx-lent' OR division='trx-cicilan')`
+
+	sqlStatement = `DELETE FROM trx WHERE ref_id=$1 AND division='trx-cicilan'`
+	_, err = Sql().Exec(sqlStatement, id)
+	if err != nil {
+		log.Fatal(err)
+		return 0, err
+	}
+
+	sqlStatement = `UPDATE trx SET division='trx-order', descriptions='Batal dipiutangkan' WHERE ref_id=$1 AND division='trx-lent'`
 	res, err := Sql().Exec(sqlStatement, id)
 	if err != nil {
 		log.Fatal(err)
 		return 0, err
 	}
+
 	rowsAffected, err := res.RowsAffected()
 	return rowsAffected, err
 

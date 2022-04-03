@@ -747,6 +747,7 @@ func invoice_get_orders(finance_id *int, invoice_id *int64) ([]invoice_order, er
 	b.WriteString(" WHERE o.finance_id=$1")
 	b.WriteString(" AND o.verified_by IS NOT NULL")
 	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM invoice_details)")
+	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM lents)")
 	b.WriteString(")")
 	// -- WHERE 0 = $2
 	// -- WHERE d.invoice_id = $2

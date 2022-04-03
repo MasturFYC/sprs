@@ -340,6 +340,22 @@ func rptOrder1(financeId *int, branchId *int, typeId *int, month *int, year *int
 	b.WriteString(" AND (tp.wheel_id=$3 OR 0=$3)")
 	b.WriteString(" AND o.verified_by IS NOT NULL")
 	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM invoice_details)")
+	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM lents)")
+	b.WriteString(" AND (EXTRACT(MONTH from o.order_at)=$4 AND EXTRACT(YEAR from o.order_at)=$5 OR 0=$4)")
+
+	b.WriteString("\n\nUNION ALL\n\n")
+
+	// mencari orders yg dipinjamkan
+	b.WriteString(" SELECT 3 as status, o.id, o.name, o.order_at, o.bt_finance,")
+	b.WriteString(" o.bt_percent, o.bt_matel, o.branch_id, o.finance_id,")
+	b.WriteString(" o.is_stnk, o.stnk_price ")
+	b.WriteString(" FROM orders AS o")
+	b.WriteString(" INNER JOIN units un ON un.order_id=o.id")
+	b.WriteString(" INNER JOIN types tp ON tp.id=un.type_id")
+	b.WriteString(" WHERE (o.finance_id=$1 OR 0=$1)")
+	b.WriteString(" AND (o.branch_id=$2 OR 0=$2)")
+	b.WriteString(" AND (tp.wheel_id=$3 OR 0=$3)")
+	b.WriteString(" AND o.id IN (SELECT order_id FROM lents)")
 	b.WriteString(" AND (EXTRACT(MONTH from o.order_at)=$4 AND EXTRACT(YEAR from o.order_at)=$5 OR 0=$4)")
 
 	b.WriteString(")")
@@ -424,6 +440,7 @@ func rptOrder2(financeId *int, branchId *int, typeId *int, dateFrom *string, dat
 	b.WriteString(" AND (o.branch_id=$2 OR 0=$2)")
 	b.WriteString(" AND (tp.wheel_id=$3 OR 0=$3)")
 	b.WriteString(" AND o.id IN (SELECT order_id FROM invoice_details)")
+	//b.WriteString(" AND o.id NOT IN (SELECT order_id FROM lents)")
 	//	b.WriteString(" AND ((v.invoice_at>=TO_DATE($4, 'YYYY-MM-DD') AND v.invoice_at<=TO_DATE($5, 'YYYY-MM-DD')) OR (''=$4 AND ''=$5))")
 	b.WriteString(" AND (o.order_at>=TO_DATE($4, 'YYYY-MM-DD') AND o.order_at<=TO_DATE($5,'YYYY-MM-DD'))")
 
@@ -441,6 +458,22 @@ func rptOrder2(financeId *int, branchId *int, typeId *int, dateFrom *string, dat
 	b.WriteString(" AND (tp.wheel_id=$3 OR 0=$3)")
 	b.WriteString(" AND o.verified_by IS NOT NULL")
 	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM invoice_details)")
+	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM lents)")
+	b.WriteString(" AND (o.order_at>=TO_DATE($4, 'YYYY-MM-DD') AND o.order_at<=TO_DATE($5,'YYYY-MM-DD'))")
+
+	b.WriteString("\n\nUNION ALL\n\n")
+
+	// mencari orders yg dipinjamkan
+	b.WriteString(" SELECT 3 as status, o.id, o.name, o.order_at, o.bt_finance,")
+	b.WriteString(" o.bt_percent, o.bt_matel, o.branch_id, o.finance_id,")
+	b.WriteString(" o.is_stnk, o.stnk_price ")
+	b.WriteString(" FROM orders AS o")
+	b.WriteString(" INNER JOIN units un ON un.order_id=o.id")
+	b.WriteString(" INNER JOIN types tp ON tp.id=un.type_id")
+	b.WriteString(" WHERE (o.finance_id=$1 OR 0=$1)")
+	b.WriteString(" AND (o.branch_id=$2 OR 0=$2)")
+	b.WriteString(" AND (tp.wheel_id=$3 OR 0=$3)")
+	b.WriteString(" AND o.id IN (SELECT order_id FROM lents)")
 	b.WriteString(" AND (o.order_at>=TO_DATE($4, 'YYYY-MM-DD') AND o.order_at<=TO_DATE($5,'YYYY-MM-DD'))")
 
 	b.WriteString(")")
@@ -527,6 +560,21 @@ func rptOrder3(financeId *int, branchId *int, typeId *int) ([]order_invoiced, er
 	b.WriteString(" AND (tp.wheel_id=$3 OR 0=$3)")
 	b.WriteString(" AND o.verified_by IS NOT NULL")
 	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM invoice_details)")
+	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM lents)")
+
+	//	b.WriteString("\n\nUNION ALL\n\n")
+
+	// // mencari unit orders yg dipinjamkan
+	// b.WriteString(" SELECT 3 as status, o.id, o.name, o.order_at, o.bt_finance,")
+	// b.WriteString(" o.bt_percent, o.bt_matel, o.branch_id, o.finance_id,")
+	// b.WriteString(" o.is_stnk, o.stnk_price ")
+	// b.WriteString(" FROM orders AS o")
+	// b.WriteString(" INNER JOIN units un ON un.order_id=o.id")
+	// b.WriteString(" INNER JOIN types tp ON tp.id=un.type_id")
+	// b.WriteString(" WHERE (o.finance_id=$1 OR 0=$1)")
+	// b.WriteString(" AND (o.branch_id=$2 OR 0=$2)")
+	// b.WriteString(" AND (tp.wheel_id=$3 OR 0=$3)")
+	// b.WriteString(" AND o.id IN (SELECT order_id FROM lents)")
 
 	b.WriteString(")")
 

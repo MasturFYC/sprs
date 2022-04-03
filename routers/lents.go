@@ -13,6 +13,7 @@ func LentRouter(router *mux.Router) {
 	router.HandleFunc("/{id}", middleware.Lent_Delete).Methods("DELETE")
 	router.HandleFunc("", middleware.Lent_Create).Methods("POST")
 	router.HandleFunc("/{id}", middleware.Lent_Update).Methods("PUT")
+	router.HandleFunc("/payment/{id}", middleware.Lent_Payment).Methods("POST")
 	router.HandleFunc("/get/units", middleware.Lent_GetUnits).Methods("GET")
 
 }
