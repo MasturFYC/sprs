@@ -685,6 +685,7 @@ func searchOrders(txt *string) ([]order_all, error) {
 	b.WriteString(" FROM orders AS o")
 	b.WriteString(" WHERE token @@ to_tsquery('indonesian', $1)")
 	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM invoice_details)")
+	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM lents)")
 	b.WriteString(" ORDER BY o.order_at, o.id")
 
 	rs, err := Sql().Query(b.String(), txt)
@@ -742,6 +743,7 @@ func get_order_by_finance(id *int) ([]order_all, error) {
 	b.WriteString(" FROM orders AS o")
 	b.WriteString(" WHERE o.finance_id=$1 OR 0=$1")
 	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM invoice_details)")
+	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM lents)")
 	b.WriteString(" ORDER BY o.order_at, o.id")
 
 	rs, err := Sql().Query(b.String(), id)
@@ -799,6 +801,7 @@ func get_order_by_branch(id *int) ([]order_all, error) {
 	b.WriteString(" FROM orders AS o")
 	b.WriteString(" WHERE o.branch_id=$1 OR 0=$1")
 	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM invoice_details)")
+	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM lents)")
 	b.WriteString(" ORDER BY o.order_at, o.id")
 
 	rs, err := Sql().Query(b.String(), id)
@@ -893,6 +896,7 @@ func get_order_by_month(id *int) ([]order_all, error) {
 	b.WriteString(" FROM orders AS o")
 	b.WriteString(" WHERE EXTRACT(MONTH from o.order_at)=$1 OR 0 = $1")
 	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM invoice_details)")
+	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM lents)")
 	b.WriteString(" ORDER BY o.order_at, o.id")
 	rs, err := Sql().Query(b.String(), id)
 
