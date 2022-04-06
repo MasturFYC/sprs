@@ -1,27 +1,24 @@
 package main
 
 import (
-	"fmt"
+	"time"
 
 	"log"
 
-	"net/http"
-
-	"fyc.com/sprs/routers"
-
-	"github.com/gorilla/mux"
+	conn "fyc.com/sprs/controller"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 
 	"github.com/joho/godotenv"
-	"github.com/rs/cors"
 )
 
-var (
-	mainRouter *mux.Router
-)
+// var (
+// 	mainRouter *mux.Router
+// )
 
-func createRouter() {
-	mainRouter = mux.NewRouter()
-}
+// func createRouter() {
+// 	mainRouter = mux.NewRouter()
+// }
 
 func loadEnvirontment() {
 	// home, err := os.UserHomeDir()
@@ -39,70 +36,78 @@ func loadEnvirontment() {
 
 func loadRouter() {
 
-	routers.InitializeRoute(mainRouter)
+	// routers.InitializeRoute(mainRouter)
 
-	routers.AccGroupRouter(mainRouter.PathPrefix("/api/acc-group").Subrouter())
-	routers.AccountTypeRouter(mainRouter.PathPrefix("/api/acc-type").Subrouter())
-	routers.AccountCodeRouter(mainRouter.PathPrefix("/api/acc-code").Subrouter())
-	routers.ActionRouter(mainRouter.PathPrefix("/api/actions/").Subrouter())
-	routers.BranchRouter(mainRouter.PathPrefix("/api/branchs").Subrouter())
-	routers.CustomerRouter(mainRouter.PathPrefix("/api/customers").Subrouter())
-	routers.FinanceGroupRouter(mainRouter.PathPrefix("/api/finance-group").Subrouter())
-	routers.FinanceRouter(mainRouter.PathPrefix("/api/finances/").Subrouter())
+	// routers.AccGroupRouter(mainRouter.PathPrefix("/api/acc-group").Subrouter())
+	// routers.AccountTypeRouter(mainRouter.PathPrefix("/api/acc-type").Subrouter())
+	// routers.AccountCodeRouter(mainRouter.PathPrefix("/api/acc-code").Subrouter())
+	// routers.ActionRouter(mainRouter.PathPrefix("/api/actions/").Subrouter())
+	// routers.BranchRouter(mainRouter.PathPrefix("/api/branchs").Subrouter())
+	// routers.CustomerRouter(mainRouter.PathPrefix("/api/customers").Subrouter())
+	// routers.FinanceGroupRouter(mainRouter.PathPrefix("/api/finance-group").Subrouter())
+	// routers.FinanceRouter(mainRouter.PathPrefix("/api/finances/").Subrouter())
 
-	routers.HomeAddressRouter(mainRouter.PathPrefix("/api/home-address").Subrouter())
-	routers.KtpAddressRouter(mainRouter.PathPrefix("/api/ktp-address").Subrouter())
-	routers.OfficeAddressRouter(mainRouter.PathPrefix("/api/office-address").Subrouter())
-	routers.PostAddressRouter(mainRouter.PathPrefix("/api/post-address").Subrouter())
+	// routers.HomeAddressRouter(mainRouter.PathPrefix("/api/home-address").Subrouter())
+	// routers.KtpAddressRouter(mainRouter.PathPrefix("/api/ktp-address").Subrouter())
+	// routers.OfficeAddressRouter(mainRouter.PathPrefix("/api/office-address").Subrouter())
+	// routers.PostAddressRouter(mainRouter.PathPrefix("/api/post-address").Subrouter())
 
-	routers.MerkRouter(mainRouter.PathPrefix("/api/merks/").Subrouter())
-	routers.OrderRouter(mainRouter.PathPrefix("/api/orders").Subrouter())
+	// routers.MerkRouter(mainRouter.PathPrefix("/api/merks/").Subrouter())
+	// routers.OrderRouter(mainRouter.PathPrefix("/api/orders").Subrouter())
 
-	// routers.ReceivableRouter(mainRouter.PathPrefix("/api/receivables/").Subrouter())
-	routers.TaskRouter(mainRouter.PathPrefix("/api/tasks").Subrouter())
-	routers.TypeRouter(mainRouter.PathPrefix("/api/types").Subrouter())
-	routers.UnitRouter(mainRouter.PathPrefix("/api/units/").Subrouter())
-	routers.WarehouseRouter(mainRouter.PathPrefix("/api/warehouses/").Subrouter())
-	routers.WheelRouter(mainRouter.PathPrefix("/api/wheels").Subrouter())
-	routers.PropertyRouter(mainRouter.PathPrefix("/api/properties/").Subrouter())
-	routers.TransactionRouter(mainRouter.PathPrefix("/api/trx/").Subrouter())
-	routers.TransactionDetailRouter(mainRouter.PathPrefix("/api/trx-detail/").Subrouter())
-	routers.SaldoRouter(mainRouter.PathPrefix("/api/saldo/").Subrouter())
-	routers.ReportRouter(mainRouter.PathPrefix("/api/report/").Subrouter())
-	routers.InvoiceRouter(mainRouter.PathPrefix("/api/invoices/").Subrouter())
+	// // routers.ReceivableRouter(mainRouter.PathPrefix("/api/receivables/").Subrouter())
+	// routers.TaskRouter(mainRouter.PathPrefix("/api/tasks").Subrouter())
+	// routers.TypeRouter(mainRouter.PathPrefix("/api/types").Subrouter())
+	// routers.UnitRouter(mainRouter.PathPrefix("/api/units/").Subrouter())
+	// routers.WarehouseRouter(mainRouter.PathPrefix("/api/warehouses/").Subrouter())
+	// routers.WheelRouter(mainRouter.PathPrefix("/api/wheels").Subrouter())
+	// routers.PropertyRouter(mainRouter.PathPrefix("/api/properties/").Subrouter())
+	// routers.TransactionRouter(mainRouter.PathPrefix("/api/trx/").Subrouter())
+	// routers.TransactionDetailRouter(mainRouter.PathPrefix("/api/trx-detail/").Subrouter())
+	// routers.SaldoRouter(mainRouter.PathPrefix("/api/saldo/").Subrouter())
+	// routers.ReportRouter(mainRouter.PathPrefix("/api/report/").Subrouter())
+	// routers.InvoiceRouter(mainRouter.PathPrefix("/api/invoices/").Subrouter())
 
-	routers.LoanRouter(mainRouter.PathPrefix("/api/loans").Subrouter())
-	routers.LentRouter(mainRouter.PathPrefix("/api/lents").Subrouter())
+	// routers.LoanRouter(mainRouter.PathPrefix("/api/loans").Subrouter())
+	// routers.LentRouter(mainRouter.PathPrefix("/api/lents").Subrouter())
+
 }
 
 func runServer() {
-	cor := cors.New(cors.Options{
-		AllowedOrigins: []string{
-			"http://localhost:8181",
-			"http://localhost:3000",
-			//"http://192.168.100.2:3000",
-			//"http://103.179.56.180",
-			"http://ya2yo.com",
-			//"http://localhost:3000",
-			//"http://192.168.100.3:3000",
+
+	router := gin.Default()
+	// CORS for https://foo.com and https://github.com origins, allowing:
+	// - PUT and PATCH methods
+	// - Origin header
+	// - Credentials share
+	// - Preflight requests cached for 12 hours
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:  []string{"http://localhost:3000"},
+		AllowMethods:  []string{"PUT", "PATCH"},
+		AllowHeaders:  []string{"Origin"},
+		ExposeHeaders: []string{"Content-Length"},
+		// AllowCredentials: true,
+		AllowOriginFunc: func(origin string) bool {
+			return origin == "http://localhost:3000"
 		},
+		MaxAge: 12 * time.Hour,
+	}))
 
-		AllowedMethods: []string{"POST", "GET", "OPTIONS", "PUT", "DELETE"},
-		AllowedHeaders: []string{"Accept", "Accept-Language", "Content-Type"},
-		//AllowCredentials: true,
-		Debug: true,
-	})
+	apiRouter := router.Group("/api")
+	{
+		accGroupRouter := apiRouter.Group("/acc-group")
+		{
+			accGroupRouter.GET("", conn.GetAccGroups)
+			accGroupRouter.GET("/types/:id", conn.Group_GetTypes)
+		}
+	}
 
-	handler := cor.Handler(mainRouter)
+	router.Run(":8181")
 
-	fmt.Println("web server run at local: http://localhost:8181/")
-	fmt.Println("web server run at: http://pixel.id:8181/")
-	log.Fatal(http.ListenAndServe(":8181", handler))
 }
 
 func main() {
 	loadEnvirontment()
-	createRouter()
-	loadRouter()
+	//	createRouter()
 	runServer()
 }

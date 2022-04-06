@@ -1,4 +1,4 @@
-package middleware
+package controller
 
 import (
 	"database/sql"
@@ -12,6 +12,7 @@ import (
 
 	"strconv"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/mux"
 )
 
@@ -36,30 +37,31 @@ func Group_GetAllAccount(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(&accounts)
 }
 
-func GetAccGroups(w http.ResponseWriter, r *http.Request) {
-	EnableCors(&w)
+func GetAccGroups(c *gin.Context) {
 
 	groups, err := getAllAccGroups()
 
 	if err != nil {
 		//log.Printf("Unable to get all account groups. %v", err)
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		//http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
 
-	json.NewEncoder(w).Encode(&groups)
+	c.IndentedJSON(http.StatusOK, &groups)
+	//json.NewEncoder(w).Encode(&groups)
 }
-func Group_GetTypes(w http.ResponseWriter, r *http.Request) {
 
-	EnableCors(&w)
+func Group_GetTypes(c *gin.Context) {
 
-	params := mux.Vars(r)
+	//	EnableCors(&w)
 
-	id, err := strconv.Atoi(params["id"])
+	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
 		//log.Printf("Unable to convert the string into int.  %v", err)
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		//http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -67,11 +69,11 @@ func Group_GetTypes(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		//log.Printf("Unable to get account group. %v", err)
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 
-	json.NewEncoder(w).Encode(&acc_group)
+	c.IndentedJSON(http.StatusOK, &acc_group)
 }
 
 /*
