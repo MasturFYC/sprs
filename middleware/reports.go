@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"strings"
 
@@ -127,6 +128,7 @@ func get_report_trx_by_month(m *int, y *int) ([]reportMonth, error) {
 	b := strings.Builder{}
 
 	b.WriteString("WITH RECURSIVE rs AS (\n")
+
 	b.WriteString("SELECT 0 AS group, 0 AS id, 'Saldo awal' AS name,")
 	// -- COALESCE(SUM(d.debt), 0) AS debt,
 	b.WriteString(" 0 AS debt,")
@@ -135,11 +137,14 @@ func get_report_trx_by_month(m *int, y *int) ([]reportMonth, error) {
 	b.WriteString(" INNER JOIN trx x on x.id = d.trx_id")
 	b.WriteString(" INNER JOIN acc_code c on c.id = d.code_id")
 	//-- INNER JOIN acc_type t on t.id = c.type_id
-	b.WriteString(" WHERE c.receivable_option = 1 AND")
-	b.WriteString(" EXTRACT(MONTH FROM x.trx_date) < $1 AND")
-	b.WriteString(" EXTRACT(YEAR  FROM x.trx_date) = $2")
+	b.WriteString(" WHERE c.type_id = 11 AND")
 
-	b.WriteString("\nUNION ALL\n")
+	b.WriteString(" x.trx_date < TO_DATE($3, 'YYYY-MM-DD')")
+
+	// b.WriteString(" (EXTRACT(MONTH FROM x.trx_date) < $1 OR")
+	// b.WriteString(" EXTRACT(YEAR FROM x.trx_date) <= $2)")
+
+	b.WriteString("\n\nUNION ALL\n\n")
 
 	b.WriteString("SELECT 1 as group, t.id, t.name,")
 	b.WriteString(" COALESCE(sum(d.debt), 0) AS debt,")
@@ -148,9 +153,9 @@ func get_report_trx_by_month(m *int, y *int) ([]reportMonth, error) {
 	b.WriteString(" INNER JOIN trx x on x.id = d.trx_id")
 	b.WriteString(" INNER JOIN acc_code c on c.id = d.code_id")
 	b.WriteString(" INNER JOIN acc_type t on t.id = c.type_id")
-	b.WriteString(" WHERE c.receivable_option != 1 AND")
-	b.WriteString(" extract(MONTH FROM x.trx_date) = $1")
-	b.WriteString(" AND extract(YEAR  FROM x.trx_date) = $2")
+	b.WriteString(" WHERE c.type_id != 11 AND")
+	b.WriteString(" (EXTRACT(MONTH FROM x.trx_date) = $1")
+	b.WriteString(" AND EXTRACT(YEAR FROM x.trx_date) = $2)")
 	b.WriteString(" GROUP BY t.id)\n")
 	b.WriteString("SELECT")
 	b.WriteString(" t.group,")
@@ -162,8 +167,8 @@ func get_report_trx_by_month(m *int, y *int) ([]reportMonth, error) {
 	b.WriteString(" FROM rs t")
 	b.WriteString(" ORDER BY t.group, t.id;")
 
-	//log.Println(b.String())
-	rs, err := Sql().Query(b.String(), m, y)
+	log.Println(fmt.Sprintf("%d-%02d-%02d", *y, *m, 1))
+	rs, err := Sql().Query(b.String(), m, y, fmt.Sprintf("%d-%02d-%02d", (*y), (*m), 1))
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)
