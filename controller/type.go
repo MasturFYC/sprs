@@ -31,13 +31,16 @@ func GetType(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		//		log.Fatalf("Unable to convert the string into int.  %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	types, err := getType(&id)
 
 	if err != nil {
-		log.Fatalf("Unable to get type. %v", err)
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
 	}
 
 	c.JSON(http.StatusOK, &types)
@@ -49,7 +52,8 @@ func DeleteType(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	deletedRows := deleteType(&id)
@@ -88,7 +92,7 @@ func CreateType(c *gin.Context) {
 
 	t.ID = id
 
-	c.JSON(http.StatusOK, &t)
+	c.JSON(http.StatusCreated, &t)
 
 }
 

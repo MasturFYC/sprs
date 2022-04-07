@@ -63,3 +63,9 @@ type AccCodeType struct {
 	Descriptions NullString `json:"descriptions"`
 	IsActive     bool       `json:"isActive"`
 }
+
+type TrxType struct {
+	ID           int32      `json:"id"`
+	Name         string     `json:"name"`
+	Descriptions NullString `json:"descriptions"`
+}

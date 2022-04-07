@@ -134,7 +134,12 @@ func ActionDelete(c *gin.Context) {
 		return
 	}
 
-	deletedRows := deleteAction(&id)
+	deletedRows, err := deleteAction(&id)
+
+	if err != nil {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
+		return
+	}
 
 	msg := fmt.Sprintf("Action deleted successfully. Total rows/record affected %v", deletedRows)
 
@@ -280,7 +285,7 @@ func getAction(id *int64) (models.Action, error) {
 	return act, err
 }
 
-func deleteAction(id *int64) int64 {
+func deleteAction(id *int64) (int64, error) {
 	// create the delete sql query
 	sqlStatement := `DELETE FROM actions WHERE id=$1`
 
@@ -294,11 +299,7 @@ func deleteAction(id *int64) int64 {
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Fatalf("Error while checking the affected rows. %v", err)
-	}
-
-	return rowsAffected
+	return rowsAffected, err
 }
 
 func createAction(act *models.Action) (int64, error) {

@@ -24,20 +24,18 @@ func SearchOrders(c *gin.Context) {
 	err := c.BindJSON(&t)
 
 	if err != nil {
-		//log.Printf("Unable to decode the request body to transaction.  %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	acc_codes, err := searchOrders(&t.Txt)
+	orders, err := searchOrders(&t.Txt)
 
-	if err != nil || len(acc_codes) == 0 {
-		//log.Printf("Unable to get all account codes. %v", err)
+	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, &acc_codes)
+	c.JSON(http.StatusOK, &orders)
 }
 
 func GetOrdersByFinance(c *gin.Context) {
@@ -660,7 +658,7 @@ func searchOrders(txt *string) ([]order_all, error) {
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)
-		return nil, err
+		return orders, err
 	}
 
 	defer rs.Close()

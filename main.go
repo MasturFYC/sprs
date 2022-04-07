@@ -6,6 +6,8 @@ import (
 	"log"
 
 	conn "fyc.com/sprs/controller"
+	"fyc.com/sprs/controller/properties"
+	"fyc.com/sprs/controller/reports"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
@@ -23,6 +25,10 @@ func loadEnvirontment() {
 
 func runServer() {
 
+	//if os.Getenv("GIN_MODE") == "release" {
+	gin.SetMode(gin.ReleaseMode)
+	//}
+
 	router := gin.Default()
 	// CORS for https://foo.com and https://github.com origins, allowing:
 	// - PUT and PATCH methods
@@ -31,8 +37,8 @@ func runServer() {
 	// - Preflight requests cached for 12 hours
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:  []string{"http://localhost:3000"},
-		AllowMethods:  []string{"PUT", "PATCH"},
-		AllowHeaders:  []string{"Origin"},
+		AllowMethods:  []string{"PUT", "POST", "DELETE", "GET"},
+		AllowHeaders:  []string{"Origin", "Content-Type"},
 		ExposeHeaders: []string{"Content-Length"},
 		// AllowCredentials: true,
 		AllowOriginFunc: func(origin string) bool {
@@ -56,19 +62,20 @@ func runServer() {
 		{
 			accTypeRouter.POST("", conn.AccTypeCreate)
 			accTypeRouter.PUT("/:id", conn.AccTypeUpdate)
-			accTypeRouter.DELETE("", conn.AccTypeDelete)
+			accTypeRouter.DELETE("/:id", conn.AccTypeDelete)
 			accTypeRouter.GET("", conn.AccTypeGetAll)
 		}
 		accCodeRouter := apiRouter.Group("/acc-code")
 		{
-			accCodeRouter.POST("", conn.AccCodeCreate)
-			accCodeRouter.PUT("/:id", conn.AccCodeUpdate)
-			accCodeRouter.DELETE("/:id", conn.AccCodeDelete)
 			accCodeRouter.GET("", conn.AccCodeGetAll)
 			accCodeRouter.GET("/search-name/:txt", conn.AccCodeSearchByName)
 			accCodeRouter.GET("/group-type/:id", conn.AccCodeGetByType)
 			accCodeRouter.GET("/props", conn.AccCodeGetProps)
+			accCodeRouter.GET("/item/:id", conn.AccCodeGetItem)
 			accCodeRouter.GET("/spec/:id", conn.AccCodeGetSpec)
+			accCodeRouter.DELETE("/:id", conn.AccCodeDelete)
+			accCodeRouter.POST("", conn.AccCodeCreate)
+			accCodeRouter.PUT("/:id", conn.AccCodeUpdate)
 		}
 		actionRouter := apiRouter.Group("/action")
 		{
@@ -95,46 +102,6 @@ func runServer() {
 			customerRouter.DELETE("/:id", conn.CustomerDelete)
 			customerRouter.PUT("/:id", conn.CustomerUpdate)
 		}
-		trxRouter := apiRouter.Group("/trx") // need attention
-		{
-			trxRouter.POST("", conn.TransactionCreate)
-			trxRouter.PUT("/:id", conn.TransactionUpdate)
-			trxRouter.DELETE("/:id", conn.TransactionDelete)
-			trxRouter.GET("", conn.TransactionGetAll)
-			trxRouter.POST("/search", conn.TransactionSearch)
-			trxRouter.GET("/group/:id", conn.TransactionGetByGroup)
-			trxRouter.GET("/month/:id", conn.TransactionGetByMonth)
-		}
-		invoiceRouter := apiRouter.Group("/invoice") // need attention
-		{
-
-			invoiceRouter.GET("/finance/:id", conn.Invoice_GetByFinance)
-			invoiceRouter.GET("/month-year/:month/:year", conn.Invoice_GetByMonth) // need attention
-
-			invoiceRouter.GET("/order/:financeId/:id", conn.Invoice_GetOrders)
-			invoiceRouter.POST("/search", conn.Invoice_GetSearch)
-
-			invoiceRouter.GET("/download/1/:id", conn.Pdf_GetInvoice)
-
-			//CLIPAN  : 2
-			invoiceRouter.GET("/download/2/:id", conn.Clipan_GetInvoice)
-			// MTF  : 3
-			invoiceRouter.GET("/download/3/:id", conn.Mtf_GetInvoice)
-
-			invoiceRouter.GET("/item/:id", conn.Invoice_GetItem)
-			invoiceRouter.GET("", conn.Invoice_GetAll)
-			invoiceRouter.POST("", conn.Invoice_Create)
-			invoiceRouter.PUT("/:id", conn.Invoice_Update)
-			invoiceRouter.DELETE("/:id", conn.Invoice_Delete)
-		}
-		financeRouter := apiRouter.Group("/finance") // need attention
-		{
-			financeRouter.GET("", conn.FinanceGetAll)
-			financeRouter.GET("/:id", conn.FinanceGetItem)
-			financeRouter.DELETE("/:id", conn.FinanceDelete)
-			financeRouter.POST("", conn.FinanceCreate)
-			financeRouter.PUT("/:id", conn.FinanceUpdate)
-		}
 		financeGroupRouter := apiRouter.Group("/finance-group")
 		{
 			financeGroupRouter.GET("", conn.FinanceGroup_GetAll)
@@ -143,6 +110,14 @@ func runServer() {
 			financeGroupRouter.DELETE("/:id", conn.FinanceGroup_Delete)
 			financeGroupRouter.POST("", conn.FinanceGroup_Create)
 			financeGroupRouter.PUT("/:id", conn.FinanceGroup_Update)
+		}
+		financeRouter := apiRouter.Group("/finance") // need attention
+		{
+			financeRouter.GET("", conn.FinanceGetAll)
+			financeRouter.GET("/:id", conn.FinanceGetItem)
+			financeRouter.DELETE("/:id", conn.FinanceDelete)
+			financeRouter.POST("", conn.FinanceCreate)
+			financeRouter.PUT("/:id", conn.FinanceUpdate)
 		}
 		homeAddressRouter := apiRouter.Group("/home-address")
 		{
@@ -172,25 +147,6 @@ func runServer() {
 			postAddressRouter.PUT("/:id", conn.UpdatePostAddress)
 			postAddressRouter.DELETE("/:id", conn.DeletePostAddress)
 		}
-		loanRouter := apiRouter.Group("/loan")
-		{
-			loanRouter.GET("", conn.LoanGetAll)
-			loanRouter.GET("/:id", conn.LoanGetItem)
-			loanRouter.DELETE("/:id", conn.LoanDelete)
-			loanRouter.POST("", conn.LoanCreate)
-			loanRouter.POST("/payment/:id", conn.LoanPayment)
-			loanRouter.PUT("/:id", conn.LoanUpdate)
-		}
-		lentRouter := apiRouter.Group("/lent")
-		{
-			lentRouter.GET("", conn.LentGetAll)
-			lentRouter.DELETE("/:id", conn.LentDelete)
-			lentRouter.POST("", conn.LentCreate)
-			lentRouter.PUT("/:id", conn.LentUpdate)
-			lentRouter.GET("/item/:id", conn.LentGetItem) // need attention
-			lentRouter.POST("/payment/:id", conn.LentPayment)
-			lentRouter.GET("/get/units", conn.LentGetUnits)
-		}
 		merkRouter := apiRouter.Group("/merk")
 		{
 			merkRouter.GET("", conn.MerkGetAll)
@@ -215,10 +171,116 @@ func runServer() {
 			orderRouter.GET("/name/seq", conn.Order_GetNameSeq)
 			orderRouter.GET("/invoiced/:month/:year/:financeId", conn.Order_GetInvoiced)
 		}
+		taskRouter := apiRouter.Group("/task")
+		{
+			taskRouter.POST("", conn.CreateTask)
+			taskRouter.GET("/:id", conn.GetTask)
+			taskRouter.DELETE("/:id", conn.DeleteTask)
+			taskRouter.PUT("/:id", conn.UpdateTask)
+		}
+		typeRouter := apiRouter.Group("/type")
+		{
+			typeRouter.GET("", conn.GetTypes)
+			typeRouter.GET("/:id", conn.GetType)
+			typeRouter.DELETE("/:id", conn.DeleteType)
+			typeRouter.POST("", conn.CreateType)
+			typeRouter.PUT("/:id", conn.UpdateType)
+		}
+		unitRouter := apiRouter.Group("/unit")
+		{
+			unitRouter.GET("/:id", conn.GetUnit)
+			unitRouter.DELETE("/:id", conn.DeleteUnit)
+			unitRouter.POST("", conn.CreateUnit)
+			unitRouter.PUT("/:id", conn.UpdateUnit)
+		}
+		warehouseRouter := apiRouter.Group("/warehouse")
+		{
+			warehouseRouter.GET("", conn.GetWarehouses)
+			warehouseRouter.POST("", conn.CreateWarehouse)
+			warehouseRouter.GET("/:id", conn.GetWarehouse)
+			warehouseRouter.DELETE("/:id", conn.DeleteWarehouse)
+			warehouseRouter.PUT("/:id", conn.UpdateWarehouse)
+		}
+		wheelRouter := apiRouter.Group("/wheel")
+		{
+			wheelRouter.GET("", conn.GetWheels)
+			wheelRouter.GET("/:id", conn.GetWheel)
+			wheelRouter.DELETE("/:id", conn.DeleteWheel)
+			wheelRouter.POST("", conn.CreateWheel)
+			wheelRouter.PUT("/:id", conn.UpdateWheel)
+		}
+		propRouter := apiRouter.Group("/properties")
+		{
+			propRouter.GET("/product", properties.GetProductsProps)
+			propRouter.GET("/category", properties.GetCategoryProps)
+		}
+		trxRouter := apiRouter.Group("/trx") // need attention
+		{
+			trxRouter.POST("", conn.TransactionCreate)
+			trxRouter.PUT("/:id", conn.TransactionUpdate)
+			trxRouter.DELETE("/:id", conn.TransactionDelete)
+			trxRouter.GET("", conn.TransactionGetAll)
+			trxRouter.POST("/search", conn.TransactionSearch)
+			trxRouter.GET("/group/:id", conn.TransactionGetByGroup)
+			trxRouter.GET("/month/:id", conn.TransactionGetByMonth)
+		}
+		trxDetailRouter := apiRouter.Group("/trx-detail")
+		{
+			trxDetailRouter.GET("/:id", conn.GetTransactionDetails)
+			//trxDetailRouter("/props", conn.GetTransactionDetailProps)
+			//trxDetailRouter("/:id", conn.GetTransactionDetail)
+			trxDetailRouter.DELETE("/:id", conn.DeleteTransactionDetail)
+			trxDetailRouter.POST("", conn.CreateTransactionDetail)
+			trxDetailRouter.PUT("/:id", conn.UpdateTransactionDetail)
+		}
+		apiRouter.GET("/saldo", conn.GetRemainSaldo)
+		reportRouter := apiRouter.Group("/report")
+		{
+			reportRouter.GET("/trx/month/:month/:year", conn.GetRepotTrxByMonth)
+			reportRouter.GET("/order-status/:finance/:branch/:type/:month/:year/:from/:to", reports.ReportOrder)
+			reportRouter.GET("/order-all-waiting/:finance/:branch/:type", reports.ReportOrderAllWaiting)
+		}
+		invoiceRouter := apiRouter.Group("/invoice") // need attention
+		{
+
+			invoiceRouter.POST("/search", conn.Invoice_GetSearch)
+
+			invoiceRouter.GET("/finance/:id", conn.Invoice_GetByFinance)
+			invoiceRouter.GET("/month-year/:month/:year", conn.Invoice_GetByMonth) // need attention
+			invoiceRouter.GET("/order/:financeId/:id", conn.Invoice_GetOrders)
+			invoiceRouter.GET("/download/1/:id", conn.Pdf_GetInvoice)
+			//CLIPAN  : 2
+			invoiceRouter.GET("/download/2/:id", conn.Clipan_GetInvoice)
+			// MTF  : 3
+			invoiceRouter.GET("/download/3/:id", conn.Mtf_GetInvoice)
+
+			invoiceRouter.GET("/item/:id", conn.Invoice_GetItem)
+			invoiceRouter.GET("", conn.Invoice_GetAll)
+			invoiceRouter.POST("", conn.Invoice_Create)
+			invoiceRouter.PUT("/:id", conn.Invoice_Update)
+			invoiceRouter.DELETE("/:id", conn.Invoice_Delete)
+		}
+		loanRouter := apiRouter.Group("/loan")
+		{
+			loanRouter.GET("", conn.LoanGetAll)
+			loanRouter.GET("/:id", conn.LoanGetItem)
+			loanRouter.DELETE("/:id", conn.LoanDelete)
+			loanRouter.POST("", conn.LoanCreate)
+			loanRouter.POST("/payment/:id", conn.LoanPayment)
+			loanRouter.PUT("/:id", conn.LoanUpdate)
+		}
+		lentRouter := apiRouter.Group("/lent")
+		{
+			lentRouter.GET("", conn.LentGetAll)
+			lentRouter.GET("/item/:id", conn.LentGetItem) // need attention
+			lentRouter.GET("/get/units", conn.LentGetUnits)
+			lentRouter.DELETE("/:id", conn.LentDelete)
+			lentRouter.POST("", conn.LentCreate)
+			lentRouter.POST("/payment/:id", conn.LentPayment)
+			lentRouter.PUT("/:id", conn.LentUpdate)
+		}
 	}
-
-	router.Run() // ":8080"
-
+	router.Run(":8181") // ":8080"
 }
 
 func main() {

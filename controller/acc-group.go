@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 
 	"fyc.com/sprs/models"
 
@@ -108,10 +109,7 @@ func AccGroupCreate(c *gin.Context) {
 
 	var acc_group models.AccGroup
 
-	//	err := json.NewDecoder(c.Request.Body).Decode(&acc_group)
-	err := c.BindJSON(&acc_group)
-
-	if err != nil {
+	if err := c.BindJSON(&acc_group); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -123,18 +121,22 @@ func AccGroupCreate(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"rowsAffected": rowsAffected, "message": "Group was created"})
+	c.JSON(http.StatusCreated, gin.H{"rowsAffected": rowsAffected, "message": "Group was created"})
 
 }
 
 func AccGroupUpdate(c *gin.Context) {
 
-	id, _ := strconv.Atoi(c.Param("id"))
-
-	var acc_group models.AccGroup
-	err := c.BindJSON(&acc_group)
+	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var acc_group models.AccGroup
+
+	if err := c.BindJSON(&acc_group); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -165,8 +167,7 @@ func AccGroupDelete(c *gin.Context) {
 		return
 	}
 
-	msg := fmt.Sprintf("Account group deleted successfully. Total rows/record affected %v", deletedRows)
-	c.JSON(http.StatusOK, gin.H{"rowsDeleted": deletedRows, "message": msg})
+	c.JSON(http.StatusOK, gin.H{"rowsDeleted": deletedRows, "message": "Account group deleted successfully."})
 
 }
 
@@ -205,10 +206,7 @@ func getAccGroup(id *int) (models.AccGroup, error) {
 
 	var acc_group models.AccGroup
 
-	var sqlStatement = `SELECT 
-		id, name, descriptions
-	FROM acc_group
-	WHERE id=$1`
+	var sqlStatement = "SELECT id, name, descriptions FROM acc_group WHERE id=$1"
 
 	rs := Sql().QueryRow(sqlStatement, id)
 
@@ -232,10 +230,7 @@ func getAllAccGroups() ([]models.AccGroup, error) {
 
 	var results []models.AccGroup
 
-	var sqlStatement = `SELECT 
-		id, name, descriptions
-	FROM acc_group
-	ORDER BY id`
+	var sqlStatement = `SELECT id, name, descriptions FROM acc_group ORDER BY id`
 
 	rs, err := Sql().Query(sqlStatement)
 
@@ -274,10 +269,6 @@ func createAccGroup(p *models.AccGroup) (int64, error) {
 
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Printf("Unable to create account group. %v", err)
-	}
-
 	return rowsAffected, err
 }
 
@@ -301,11 +292,6 @@ func updateAccGroup(id *int, p *models.AccGroup) (int64, error) {
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Printf("Error while updating account group. %v", err)
-		return 0, err
-	}
-
 	return rowsAffected, err
 }
 
@@ -323,44 +309,34 @@ func deleteAccGroup(id *int) (int64, error) {
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Fatalf("Error while checking the affected rows. %v", err)
-	}
-
 	return rowsAffected, err
 }
 
 func get_all_accounts() ([]all_accounts, error) {
 	var accounts []all_accounts
-	var sqlStatement = `WITH RECURSIVE rs AS (
 
-		SELECT true as is_group, false is_type, false is_account,
-		id, name, 0 as type_id, descriptions, 0 as receivable_option, false as is_active, false as is_auto_debet
-		FROM acc_group
+	sb := strings.Builder{}
+	sb.WriteString("WITH RECURSIVE rs AS (")
+	sb.WriteString("SELECT true as is_group, false is_type, false is_account,")
+	sb.WriteString(" id, name, 0 as type_id, descriptions, 0 as receivable_option, false as is_active, false as is_auto_debet")
+	sb.WriteString(" FROM acc_group")
+	sb.WriteString("\n\nUNION ALL\n\n")
+	sb.WriteString("SELECT false as is_group, true is_type, false is_account,")
+	sb.WriteString(" id, name, group_id as type_id, descriptions, 0 as receivable_option, false is_active, false as is_auto_debet")
+	sb.WriteString(" FROM acc_type")
+	sb.WriteString("\n\nUNION ALL\n\n")
+	sb.WriteString("SELECT false as is_group, false is_type, true is_account,")
+	sb.WriteString(" id, name, type_id, descriptions, receivable_option, is_active, is_auto_debet")
+	sb.WriteString(" FROM acc_code")
+	sb.WriteString(" ORDER BY name")
+	sb.WriteString(")\n")
+	sb.WriteString("SELECT")
+	sb.WriteString(" t.is_group, t.is_type, t.is_account,")
+	sb.WriteString(" t.id, t.name, t.type_id, t.descriptions, t.receivable_option, t.is_active, t.is_auto_debet")
+	sb.WriteString(" FROM rs t")
+	sb.WriteString(" ORDER BY t.is_group, t.is_account, t.id;")
 
-		union all
-
-		SELECT false as is_group, true is_type, false is_account,
-		id, name, group_id as type_id, descriptions, 0 as receivable_option, false is_active, false as is_auto_debet
-		FROM acc_type
-
-		union all
-
-		SELECT false as is_group, false is_type, true is_account,
-		id, name, type_id, descriptions, receivable_option, is_active, is_auto_debet
-		FROM acc_code 
-		ORDER BY name
-	)
-
-	select
-		t.is_group, t.is_type, t.is_account,
-		t.id, t.name, t.type_id, t.descriptions, t.receivable_option, t.is_active, t.is_auto_debet
-	from rs t
-	order by t.is_group, t.is_account, t.id;
-
-	`
-
-	rs, err := Sql().Query(sqlStatement)
+	rs, err := Sql().Query(sb.String())
 
 	if err != nil {
 		log.Printf("Unable to execute saldo query %v", err)
