@@ -122,6 +122,50 @@ func GetRepotTrxByMonth(w http.ResponseWriter, r *http.Request) {
 }
 
 func get_report_trx_by_month(m *int, y *int) ([]reportMonth, error) {
+	/*
+		var reports []reportMonth
+
+		b := strings.Builder{}
+
+		b.WriteString("WITH RECURSIVE rs AS (\n")
+		b.WriteString("SELECT 0 AS group, 0 AS id, 'Saldo awal' AS name,")
+		// -- COALESCE(SUM(d.debt), 0) AS debt,
+		b.WriteString(" 0 AS debt,")
+		b.WriteString(" COALESCE(SUM(d.debt - d.cred), 0) AS cred")
+		b.WriteString(" FROM trx_detail d")
+		b.WriteString(" INNER JOIN trx x on x.id = d.trx_id")
+		b.WriteString(" INNER JOIN acc_code c on c.id = d.code_id")
+		//-- INNER JOIN acc_type t on t.id = c.type_id
+		b.WriteString(" WHERE c.receivable_option = 1 AND")
+		b.WriteString(" EXTRACT(MONTH FROM x.trx_date) < $1 AND")
+		b.WriteString(" EXTRACT(YEAR  FROM x.trx_date) = $2")
+
+		b.WriteString("\nUNION ALL\n")
+
+		b.WriteString("SELECT 1 as group, t.id, t.name,")
+		b.WriteString(" COALESCE(sum(d.debt), 0) AS debt,")
+		b.WriteString(" COALESCE(sum(d.cred), 0) AS cred")
+		b.WriteString(" FROM trx_detail d")
+		b.WriteString(" INNER JOIN trx x on x.id = d.trx_id")
+		b.WriteString(" INNER JOIN acc_code c on c.id = d.code_id")
+		b.WriteString(" INNER JOIN acc_type t on t.id = c.type_id")
+		b.WriteString(" WHERE c.receivable_option != 1 AND")
+		b.WriteString(" extract(MONTH FROM x.trx_date) = $1")
+		b.WriteString(" AND extract(YEAR  FROM x.trx_date) = $2")
+		b.WriteString(" GROUP BY t.id)\n")
+		b.WriteString("SELECT")
+		b.WriteString(" t.group,")
+		b.WriteString(" t.id,")
+		b.WriteString(" t.name,")
+		b.WriteString(" t.debt, t.cred,")
+		b.WriteString(" SUM(t.cred - t.debt)")
+		b.WriteString(" OVER (ORDER BY t.group, t.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as saldo")
+		b.WriteString(" FROM rs t")
+		b.WriteString(" ORDER BY t.group, t.id;")
+
+		//log.Println(b.String())
+		rs, err := Sql().Query(b.String(), m, y)
+	*/
 
 	var reports []reportMonth
 
@@ -167,7 +211,11 @@ func get_report_trx_by_month(m *int, y *int) ([]reportMonth, error) {
 	b.WriteString(" FROM rs t")
 	b.WriteString(" ORDER BY t.group, t.id;")
 
+<<<<<<< HEAD
 	log.Println(fmt.Sprintf("%d-%02d-%02d", *y, *m, 1))
+=======
+	// log.Println(fmt.Sprintf("%d-%02d-%02d", *y, *m, 1))
+>>>>>>> b04ee08ccea65d07070c037e5206d2ae62ca71ad
 	rs, err := Sql().Query(b.String(), m, y, fmt.Sprintf("%d-%02d-%02d", (*y), (*m), 1))
 
 	if err != nil {
@@ -216,7 +264,7 @@ func get_report_trx_by_type_month(group_id *int32, m *int, y *int) ([]reportType
 		INNER JOIN trx x on x.id = d.trx_id
 		INNER JOIN acc_code c on c.id = d.code_id
 		INNER JOIN acc_type t on t.id = c.type_id
-		WHERE c.receivable_option != 1 AND 
+		WHERE c.type_id != 11 AND 
 			t.id = $1 AND
 			EXTRACT(MONTH FROM x.trx_date) = $2	AND
 			EXTRACT(YEAR  FROM x.trx_date) = $3
@@ -286,15 +334,15 @@ func get_trx_details_by_acc(acc *int32, group_id *int32, m *int, y *int) ([]repo
 	)
 
 	SELECT
-		t.id,
 		t.trx_date,
+		t.id,
 		t.name,
 		t.debt,
 		t.cred,
 		SUM(t.debt - t.cred)
-		OVER (ORDER BY t.id, t.trx_date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS saldo
+		OVER (ORDER BY t.trx_date, t.id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS saldo
 	FROM rs t
-	ORDER BY t.id, t.trx_date;`
+	ORDER BY t.trx_date, t.id;`
 
 	rs, err := Sql().Query(sqlStatement, acc, group_id, m, y)
 
@@ -309,8 +357,8 @@ func get_trx_details_by_acc(acc *int32, group_id *int32, m *int, y *int) ([]repo
 		var o reportAccount
 
 		err := rs.Scan(
-			&o.ID,
 			&o.TrxDate,
+			&o.ID,
 			&o.Name,
 			&o.Debt,
 			&o.Cred,

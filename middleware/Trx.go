@@ -515,7 +515,7 @@ func trxMoveToLent(id *int64, p *models.Trx, token string) (int64, error) {
 
 	//var trxid int64
 
-	res, err := Sql().Exec(sb.String(),
+	_, err := Sql().Exec(sb.String(),
 		id, p.Descriptions, p.Memo, token,
 	)
 
@@ -524,6 +524,12 @@ func trxMoveToLent(id *int64, p *models.Trx, token string) (int64, error) {
 		return 0, err
 	}
 
+	res, err := Sql().Exec("UPDATE trx_detail SET code_id = 5513 WHERE trx_id = $1", id)
+
+	if err != nil {
+		log.Printf("Unable move trx to lent. %v", err)
+		return 0, err
+	}
 	// // check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
