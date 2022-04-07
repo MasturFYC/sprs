@@ -2,7 +2,6 @@ package controller
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
 
@@ -13,7 +12,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/mux"
 )
 
 type all_accounts struct {
@@ -23,44 +21,35 @@ type all_accounts struct {
 	IsAccount bool `json:"isAccount"`
 }
 
-func Group_GetAllAccount(w http.ResponseWriter, r *http.Request) {
-	EnableCors(&w)
+func AccGroupGetAllAccount(c *gin.Context) {
 
 	accounts, err := get_all_accounts()
 
 	if err != nil {
-		//log.Printf("Unable to get all account groups. %v", err)
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 
-	json.NewEncoder(w).Encode(&accounts)
+	c.JSON(http.StatusOK, &accounts)
 }
 
-func GetAccGroups(c *gin.Context) {
+func AccGroupGetAll(c *gin.Context) {
 
 	groups, err := getAllAccGroups()
 
 	if err != nil {
-		//log.Printf("Unable to get all account groups. %v", err)
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		//http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, &groups)
-	//json.NewEncoder(w).Encode(&groups)
+	c.JSON(http.StatusOK, &groups)
 }
 
-func Group_GetTypes(c *gin.Context) {
-
-	//	EnableCors(&w)
+func AccGroupGetTypes(c *gin.Context) {
 
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
-		//log.Printf("Unable to convert the string into int.  %v", err)
-		//http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -68,12 +57,11 @@ func Group_GetTypes(c *gin.Context) {
 	acc_group, err := group_get_types(&id)
 
 	if err != nil {
-		//log.Printf("Unable to get account group. %v", err)
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, &acc_group)
+	c.JSON(http.StatusOK, &acc_group)
 }
 
 /*
@@ -96,6 +84,91 @@ type Acc_Type struct {
 	WHERE t.group_id=$1 OR 0=$1
 	ORDER BY t.id`
 */
+
+func GetAccGroup(c *gin.Context) {
+
+	id, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	acc_group, err := getAccGroup(&id)
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, &acc_group)
+}
+
+func AccGroupCreate(c *gin.Context) {
+
+	var acc_group models.AccGroup
+
+	//	err := json.NewDecoder(c.Request.Body).Decode(&acc_group)
+	err := c.BindJSON(&acc_group)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	rowsAffected, err := createAccGroup(&acc_group)
+
+	if err != nil {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"rowsAffected": rowsAffected, "message": "Group was created"})
+
+}
+
+func AccGroupUpdate(c *gin.Context) {
+
+	id, _ := strconv.Atoi(c.Param("id"))
+
+	var acc_group models.AccGroup
+	err := c.BindJSON(&acc_group)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	updatedRows, err := updateAccGroup(&id, &acc_group)
+
+	if err != nil {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"rowsAffected": updatedRows, "message": "Group was updated"})
+}
+
+func AccGroupDelete(c *gin.Context) {
+
+	id, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	deletedRows, err := deleteAccGroup(&id)
+
+	if err != nil {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
+		return
+	}
+
+	msg := fmt.Sprintf("Account group deleted successfully. Total rows/record affected %v", deletedRows)
+	c.JSON(http.StatusOK, gin.H{"rowsDeleted": deletedRows, "message": msg})
+
+}
 
 func group_get_types(id *int) ([]models.AccType, error) {
 	var results []models.AccType
@@ -126,139 +199,6 @@ func group_get_types(id *int) ([]models.AccType, error) {
 	}
 
 	return results, err
-}
-
-func GetAccGroup(w http.ResponseWriter, r *http.Request) {
-
-	EnableCors(&w)
-
-	params := mux.Vars(r)
-
-	id, err := strconv.Atoi(params["id"])
-
-	if err != nil {
-		//log.Printf("Unable to convert the string into int.  %v", err)
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-		return
-	}
-
-	acc_group, err := getAccGroup(&id)
-
-	if err != nil {
-		//log.Printf("Unable to get account group. %v", err)
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		return
-	}
-
-	json.NewEncoder(w).Encode(&acc_group)
-}
-
-func CreateAccGroup(w http.ResponseWriter, r *http.Request) {
-	EnableCors(&w)
-
-	w.Header().Set("Access-Control-Allow-Methods", "POST")
-
-	var acc_group models.AccGroup
-
-	err := json.NewDecoder(r.Body).Decode(&acc_group)
-
-	if err != nil {
-		//log.Printf("Unable to decode the request body to account group.  %v", err)
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-		return
-	}
-
-	rowsAffected, err := createAccGroup(&acc_group)
-
-	if err != nil {
-		//log.Printf("(API) Unable to create account group.  %v", err)
-		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-		return
-	}
-
-	res := Response{
-		ID:      rowsAffected,
-		Message: "Account group created successfully",
-	}
-
-	json.NewEncoder(w).Encode(&res)
-
-}
-
-func UpdateAccGroup(w http.ResponseWriter, r *http.Request) {
-
-	EnableCors(&w)
-
-	w.Header().Set("Access-Control-Allow-Methods", "PUT")
-	// create the postgres db connection
-
-	params := mux.Vars(r)
-
-	id, _ := strconv.Atoi(params["id"])
-
-	var acc_group models.AccGroup
-
-	err := json.NewDecoder(r.Body).Decode(&acc_group)
-
-	if err != nil {
-		//log.Printf("Unable to decode the request body to account group.  %v", err)
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-		return
-	}
-
-	updatedRows, err := updateAccGroup(&id, &acc_group)
-
-	if err != nil {
-		//log.Printf("Unable to update account group.  %v", err)
-		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-		return
-	}
-
-	msg := fmt.Sprintf("Account group updated successfully. Total rows/record affected %v", updatedRows)
-
-	// format the response message
-	res := Response{
-		ID:      updatedRows,
-		Message: msg,
-	}
-
-	// send the response
-	json.NewEncoder(w).Encode(res)
-}
-
-func DeleteAccGroup(w http.ResponseWriter, r *http.Request) {
-	EnableCors(&w)
-
-	w.Header().Set("Access-Control-Allow-Methods", "DELETE")
-
-	params := mux.Vars(r)
-
-	id, err := strconv.Atoi(params["id"])
-
-	if err != nil {
-		//log.Printf("Unable to convert the string into int.  %v", err)
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-		return
-	}
-
-	deletedRows, err := deleteAccGroup(&id)
-
-	if err != nil {
-		//log.Printf("Unable to delete account group.  %v", err)
-		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-		return
-	}
-
-	msg := fmt.Sprintf("Account group deleted successfully. Total rows/record affected %v", deletedRows)
-
-	// format the reponse message
-	res := Response{
-		ID:      deletedRows,
-		Message: msg,
-	}
-
-	// send the response
-	json.NewEncoder(w).Encode(res)
 }
 
 func getAccGroup(id *int) (models.AccGroup, error) {
