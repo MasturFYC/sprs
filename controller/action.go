@@ -397,7 +397,7 @@ func ActionGetFile(c *gin.Context) {
 
 	targetPath := path.Join(os.Getenv("UPLOADFILE_LOCATION"), txt)
 
-	if isFileExist := exists(targetPath); isFileExist == false {
+	if exists(targetPath) {
 		http.NotFound(c.Writer, c.Request)
 		return
 	}
@@ -414,7 +414,7 @@ func ActionGetPreview(c *gin.Context) {
 		targetPath = path.Join(os.Getenv("UPLOADFILE_LOCATION"), "default.jpg")
 	}
 
-	if isFileExist := exists(targetPath); isFileExist == false {
+	if exists(targetPath) {
 
 		c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
 		return

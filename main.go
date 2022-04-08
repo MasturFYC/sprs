@@ -294,6 +294,10 @@ func runServer() {
 			lentRouter.POST("/payment/:id", conn.LentPayment)
 			lentRouter.PUT("/:id", conn.LentUpdate)
 		}
+		labaRugiRouter := apiRouter.Group("/labarugi")
+		{
+			labaRugiRouter.GET("/bydate/:from/:to", conn.LabaRugiGetByDate)
+		}
 	}
 	router.Run(":8181") // ":8080"
 }
