@@ -16,7 +16,8 @@ import (
 
 func MerkGetAll(c *gin.Context) {
 
-	merks, err := getAllMerks()
+	db := c.Keys["db"].(*sql.DB)
+	merks, err := getAllMerks(db)
 
 	if err != nil {
 		log.Fatalf("Unable to get all merks. %v", err)
@@ -33,8 +34,8 @@ func MerkGetItem(c *gin.Context) {
 	if err != nil {
 		log.Fatalf("Unable to convert the string into int.  %v", err)
 	}
-
-	merks, err := getMerk(&id)
+	db := c.Keys["db"].(*sql.DB)
+	merks, err := getMerk(db, &id)
 
 	if err != nil {
 		log.Fatalf("Unable to get merk. %v", err)
@@ -52,7 +53,8 @@ func MerkDelete(c *gin.Context) {
 		log.Fatalf("Unable to convert the string into int.  %v", err)
 	}
 
-	deletedRows := deleteMerk(&id)
+	db := c.Keys["db"].(*sql.DB)
+	deletedRows := deleteMerk(db, &id)
 
 	msg := fmt.Sprintf("Merk deleted successfully. Total rows/record affected %v", deletedRows)
 
@@ -78,7 +80,8 @@ func MerkCreate(c *gin.Context) {
 		return
 	}
 
-	id, err := createMerk(&merk)
+	db := c.Keys["db"].(*sql.DB)
+	id, err := createMerk(db, &merk)
 
 	if err != nil {
 		//log.Fatalf("Nama merk tidak boleh sama.  %v", err)
@@ -108,7 +111,8 @@ func MerkUpdate(c *gin.Context) {
 		return
 	}
 
-	updatedRows := updateMerk(&id, &merk)
+	db := c.Keys["db"].(*sql.DB)
+	updatedRows := updateMerk(db, &id, &merk)
 
 	if updatedRows == 0 {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -127,13 +131,13 @@ func MerkUpdate(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func getMerk(id *int) (models.Merk, error) {
+func getMerk(db *sql.DB, id *int) (models.Merk, error) {
 
 	var merk models.Merk
 
 	var sqlStatement = `SELECT id, name FROM merks WHERE id=$1`
 
-	rs := Sql().QueryRow(sqlStatement, id)
+	rs := db.QueryRow(sqlStatement, id)
 
 	err := rs.Scan(&merk.ID, &merk.Name)
 
@@ -151,13 +155,13 @@ func getMerk(id *int) (models.Merk, error) {
 	return merk, err
 }
 
-func getAllMerks() ([]models.Merk, error) {
+func getAllMerks(db *sql.DB) ([]models.Merk, error) {
 
 	var merks []models.Merk
 
 	var sqlStatement = `SELECT id, name FROM merks ORDER BY name`
 
-	rs, err := Sql().Query(sqlStatement)
+	rs, err := db.Query(sqlStatement)
 
 	if err != nil {
 		log.Fatalf("Unable to execute merks query %v", err)
@@ -180,12 +184,12 @@ func getAllMerks() ([]models.Merk, error) {
 	return merks, err
 }
 
-func deleteMerk(id *int) int64 {
+func deleteMerk(db *sql.DB, id *int) int64 {
 	// create the delete sql query
 	sqlStatement := `DELETE FROM merks WHERE id=$1`
 
 	// execute the sql statement
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		log.Fatalf("Unable to delete merk. %v", err)
@@ -201,13 +205,13 @@ func deleteMerk(id *int) int64 {
 	return rowsAffected
 }
 
-func createMerk(merk *models.Merk) (int, error) {
+func createMerk(db *sql.DB, merk *models.Merk) (int, error) {
 
 	sqlStatement := `INSERT INTO merks (name) VALUES ($1) RETURNING id`
 
 	var id int
 
-	err := Sql().QueryRow(sqlStatement, merk.Name).Scan(&id)
+	err := db.QueryRow(sqlStatement, merk.Name).Scan(&id)
 
 	if err != nil {
 		log.Printf("Unable to create merk. %v\n", err)
@@ -216,11 +220,11 @@ func createMerk(merk *models.Merk) (int, error) {
 	return id, err
 }
 
-func updateMerk(id *int, merk *models.Merk) int64 {
+func updateMerk(db *sql.DB, id *int, merk *models.Merk) int64 {
 
 	sqlStatement := `UPDATE merks SET name=$2 WHERE id=$1`
 
-	res, err := Sql().Exec(sqlStatement, id, merk.Name)
+	res, err := db.Exec(sqlStatement, id, merk.Name)
 
 	if err != nil {
 		log.Printf("Unable to update merk. %v", err)

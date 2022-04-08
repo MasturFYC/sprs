@@ -37,7 +37,8 @@ func GetTask(c *gin.Context) {
 		return
 	}
 
-	tasks, err := getTask(&id)
+	db := c.Keys["db"].(*sql.DB)
+	tasks, err := getTask(db, &id)
 
 	if err != nil {
 		//		log.Fatalf("Unable to get task. %v", err)
@@ -59,7 +60,8 @@ func DeleteTask(c *gin.Context) {
 		return
 	}
 
-	deletedRows := deleteTask(&id)
+	db := c.Keys["db"].(*sql.DB)
+	deletedRows := deleteTask(db, &id)
 
 	msg := fmt.Sprintf("Task deleted successfully. Total rows/record affected %v", deletedRows)
 
@@ -85,7 +87,8 @@ func CreateTask(c *gin.Context) {
 		return
 	}
 
-	rowAffected, err := createTask(&task)
+	db := c.Keys["db"].(*sql.DB)
+	rowAffected, err := createTask(db, &task)
 
 	if err != nil {
 		//log.Printf("Nama tasks tidak boleh sama.  %v", err)
@@ -120,7 +123,8 @@ func UpdateTask(c *gin.Context) {
 		return
 	}
 
-	updatedRows, err := updateTask(&id, &task)
+	db := c.Keys["db"].(*sql.DB)
+	updatedRows, err := updateTask(db, &id, &task)
 
 	if err != nil {
 		log.Printf("Unable to update task.  %v", err)
@@ -140,7 +144,7 @@ func UpdateTask(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func getTask(id *int64) (models.Task, error) {
+func getTask(db *sql.DB, id *int64) (models.Task, error) {
 
 	var task models.Task
 
@@ -151,7 +155,7 @@ func getTask(id *int64) (models.Task, error) {
 	FROM tasks
 	WHERE order_id=$1`
 
-	rs := Sql().QueryRow(sqlStatement, id)
+	rs := db.QueryRow(sqlStatement, id)
 
 	err := rs.Scan(
 		&task.OrderID,
@@ -188,7 +192,7 @@ func getTask(id *int64) (models.Task, error) {
 // 		giver_name, giver_position
 // 	FROM tasks`
 
-// 	rs, err := Sql().Query(sqlStatement)
+// 	rs, err := db.Query(sqlStatement)
 
 // 	if err != nil {
 // 		log.Fatalf("Unable to execute tasks query %v", err)
@@ -220,12 +224,12 @@ func getTask(id *int64) (models.Task, error) {
 // 	return tasks, err
 // }
 
-func deleteTask(id *int64) int64 {
+func deleteTask(db *sql.DB, id *int64) int64 {
 	// create the delete sql query
 	sqlStatement := `DELETE FROM tasks WHERE order_id=$1`
 
 	// execute the sql statement
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		log.Fatalf("Unable to delete task. %v", err)
@@ -241,7 +245,7 @@ func deleteTask(id *int64) int64 {
 	return rowsAffected
 }
 
-func createTask(t *models.Task) (int64, error) {
+func createTask(db *sql.DB, t *models.Task) (int64, error) {
 
 	sqlStatement := `INSERT INTO tasks (
 		order_id, descriptions, period_from, period_to,
@@ -250,7 +254,7 @@ func createTask(t *models.Task) (int64, error) {
 	)
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		t.OrderID,
 		t.Descriptions,
 		t.PeriodFrom,
@@ -275,7 +279,7 @@ func createTask(t *models.Task) (int64, error) {
 	return rowsAffected, err
 }
 
-func updateTask(id *int64, t *models.Task) (int64, error) {
+func updateTask(db *sql.DB, id *int64, t *models.Task) (int64, error) {
 
 	sqlStatement := `UPDATE tasks SET
 		descriptions=$2, period_from=$3, period_to=$4,
@@ -283,7 +287,7 @@ func updateTask(id *int64, t *models.Task) (int64, error) {
 		giver_name=$7, giver_position=$8
 	WHERE order_id=$1`
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		id,
 		t.Descriptions,
 		t.PeriodFrom,

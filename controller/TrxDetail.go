@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 
@@ -22,8 +23,8 @@ func GetTransactionDetails(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	details, err := getTransactionDetails(&id)
+	db := c.Keys["db"].(*sql.DB)
+	details, err := getTransactionDetails(db, &id)
 
 	if err != nil {
 		log.Printf("Unable to get transaction detail. %v", err)
@@ -44,8 +45,8 @@ func CreateTransactionDetail(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	id, err := createTransactionDetail(&trx)
+	db := c.Keys["db"].(*sql.DB)
+	id, err := createTransactionDetail(db, &trx)
 
 	if err != nil {
 		//log.Printf("(API) Unable to create transaction detail.  %v", err)
@@ -74,8 +75,8 @@ func UpdateTransactionDetail(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	updatedRows, err := updateTransactionDetail(&id, &detail)
+	db := c.Keys["db"].(*sql.DB)
+	updatedRows, err := updateTransactionDetail(db, &id, &detail)
 
 	if err != nil {
 		//log.Printf("Unable to update transaction detail.  %v", err)
@@ -112,8 +113,8 @@ func DeleteTransactionDetail(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	deletedRows, err := deleteTransactionDetail(&trxid, &id)
+	db := c.Keys["db"].(*sql.DB)
+	deletedRows, err := deleteTransactionDetail(db, &trxid, &id)
 
 	if err != nil {
 		//log.Printf("Unable to delete transaction detail.  %v", err)
@@ -133,7 +134,7 @@ func DeleteTransactionDetail(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func getTransactionDetails(trxID *int64) ([]models.TrxDetail, error) {
+func getTransactionDetails(db *sql.DB, trxID *int64) ([]models.TrxDetail, error) {
 
 	var details []models.TrxDetail
 
@@ -143,7 +144,7 @@ func getTransactionDetails(trxID *int64) ([]models.TrxDetail, error) {
 	WHERE trx_id=$1
 	ORDER BY id`
 
-	rs, err := Sql().Query(sqlStatement, trxID)
+	rs, err := db.Query(sqlStatement, trxID)
 
 	if err != nil {
 		//log.Printf("Unable to execute transaction details query %v", err)
@@ -172,7 +173,7 @@ func getTransactionDetails(trxID *int64) ([]models.TrxDetail, error) {
 	return details, err
 }
 
-func createTransactionDetail(p *models.TrxDetail) (int64, error) {
+func createTransactionDetail(db *sql.DB, p *models.TrxDetail) (int64, error) {
 
 	sqlStatement := `INSERT INTO trx_detail
 	(code_id, trx_id, debt, cred)
@@ -181,7 +182,7 @@ func createTransactionDetail(p *models.TrxDetail) (int64, error) {
 
 	var id int64
 
-	err := Sql().QueryRow(sqlStatement,
+	err := db.QueryRow(sqlStatement,
 		&p.CodeID,
 		&p.TrxID,
 		&p.Debt,
@@ -195,7 +196,7 @@ func createTransactionDetail(p *models.TrxDetail) (int64, error) {
 	return id, err
 }
 
-func updateTransactionDetail(id *int64, p *models.TrxDetail) (int64, error) {
+func updateTransactionDetail(db *sql.DB, id *int64, p *models.TrxDetail) (int64, error) {
 
 	sqlStatement := `UPDATE trx_detail SET 
 		code_id=$2,
@@ -204,7 +205,7 @@ func updateTransactionDetail(id *int64, p *models.TrxDetail) (int64, error) {
 		cred=$5
 	WHERE id=$1`
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		id,
 		p.CodeID,
 		p.TrxID,
@@ -228,11 +229,11 @@ func updateTransactionDetail(id *int64, p *models.TrxDetail) (int64, error) {
 	return rowsAffected, err
 }
 
-func deleteTransactionDetail(trxid *int64, id *int) (int64, error) {
+func deleteTransactionDetail(db *sql.DB, trxid *int64, id *int) (int64, error) {
 
 	sqlStatement := `DELETE FROM trx_detail WHERE trx_id=$1 AND id =$2`
 
-	res, err := Sql().Exec(sqlStatement, trxid, id)
+	res, err := db.Exec(sqlStatement, trxid, id)
 
 	if err != nil {
 		log.Printf("Unable to delete transaction detail. %v", err)

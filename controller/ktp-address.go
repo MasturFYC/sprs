@@ -36,7 +36,8 @@ func GetKTPAddress(c *gin.Context) {
 		return
 	}
 
-	ha, err := getKTPAddress(&id)
+	db := c.Keys["db"].(*sql.DB)
+	ha, err := getKTPAddress(db, &id)
 
 	if err != nil {
 		//log.Fatalf("Unable to get ktp address. %v", err)
@@ -58,7 +59,8 @@ func DeleteKTPAddress(c *gin.Context) {
 		return
 	}
 
-	deletedRows := deleteKTPAddress(&id)
+	db := c.Keys["db"].(*sql.DB)
+	deletedRows := deleteKTPAddress(db, &id)
 
 	msg := fmt.Sprintf("KTP address deleted successfully. Total rows/record affected %v", deletedRows)
 
@@ -84,7 +86,8 @@ func CreateKTPAddress(c *gin.Context) {
 		return
 	}
 
-	rowAffected, err := createKTPAddress(&ha)
+	db := c.Keys["db"].(*sql.DB)
+	rowAffected, err := createKTPAddress(db, &ha)
 
 	if err != nil {
 		//log.Fatalf("Nama ktp address tidak boleh sama.  %v", err)
@@ -120,7 +123,8 @@ func UpdateKTPAddress(c *gin.Context) {
 		return
 	}
 
-	updatedRows := updateKTPAddress(&id, &ha)
+	db := c.Keys["db"].(*sql.DB)
+	updatedRows := updateKTPAddress(db, &id, &ha)
 
 	msg := fmt.Sprintf("KTP address updated successfully. Total rows/record affected %v", updatedRows)
 
@@ -134,7 +138,7 @@ func UpdateKTPAddress(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func getKTPAddress(id *int64) (models.KtpAddress, error) {
+func getKTPAddress(db *sql.DB, id *int64) (models.KtpAddress, error) {
 
 	var ha models.KtpAddress
 
@@ -143,7 +147,7 @@ func getKTPAddress(id *int64) (models.KtpAddress, error) {
 	FROM ktp_addresses
 	WHERE order_id=$1`
 
-	rs := Sql().QueryRow(sqlStatement, id)
+	rs := db.QueryRow(sqlStatement, id)
 
 	err := rs.Scan(&ha.OrderID, &ha.Street, &ha.Region, &ha.City, &ha.Phone, &ha.Zip)
 
@@ -170,7 +174,7 @@ func getKTPAddress(id *int64) (models.KtpAddress, error) {
 // 	FROM ktp_addresses
 // 	ORDER BY name`
 
-// 	rs, err := Sql().Query(sqlStatement)
+// 	rs, err := db.Query(sqlStatement)
 
 // 	if err != nil {
 // 		log.Fatalf("Unable to execute ktp addresses query %v", err)
@@ -193,12 +197,12 @@ func getKTPAddress(id *int64) (models.KtpAddress, error) {
 // 	return addresses, err
 // }
 
-func deleteKTPAddress(id *int64) int64 {
+func deleteKTPAddress(db *sql.DB, id *int64) int64 {
 	// create the delete sql query
 	sqlStatement := `DELETE FROM ktp_addresses WHERE order_id=$1`
 
 	// execute the sql statement
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		log.Fatalf("Unable to delete ktp address. %v", err)
@@ -214,14 +218,14 @@ func deleteKTPAddress(id *int64) int64 {
 	return rowsAffected
 }
 
-func createKTPAddress(ha *models.KtpAddress) (int64, error) {
+func createKTPAddress(db *sql.DB, ha *models.KtpAddress) (int64, error) {
 
 	sqlStatement := `INSERT INTO ktp_addresses
 	(order_id, street, region, city, phone, zip) 
 	VALUES 
 	($1, $2, $3, $4, $5, $6)`
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		ha.OrderID,
 		ha.Street,
 		ha.Region,
@@ -243,13 +247,13 @@ func createKTPAddress(ha *models.KtpAddress) (int64, error) {
 	return rowsAffected, err
 }
 
-func updateKTPAddress(id *int64, ha *models.KtpAddress) int64 {
+func updateKTPAddress(db *sql.DB, id *int64, ha *models.KtpAddress) int64 {
 
 	sqlStatement := `UPDATE ktp_addresses SET
 		street=$2, region=$3, city=$4, phone=$5, zip=$6
 	WHERE order_id=$1`
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		id,
 		ha.Street,
 		ha.Region,

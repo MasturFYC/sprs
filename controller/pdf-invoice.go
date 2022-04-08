@@ -2,6 +2,7 @@ package controller
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -45,7 +46,8 @@ func Pdf_GetInvoice(c *gin.Context) {
 
 	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
 
-	invoice, err := invoice_get_item(&id)
+	db := c.Keys["db"].(*sql.DB)
+	invoice, err := invoice_get_item(db, &id)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -88,7 +90,8 @@ func Pdf_GetInvoice(c *gin.Context) {
 func Pdf_GetInvoiceClipan(c *gin.Context) {
 	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
 
-	invoice, err := invoice_get_item(&id)
+	db := c.Keys["db"].(*sql.DB)
+	invoice, err := invoice_get_item(db, &id)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})

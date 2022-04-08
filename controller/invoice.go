@@ -34,7 +34,8 @@ func Invoice_GetSearch(c *gin.Context) {
 		return
 	}
 
-	invoices, err := invoices_search(&t.Txt)
+	db := c.Keys["db"].(*sql.DB)
+	invoices, err := invoices_search(db, &t.Txt)
 
 	if err != nil || len(invoices) == 0 {
 		//log.Printf("Unable to get all account codes. %v", err)
@@ -49,7 +50,8 @@ func Invoice_GetSearch(c *gin.Context) {
 func Invoice_GetByFinance(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
-	invoices, err := invoices_by_finance(&id)
+	db := c.Keys["db"].(*sql.DB)
+	invoices, err := invoices_by_finance(db, &id)
 
 	if err != nil || len(invoices) == 0 {
 		//log.Printf("Unable to get all account codes. %v", err)
@@ -66,7 +68,8 @@ func Invoice_GetByMonth(c *gin.Context) {
 	m, _ := strconv.Atoi(c.Param("month"))
 	y, _ := strconv.Atoi(c.Param("year"))
 
-	invoices, err := invoices_by_month(&m, &y)
+	db := c.Keys["db"].(*sql.DB)
+	invoices, err := invoices_by_month(db, &m, &y)
 
 	if err != nil || len(invoices) == 0 {
 		//log.Printf("Unable to get all account codes. %v", err)
@@ -80,7 +83,8 @@ func Invoice_GetByMonth(c *gin.Context) {
 
 func Invoice_GetAll(c *gin.Context) {
 
-	invoices, err := invoice_get_all()
+	db := c.Keys["db"].(*sql.DB)
+	invoices, err := invoice_get_all(db)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -107,8 +111,9 @@ func Invoice_GetOrders(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
+	db := c.Keys["db"].(*sql.DB)
 
-	invoices, err := invoice_get_orders(&finance_id, &invoice_id)
+	invoices, err := invoice_get_orders(db, &finance_id, &invoice_id)
 
 	if err != nil || len(invoices) == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -122,7 +127,8 @@ func Invoice_GetItem(c *gin.Context) {
 
 	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
 
-	invoice, err := invoice_get_item(&id)
+	db := c.Keys["db"].(*sql.DB)
+	invoice, err := invoice_get_item(db, &id)
 
 	if err != nil {
 		//log.Printf("Unable to get all account groups. %v", err)
@@ -142,8 +148,8 @@ func Invoice_Create(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
-
-	id, err := invoice_create(&param.Invoice, &param.Token)
+	db := c.Keys["db"].(*sql.DB)
+	id, err := invoice_create(db, &param.Invoice, &param.Token)
 
 	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -152,7 +158,7 @@ func Invoice_Create(c *gin.Context) {
 
 	if len(param.DetailIDs) > 0 {
 
-		err = invoice_insert_details(param.DetailIDs, &id)
+		err = invoice_insert_details(db, param.DetailIDs, &id)
 
 		if err != nil {
 			c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -164,7 +170,7 @@ func Invoice_Create(c *gin.Context) {
 	var stoken = fmt.Sprintf("%s%s%v", param.Token, param.Trx.Descriptions, id)
 	param.Trx.Descriptions = fmt.Sprintf("%s%v", param.Trx.Descriptions, id)
 
-	trxId, err := createTransaction(&param.Trx, stoken)
+	trxId, err := createTransaction(db, &param.Trx, stoken)
 
 	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -173,7 +179,7 @@ func Invoice_Create(c *gin.Context) {
 
 	if len(param.Trx.Details) > 0 {
 
-		err = bulkInsertDetails(param.Trx.Details, &trxId)
+		err = bulkInsertDetails(db, param.Trx.Details, &trxId)
 
 		if err != nil {
 			c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -200,7 +206,8 @@ func Invoice_Delete(c *gin.Context) {
 		return
 	}
 
-	invoice_delete(&invoice_id)
+	db := c.Keys["db"].(*sql.DB)
+	invoice_delete(db, &invoice_id)
 
 	// if err != nil {
 	// 	//log.Printf("Unable to convert the string into int.  %v", err)
@@ -208,7 +215,7 @@ func Invoice_Delete(c *gin.Context) {
 	// 	return
 	// }
 
-	deletedRows := invoice_delete_transaction(&invoice_id)
+	deletedRows := invoice_delete_transaction(db, &invoice_id)
 	msg := fmt.Sprintf("Invoice deleted successfully. Total rows/record affected %v", deletedRows)
 
 	// format the reponse message
@@ -241,7 +248,8 @@ func Invoice_Update(c *gin.Context) {
 		return
 	}
 
-	id, err := invoice_update(&invoice_id, &param.Invoice, &param.Token)
+	db := c.Keys["db"].(*sql.DB)
+	id, err := invoice_update(db, &invoice_id, &param.Invoice, &param.Token)
 
 	if err != nil {
 		//log.Printf("(API) Unable to update invoice.  %v", err)
@@ -249,11 +257,11 @@ func Invoice_Update(c *gin.Context) {
 		return
 	}
 
-	invocie_delete_details(&invoice_id)
+	invocie_delete_details(db, &invoice_id)
 
 	if len(param.DetailIDs) > 0 {
 
-		err = invoice_insert_details(param.DetailIDs, &invoice_id)
+		err = invoice_insert_details(db, param.DetailIDs, &invoice_id)
 
 		if err != nil {
 			//log.Printf("Unable to insert invoice --- details.  %v", err)
@@ -262,7 +270,7 @@ func Invoice_Update(c *gin.Context) {
 		}
 	}
 
-	_, err = invoice_update_transaction(&param.Trx.ID, &param.Trx, param.Token)
+	_, err = invoice_update_transaction(db, &param.Trx.ID, &param.Trx, param.Token)
 
 	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -271,7 +279,7 @@ func Invoice_Update(c *gin.Context) {
 
 	if len(param.Trx.Details) > 0 {
 
-		err = bulkInsertDetails(param.Trx.Details, &param.Trx.ID)
+		err = bulkInsertDetails(db, param.Trx.Details, &param.Trx.ID)
 
 		if err != nil {
 			c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -288,7 +296,7 @@ func Invoice_Update(c *gin.Context) {
 
 }
 
-func invoice_update_transaction(id *int64, p *models.Trx, token string) (int64, error) {
+func invoice_update_transaction(db *sql.DB, id *int64, p *models.Trx, token string) (int64, error) {
 
 	b := strings.Builder{}
 
@@ -299,7 +307,7 @@ func invoice_update_transaction(id *int64, p *models.Trx, token string) (int64, 
 	b.WriteString(" WHERE ref_id=$1")
 	b.WriteString(" AND division='trx-invoice'")
 
-	res, err := Sql().Exec(b.String(),
+	res, err := db.Exec(b.String(),
 		p.RefID,
 		p.Descriptions,
 		p.Memo,
@@ -322,7 +330,7 @@ func invoice_update_transaction(id *int64, p *models.Trx, token string) (int64, 
 	return rowsAffected, err
 }
 
-func invoice_insert_details(ids []int64, id *int64) error {
+func invoice_insert_details(db *sql.DB, ids []int64, id *int64) error {
 	valueStrings := make([]string, 0, len(ids))
 	valueArgs := make([]interface{}, 0, len(ids)*2)
 	i := 0
@@ -335,15 +343,15 @@ func invoice_insert_details(ids []int64, id *int64) error {
 	stmt := fmt.Sprintf("INSERT INTO invoice_details (invoice_id, order_id) VALUES %s",
 		strings.Join(valueStrings, ","))
 	//log.Printf("%s %v", stmt, valueArgs)
-	_, err := Sql().Exec(stmt, valueArgs...)
+	_, err := db.Exec(stmt, valueArgs...)
 	return err
 }
 
-func invocie_delete_details(id *int64) (int64, error) {
+func invocie_delete_details(db *sql.DB, id *int64) (int64, error) {
 	sqlStatement := `DELETE FROM invoice_details WHERE invoice_id=$1`
 
 	// execute the sql statement
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		log.Fatalf("Unable to delete invoice_details. %v", err)
@@ -367,7 +375,7 @@ type invoice_item struct {
 	Transaction *json.RawMessage `json:"transaction,omitempty"`
 }
 
-func invoice_get_item(id *int64) (invoice_item, error) {
+func invoice_get_item(db *sql.DB, id *int64) (invoice_item, error) {
 	var item invoice_item
 	var queryWheel = fyc.NestQuerySingle(`SELECT id, name, short_name as "shortName" FROM wheels WHERE id = t.wheel_id`)
 	var queryMerk = fyc.NestQuerySingle(`SELECT id, name FROM merks WHERE id = t.merk_id`)
@@ -417,7 +425,7 @@ func invoice_get_item(id *int64) (invoice_item, error) {
 	b.WriteString(" FROM invoices v")
 	b.WriteString(" WHERE v.id=$1")
 
-	rs := Sql().QueryRow(b.String(), id)
+	rs := db.QueryRow(b.String(), id)
 
 	err := rs.Scan(
 		&item.ID,
@@ -452,12 +460,12 @@ func invoice_get_item(id *int64) (invoice_item, error) {
 	return item, err
 }
 
-func invoice_delete_transaction(ref_id *int64) int64 {
+func invoice_delete_transaction(db *sql.DB, ref_id *int64) int64 {
 	// create the delete sql query
 	sqlStatement := `DELETE FROM trx WHERE ref_id=$1 AND division='trx-invoice'`
 
 	// execute the sql statement
-	res, err := Sql().Exec(sqlStatement, ref_id)
+	res, err := db.Exec(sqlStatement, ref_id)
 
 	if err != nil {
 		log.Fatalf("Unable to delete invoice. %v", err)
@@ -473,12 +481,12 @@ func invoice_delete_transaction(ref_id *int64) int64 {
 	return rowsAffected
 }
 
-func invoice_delete(id *int64) int64 {
+func invoice_delete(db *sql.DB, id *int64) int64 {
 	// create the delete sql query
 	sqlStatement := `DELETE FROM invoices WHERE id=$1`
 
 	// execute the sql statement
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		log.Fatalf("Unable to delete invoice. %v", err)
@@ -494,7 +502,7 @@ func invoice_delete(id *int64) int64 {
 	return rowsAffected
 }
 
-func invoice_create(inv *models.Invoice, token *string) (int64, error) {
+func invoice_create(db *sql.DB, inv *models.Invoice, token *string) (int64, error) {
 
 	builder := strings.Builder{}
 	builder.WriteString("INSERT INTO invoices")
@@ -505,7 +513,7 @@ func invoice_create(inv *models.Invoice, token *string) (int64, error) {
 
 	var id int64
 
-	err := Sql().QueryRow(builder.String(),
+	err := db.QueryRow(builder.String(),
 		inv.InvoiceAt,
 		inv.PaymentTerm,
 		inv.DueAt,
@@ -527,7 +535,7 @@ func invoice_create(inv *models.Invoice, token *string) (int64, error) {
 	return id, err
 }
 
-func invoice_update(id *int64, inv *models.Invoice, token *string) (int64, error) {
+func invoice_update(db *sql.DB, id *int64, inv *models.Invoice, token *string) (int64, error) {
 
 	builder := strings.Builder{}
 	builder.WriteString("UPDATE invoices SET")
@@ -546,7 +554,7 @@ func invoice_update(id *int64, inv *models.Invoice, token *string) (int64, error
 	builder.WriteString(", token=to_tsvector('indonesian', $13)")
 	builder.WriteString(" WHERE id=$1")
 
-	res, err := Sql().Exec(builder.String(),
+	res, err := db.Exec(builder.String(),
 		id,
 		inv.InvoiceAt,
 		inv.PaymentTerm,
@@ -583,7 +591,7 @@ type invoice_all struct {
 	Account json.RawMessage `json:"account,omitempty"`
 }
 
-func invoice_get_all() ([]invoice_all, error) {
+func invoice_get_all(db *sql.DB) ([]invoice_all, error) {
 	var invoices []invoice_all
 
 	builder := strings.Builder{}
@@ -605,7 +613,7 @@ func invoice_get_all() ([]invoice_all, error) {
 	// 	nestQuerySingle(queryAccount),
 	// )
 
-	rs, err := Sql().Query(builder.String())
+	rs, err := db.Query(builder.String())
 
 	if err != nil {
 		log.Fatalf("Unable to execute merks query %v", err)
@@ -667,7 +675,7 @@ type invoice_order struct {
 	Unit       *json.RawMessage `json:"unit,omitempty"`
 }
 
-func invoice_get_orders(finance_id *int, invoice_id *int64) ([]invoice_order, error) {
+func invoice_get_orders(db *sql.DB, finance_id *int, invoice_id *int64) ([]invoice_order, error) {
 
 	var invoices []invoice_order
 
@@ -732,7 +740,7 @@ func invoice_get_orders(finance_id *int, invoice_id *int64) ([]invoice_order, er
 	// 	nestQuerySingle(queryUnit),
 	// )
 
-	rs, err := Sql().Query(b.String(), finance_id, invoice_id)
+	rs, err := db.Query(b.String(), finance_id, invoice_id)
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)
@@ -779,7 +787,7 @@ func invoice_get_orders(finance_id *int, invoice_id *int64) ([]invoice_order, er
 
 }
 
-func invoices_search(txt *string) ([]invoice_all, error) {
+func invoices_search(db *sql.DB, txt *string) ([]invoice_all, error) {
 	var invoices []invoice_all
 
 	b := strings.Builder{}
@@ -797,7 +805,7 @@ func invoices_search(txt *string) ([]invoice_all, error) {
 	b.WriteString(" WHERE token @@ to_tsquery('indonesian', $1)")
 	b.WriteString(" ORDER BY v.id DESC")
 
-	rs, err := Sql().Query(b.String(), txt)
+	rs, err := db.Query(b.String(), txt)
 
 	if err != nil {
 		log.Fatalf("Unable to execute merks query %v", err)
@@ -836,7 +844,7 @@ func invoices_search(txt *string) ([]invoice_all, error) {
 	return invoices, err
 }
 
-func invoices_by_month(month *int, year *int) ([]invoice_all, error) {
+func invoices_by_month(db *sql.DB, month *int, year *int) ([]invoice_all, error) {
 	var invoices []invoice_all
 
 	builder := strings.Builder{}
@@ -864,7 +872,7 @@ func invoices_by_month(month *int, year *int) ([]invoice_all, error) {
 	builder.WriteString(" OR 0=$1")
 	builder.WriteString(" ORDER BY v.id DESC")
 
-	rs, err := Sql().Query(builder.String(), month, year)
+	rs, err := db.Query(builder.String(), month, year)
 
 	if err != nil {
 		log.Fatalf("Unable to execute merks query %v", err)
@@ -903,7 +911,7 @@ func invoices_by_month(month *int, year *int) ([]invoice_all, error) {
 	return invoices, err
 }
 
-func invoices_by_finance(finance_id *int) ([]invoice_all, error) {
+func invoices_by_finance(db *sql.DB, finance_id *int) ([]invoice_all, error) {
 	var invoices []invoice_all
 	var querFinance = `SELECT f.id, f.name, f.short_name "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email, f.group_id AS "groupId" FROM finances f WHERE f.id = v.finance_id`
 	var queryAccount = `SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`
@@ -920,7 +928,7 @@ func invoices_by_finance(finance_id *int) ([]invoice_all, error) {
 	b.WriteString(" WHERE v.finance_id=$1 OR 0=$1")
 	b.WriteString(" ORDER BY v.id DESC")
 
-	rs, err := Sql().Query(b.String(), finance_id)
+	rs, err := db.Query(b.String(), finance_id)
 
 	//log.Println(b.String())
 
@@ -961,7 +969,7 @@ func invoices_by_finance(finance_id *int) ([]invoice_all, error) {
 	return invoices, err
 }
 
-func invoice_get_item_customer(id *int64) (invoice_item, error) {
+func invoice_get_item_customer(db *sql.DB, id *int64) (invoice_item, error) {
 	var item invoice_item
 	var queryWheel = fyc.NestQuerySingle(`SELECT id, name, short_name as "shortName" FROM wheels WHERE id = t.wheel_id`)
 	var queryMerk = fyc.NestQuerySingle(`SELECT id, name FROM merks WHERE id = t.merk_id`)
@@ -1014,7 +1022,7 @@ func invoice_get_item_customer(id *int64) (invoice_item, error) {
 	b.WriteString(" FROM invoices v")
 	b.WriteString(" WHERE v.id=$1")
 
-	rs := Sql().QueryRow(b.String(), id)
+	rs := db.QueryRow(b.String(), id)
 
 	err := rs.Scan(
 		&item.ID,

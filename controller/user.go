@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"os"
@@ -46,6 +47,7 @@ func GenerateJWT(email, role string) (string, error) {
 
 func SignUp(c *gin.Context) {
 
+	db := c.Keys["db"].(*sql.DB)
 	var user models.User
 	err := c.BindJSON(&user)
 
@@ -58,7 +60,7 @@ func SignUp(c *gin.Context) {
 	}
 
 	var sqlStatement = "SELECT email FROM users WHERE email=$1"
-	rs := Sql().QueryRow(sqlStatement, user.Email)
+	rs := db.QueryRow(sqlStatement, user.Email)
 
 	var email string
 
@@ -73,7 +75,7 @@ func SignUp(c *gin.Context) {
 	}
 
 	sqlStatement = "SELECT name FROM users WHERE name=$1"
-	rs = Sql().QueryRow(sqlStatement, user.Email)
+	rs = db.QueryRow(sqlStatement, user.Email)
 
 	var name string
 
@@ -97,7 +99,7 @@ func SignUp(c *gin.Context) {
 	VALUES ($1, $2, $3, $4)
 	RETURNING id`
 
-	err = Sql().QueryRow(sqlStatement,
+	err = db.QueryRow(sqlStatement,
 		user.Name, user.Email, user.Password, "user").Scan(&user.ID)
 
 	if err != nil {
@@ -128,7 +130,8 @@ func SignIn(c *gin.Context) {
 	FROM users
 	WHERE email=$1`
 
-	rs := Sql().QueryRow(sqlStatement, authdetails.Email)
+	db := c.Keys["db"].(*sql.DB)
+	rs := db.QueryRow(sqlStatement, authdetails.Email)
 
 	err = rs.Scan(
 		&authuser.ID,

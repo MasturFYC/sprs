@@ -36,7 +36,8 @@ func GetHomeAddress(c *gin.Context) {
 		return
 	}
 
-	ha, err := getHomeAddress(&id)
+	db := c.Keys["db"].(*sql.DB)
+	ha, err := getHomeAddress(db, &id)
 
 	if err != nil {
 		//log.Fatalf("Unable to get home address. %v", err)
@@ -58,7 +59,8 @@ func DeleteHomeAddress(c *gin.Context) {
 		return
 	}
 
-	deletedRows := deleteHomeAddress(&id)
+	db := c.Keys["db"].(*sql.DB)
+	deletedRows := deleteHomeAddress(db, &id)
 
 	msg := fmt.Sprintf("Home address deleted successfully. Total rows/record affected %v", deletedRows)
 
@@ -84,7 +86,8 @@ func CreateHomeAddress(c *gin.Context) {
 		return
 	}
 
-	rowAffected, err := createHomeAddress(&ha)
+	db := c.Keys["db"].(*sql.DB)
+	rowAffected, err := createHomeAddress(db, &ha)
 
 	if err != nil {
 		//log.Fatalf("Nama home address tidak boleh sama.  %v", err)
@@ -120,7 +123,8 @@ func UpdateHomeAddress(c *gin.Context) {
 		return
 	}
 
-	updatedRows := updateHomeAddress(&id, &ha)
+	db := c.Keys["db"].(*sql.DB)
+	updatedRows := updateHomeAddress(db, &id, &ha)
 
 	msg := fmt.Sprintf("Home address updated successfully. Total rows/record affected %v", updatedRows)
 
@@ -134,7 +138,7 @@ func UpdateHomeAddress(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func getHomeAddress(id *int64) (models.HomeAddress, error) {
+func getHomeAddress(db *sql.DB, id *int64) (models.HomeAddress, error) {
 
 	var ha models.HomeAddress
 
@@ -143,7 +147,7 @@ func getHomeAddress(id *int64) (models.HomeAddress, error) {
 	FROM home_addresses
 	WHERE order_id=$1`
 
-	rs := Sql().QueryRow(sqlStatement, id)
+	rs := db.QueryRow(sqlStatement, id)
 
 	err := rs.Scan(&ha.OrderID, &ha.Street, &ha.Region, &ha.City, &ha.Phone, &ha.Zip)
 
@@ -170,7 +174,7 @@ func getHomeAddress(id *int64) (models.HomeAddress, error) {
 // 	FROM home_addresses
 // 	ORDER BY name`
 
-// 	rs, err := Sql().Query(sqlStatement)
+// 	rs, err := db.Query(sqlStatement)
 
 // 	if err != nil {
 // 		log.Fatalf("Unable to execute home addresses query %v", err)
@@ -193,12 +197,12 @@ func getHomeAddress(id *int64) (models.HomeAddress, error) {
 // 	return addresses, err
 // }
 
-func deleteHomeAddress(id *int64) int64 {
+func deleteHomeAddress(db *sql.DB, id *int64) int64 {
 	// create the delete sql query
 	sqlStatement := `DELETE FROM home_addresses WHERE order_id=$1`
 
 	// execute the sql statement
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		log.Fatalf("Unable to delete home address. %v", err)
@@ -214,14 +218,14 @@ func deleteHomeAddress(id *int64) int64 {
 	return rowsAffected
 }
 
-func createHomeAddress(ha *models.HomeAddress) (int64, error) {
+func createHomeAddress(db *sql.DB, ha *models.HomeAddress) (int64, error) {
 
 	sqlStatement := `INSERT INTO home_addresses
 	(order_id, street, region, city, phone, zip) 
 	VALUES 
 	($1, $2, $3, $4, $5, $6)`
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		ha.OrderID,
 		ha.Street,
 		ha.Region,
@@ -243,13 +247,13 @@ func createHomeAddress(ha *models.HomeAddress) (int64, error) {
 	return rowsAffected, err
 }
 
-func updateHomeAddress(id *int64, ha *models.HomeAddress) int64 {
+func updateHomeAddress(db *sql.DB, id *int64, ha *models.HomeAddress) int64 {
 
 	sqlStatement := `UPDATE home_addresses SET
 		street=$2, region=$3, city=$4, phone=$5, zip=$6
 	WHERE order_id=$1`
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		id,
 		ha.Street,
 		ha.Region,

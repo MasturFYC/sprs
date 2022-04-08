@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 	"strings"
@@ -18,7 +19,8 @@ type remain_saldo struct {
 
 func GetRemainSaldo(c *gin.Context) {
 
-	rv, err := get_remain_saldo()
+	db := c.Keys["db"].(*sql.DB)
+	rv, err := get_remain_saldo(db)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -28,7 +30,7 @@ func GetRemainSaldo(c *gin.Context) {
 	c.JSON(http.StatusOK, &rv)
 }
 
-func get_remain_saldo() ([]remain_saldo, error) {
+func get_remain_saldo(db *sql.DB) ([]remain_saldo, error) {
 
 	var saldos []remain_saldo
 	/*
@@ -60,7 +62,7 @@ func get_remain_saldo() ([]remain_saldo, error) {
 	b.WriteString("	t.debt - t.cred AS saldo")
 	b.WriteString("	FROM rs t;")
 
-	rs, err := Sql().Query(b.String())
+	rs, err := db.Query(b.String())
 
 	if err != nil {
 		log.Printf("Unable to execute saldo query %v", err)

@@ -36,7 +36,8 @@ func GetOfficeAddress(c *gin.Context) {
 		return
 	}
 
-	ha, err := getOfficeAddress(&id)
+	db := c.Keys["db"].(*sql.DB)
+	ha, err := getOfficeAddress(db, &id)
 
 	if err != nil {
 		//		log.Fatalf("Unable to get office address. %v", err)
@@ -58,7 +59,8 @@ func DeleteOfficeAddress(c *gin.Context) {
 		return
 	}
 
-	deletedRows := deleteOfficeAddress(&id)
+	db := c.Keys["db"].(*sql.DB)
+	deletedRows := deleteOfficeAddress(db, &id)
 
 	msg := fmt.Sprintf("Office address deleted successfully. Total rows/record affected %v", deletedRows)
 
@@ -84,7 +86,8 @@ func CreateOfficeAddress(c *gin.Context) {
 		return
 	}
 
-	rowAffected, err := createOfficeAddress(&ha)
+	db := c.Keys["db"].(*sql.DB)
+	rowAffected, err := createOfficeAddress(db, &ha)
 
 	if err != nil {
 		//		log.Fatalf("Nama office address tidak boleh sama.  %v", err)
@@ -120,7 +123,8 @@ func UpdateOfficeAddress(c *gin.Context) {
 		return
 	}
 
-	updatedRows := updateOfficeAddress(&id, &ha)
+	db := c.Keys["db"].(*sql.DB)
+	updatedRows := updateOfficeAddress(db, &id, &ha)
 
 	msg := fmt.Sprintf("Office address updated successfully. Total rows/record affected %v", updatedRows)
 
@@ -134,7 +138,7 @@ func UpdateOfficeAddress(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func getOfficeAddress(id *int64) (models.OfficeAddress, error) {
+func getOfficeAddress(db *sql.DB, id *int64) (models.OfficeAddress, error) {
 
 	var ha models.OfficeAddress
 
@@ -143,7 +147,7 @@ func getOfficeAddress(id *int64) (models.OfficeAddress, error) {
 	FROM office_addresses
 	WHERE order_id=$1`
 
-	rs := Sql().QueryRow(sqlStatement, id)
+	rs := db.QueryRow(sqlStatement, id)
 
 	err := rs.Scan(&ha.OrderID, &ha.Street, &ha.Region, &ha.City, &ha.Phone, &ha.Zip)
 
@@ -170,7 +174,7 @@ func getOfficeAddress(id *int64) (models.OfficeAddress, error) {
 // 	FROM office_addresses
 // 	ORDER BY name`
 
-// 	rs, err := Sql().Query(sqlStatement)
+// 	rs, err := db.Query(sqlStatement)
 
 // 	if err != nil {
 // 		log.Fatalf("Unable to execute office addresses query %v", err)
@@ -193,12 +197,12 @@ func getOfficeAddress(id *int64) (models.OfficeAddress, error) {
 // 	return addresses, err
 // }
 
-func deleteOfficeAddress(id *int64) int64 {
+func deleteOfficeAddress(db *sql.DB, id *int64) int64 {
 	// create the delete sql query
 	sqlStatement := `DELETE FROM office_addresses WHERE order_id=$1`
 
 	// execute the sql statement
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		log.Fatalf("Unable to delete office address. %v", err)
@@ -214,14 +218,14 @@ func deleteOfficeAddress(id *int64) int64 {
 	return rowsAffected
 }
 
-func createOfficeAddress(ha *models.OfficeAddress) (int64, error) {
+func createOfficeAddress(db *sql.DB, ha *models.OfficeAddress) (int64, error) {
 
 	sqlStatement := `INSERT INTO office_addresses
 	(order_id, street, region, city, phone, zip) 
 	VALUES 
 	($1, $2, $3, $4, $5, $6)`
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		ha.OrderID,
 		ha.Street,
 		ha.Region,
@@ -243,13 +247,13 @@ func createOfficeAddress(ha *models.OfficeAddress) (int64, error) {
 	return rowsAffected, err
 }
 
-func updateOfficeAddress(id *int64, ha *models.OfficeAddress) int64 {
+func updateOfficeAddress(db *sql.DB, id *int64, ha *models.OfficeAddress) int64 {
 
 	sqlStatement := `UPDATE office_addresses SET
 		street=$2, region=$3, city=$4, phone=$5, zip=$6
 	WHERE order_id=$1`
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		id,
 		ha.Street,
 		ha.Region,

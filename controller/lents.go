@@ -31,12 +31,13 @@ func LentPayment(c *gin.Context) {
 		return
 	}
 
+	db := c.Keys["db"].(*sql.DB)
 	var updatedRows int64 = 0
 
 	if trxid == 0 {
-		trxid, err = createTransaction(&data.Trx, data.Token)
+		trxid, err = createTransaction(db, &data.Trx, data.Token)
 	} else {
-		_, err = updateTransaction(&trxid, &data.Trx, data.Token)
+		_, err = updateTransaction(db, &trxid, &data.Trx, data.Token)
 
 	}
 
@@ -49,7 +50,7 @@ func LentPayment(c *gin.Context) {
 
 	if len(data.Trx.Details) > 0 {
 
-		_, err = deleteDetailsByOrder(&trxid)
+		_, err = deleteDetailsByOrder(db, &trxid)
 		if err != nil {
 			log.Fatalf("Unable to delete trx detail query %v", err)
 			//c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -59,7 +60,7 @@ func LentPayment(c *gin.Context) {
 
 		// 	var newId int64 = 0
 
-		err = bulkInsertDetails(data.Trx.Details, &trxid)
+		err = bulkInsertDetails(db, data.Trx.Details, &trxid)
 
 		if err != nil {
 			log.Fatalf("Unable to execute finances query %v", err)
@@ -84,7 +85,7 @@ func LentPayment(c *gin.Context) {
 
 func LentGetUnits(c *gin.Context) {
 
-	units, err := lent_get_units()
+	units, err := lent_get_units(c.Keys["db"].(*sql.DB))
 
 	if err != nil {
 		//log.Fatalf("Unable to get all lent. %v", err)
@@ -97,7 +98,8 @@ func LentGetUnits(c *gin.Context) {
 
 func LentGetAll(c *gin.Context) {
 
-	lents, err := lent_get_all()
+	db := c.Keys["db"].(*sql.DB)
+	lents, err := lent_get_all(db)
 
 	if err != nil {
 		//log.Fatalf("Unable to get all lent. %v", err)
@@ -119,7 +121,7 @@ func LentGetItem(c *gin.Context) {
 		return
 	}
 
-	loan, err := lent_get_item(&id)
+	loan, err := lent_get_item(c.Keys["db"].(*sql.DB), &id)
 
 	if err != nil {
 		//log.Fatalf("Unable to get finance. %v", err)
@@ -141,7 +143,7 @@ func LentDelete(c *gin.Context) {
 		return
 	}
 
-	deletedRows, err := lent_delete(&id)
+	deletedRows, err := lent_delete(c.Keys["db"].(*sql.DB), &id)
 
 	if err != nil {
 		//log.Fatalf("Unable to convert the string into int.  %v", err)
@@ -179,7 +181,8 @@ func LentCreate(c *gin.Context) {
 		return
 	}
 
-	_, err = lent_create(&data.Lent)
+	db := c.Keys["db"].(*sql.DB)
+	_, err = lent_create(db, &data.Lent)
 
 	if err != nil {
 		log.Fatalf("Pinjaman tidak bisa disimpan.  %v", err)
@@ -187,7 +190,7 @@ func LentCreate(c *gin.Context) {
 		return
 	}
 
-	trxid, err := trxGetOrder(&data.Lent.OrderID)
+	trxid, err := trxGetOrder(db, &data.Lent.OrderID)
 
 	if err != nil {
 		log.Fatalf("Tidak bisa membuat pinjaman baru %v", err)
@@ -197,7 +200,7 @@ func LentCreate(c *gin.Context) {
 	}
 
 	//if(data.unit.verified_by != nil) {
-	_, err = trxMoveToLent(&trxid, &data.Trx, data.Token)
+	_, err = trxMoveToLent(db, &trxid, &data.Trx, data.Token)
 	//trxid, err := createTransaction(&data.Trx, data.Token)
 	//	trxid, err := updateTransaction(&data.Trx.ID, &data.Trx, data.Token)
 	//}
@@ -240,7 +243,8 @@ func LentUpdate(c *gin.Context) {
 		return
 	}
 
-	updatedRows, err := lent_update(&id, &data)
+	db := c.Keys["db"].(*sql.DB)
+	updatedRows, err := lent_update(db, &id, &data)
 
 	// log.Printf("\n\n%v\n\n", data)
 
@@ -312,7 +316,7 @@ func lent_create_unit_query() *strings.Builder {
 	return &b
 }
 
-func lent_create_trx_detail_query() *strings.Builder {
+func lent_create_trx_detail_query(db *sql.DB) *strings.Builder {
 	b := strings.Builder{}
 
 	b.WriteString(`SELECT d.trx_id AS "trxId", d.id, d.code_id AS "codeId", d.debt, d.cred`)
@@ -343,13 +347,13 @@ type ts_lent_item struct {
 	Trxs *json.RawMessage `json:"trxs,omitempty"`
 }
 
-func lent_get_item(order_id *int64) (ts_lent_item, error) {
+func lent_get_item(db *sql.DB, order_id *int64) (ts_lent_item, error) {
 	var p ts_lent_item
 
 	qunit := lent_create_unit_query()
 	qunit.WriteString(" WHERE o.id = $1")
 
-	qtrx := lent_create_trx_detail_query()
+	qtrx := lent_create_trx_detail_query(db)
 
 	sb := strings.Builder{}
 	sb.WriteString("SELECT")
@@ -361,7 +365,7 @@ func lent_get_item(order_id *int64) (ts_lent_item, error) {
 	sb.WriteString(" FROM lents AS t")
 	sb.WriteString(" WHERE t.order_id=$1")
 
-	rs := Sql().QueryRow(sb.String(), order_id)
+	rs := db.QueryRow(sb.String(), order_id)
 
 	err := rs.Scan(
 		&p.OrderID,
@@ -409,7 +413,7 @@ type lent_all_unit struct {
 	Merk      string  `json:"merk"`
 }
 
-func lent_get_units() ([]lent_all_unit, error) {
+func lent_get_units(db *sql.DB) ([]lent_all_unit, error) {
 
 	var units []lent_all_unit
 
@@ -421,7 +425,7 @@ func lent_get_units() ([]lent_all_unit, error) {
 	qunit.WriteString(" AND o.id NOT IN (SELECT order_id FROM lents)")
 	qunit.WriteString(" AND trx.division = 'trx-order'")
 
-	rs, err := Sql().Query(qunit.String())
+	rs, err := db.Query(qunit.String())
 
 	if err != nil {
 		log.Fatalf("Unable to execute finances query %v", err)
@@ -458,7 +462,7 @@ func lent_get_units() ([]lent_all_unit, error) {
 
 }
 
-func lent_get_all() ([]ts_lent_all, error) {
+func lent_get_all(db *sql.DB) ([]ts_lent_all, error) {
 
 	var lents []ts_lent_all
 
@@ -490,7 +494,7 @@ func lent_get_all() ([]ts_lent_all, error) {
 	sb.WriteString(" INNER JOIN orders AS o ON o.id = t.order_id")
 	sb.WriteString(" ORDER BY t.serial_num")
 
-	rs, err := Sql().Query(sb.String())
+	rs, err := db.Query(sb.String())
 
 	if err != nil {
 		log.Fatalf("Unable to execute lents query %v", err)
@@ -524,25 +528,25 @@ func lent_get_all() ([]ts_lent_all, error) {
 	return lents, err
 }
 
-func lent_delete(id *int64) (int64, error) {
+func lent_delete(db *sql.DB, id *int64) (int64, error) {
 
 	//log.Printf("%d", id)
 	sqlStatement := `DELETE FROM lents WHERE order_id=$1`
-	_, err := Sql().Exec(sqlStatement, id)
+	_, err := db.Exec(sqlStatement, id)
 	if err != nil {
 		log.Fatal(err)
 		return 0, err
 	}
 
 	sqlStatement = `DELETE FROM trx WHERE ref_id=$1 AND division='trx-cicilan'`
-	_, err = Sql().Exec(sqlStatement, id)
+	_, err = db.Exec(sqlStatement, id)
 	if err != nil {
 		log.Fatal(err)
 		return 0, err
 	}
 
 	sqlStatement = `UPDATE trx SET division='trx-order', descriptions='Batal dipiutangkan' WHERE ref_id=$1 AND division='trx-lent'`
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 	if err != nil {
 		log.Fatal(err)
 		return 0, err
@@ -553,7 +557,7 @@ func lent_delete(id *int64) (int64, error) {
 
 }
 
-func lent_create(lent *models.Lent) (int64, error) {
+func lent_create(db *sql.DB, lent *models.Lent) (int64, error) {
 
 	sb := strings.Builder{}
 	sb.WriteString("INSERT INTO lents")
@@ -561,7 +565,7 @@ func lent_create(lent *models.Lent) (int64, error) {
 	sb.WriteString(" VALUES")
 	sb.WriteString(" ($1, $2, $3, $4, $5, $6, $7)")
 
-	rs, err := Sql().Exec(sb.String(),
+	rs, err := db.Exec(sb.String(),
 		lent.OrderID,
 		lent.Name,
 		lent.Street,
@@ -580,13 +584,13 @@ func lent_create(lent *models.Lent) (int64, error) {
 	return rowsAffected, err
 }
 
-func lent_update(id *int64, lent *models.Lent) (int64, error) {
+func lent_update(db *sql.DB, id *int64, lent *models.Lent) (int64, error) {
 	sb := strings.Builder{}
 	sb.WriteString("UPDATE lents SET")
 	sb.WriteString(" name=$2, street=$3, city=$4, phone=$5, cell=$6, zip=$7")
 	sb.WriteString(" WHERE order_id=$1")
 
-	rs, err := Sql().Exec(sb.String(),
+	rs, err := db.Exec(sb.String(),
 		id,
 		lent.Name,
 		lent.Street,

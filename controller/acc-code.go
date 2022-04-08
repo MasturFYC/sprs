@@ -26,7 +26,8 @@ func AccCodeGetSpec(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	accounts, err := get_accounts_spec(&spec_id)
+	db := c.Keys["db"].(*sql.DB)
+	accounts, err := get_accounts_spec(db, &spec_id)
 
 	if err != nil || len(accounts) == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -38,7 +39,8 @@ func AccCodeGetSpec(c *gin.Context) {
 
 func AccCodeGetProps(c *gin.Context) {
 
-	acc_codes, err := getAllAccCodeProps()
+	db := c.Keys["db"].(*sql.DB)
+	acc_codes, err := getAllAccCodeProps(db)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -50,7 +52,8 @@ func AccCodeGetProps(c *gin.Context) {
 
 func AccCodeGetAll(c *gin.Context) {
 
-	acc_codes, err := getAllAccCodes()
+	db := c.Keys["db"].(*sql.DB)
+	acc_codes, err := getAllAccCodes(db)
 
 	if err != nil || len(acc_codes) == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -64,7 +67,8 @@ func AccCodeSearchByName(c *gin.Context) {
 
 	var txt = c.Param("txt")
 
-	acc_codes, err := searchAccCodeByName(&txt)
+	db := c.Keys["db"].(*sql.DB)
+	acc_codes, err := searchAccCodeByName(db, &txt)
 
 	if err != nil || len(acc_codes) == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -83,7 +87,8 @@ func AccCodeGetByType(c *gin.Context) {
 		return
 	}
 
-	acc_codes, err := getAccCodeByType(&id)
+	db := c.Keys["db"].(*sql.DB)
+	acc_codes, err := getAccCodeByType(db, &id)
 
 	if err != nil || len(acc_codes) == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -102,7 +107,8 @@ func AccCodeGetItem(c *gin.Context) {
 		return
 	}
 
-	acc_code, err := getAccCode(&id)
+	db := c.Keys["db"].(*sql.DB)
+	acc_code, err := getAccCode(db, &id)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -123,7 +129,8 @@ func AccCodeCreate(c *gin.Context) {
 		return
 	}
 
-	rowsAffected, err := createAccCode(&acc_code)
+	db := c.Keys["db"].(*sql.DB)
+	rowsAffected, err := createAccCode(db, &acc_code)
 
 	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -152,7 +159,8 @@ func AccCodeUpdate(c *gin.Context) {
 		return
 	}
 
-	updatedRows, err := updateAccCode(&id, &acc_code)
+	db := c.Keys["db"].(*sql.DB)
+	updatedRows, err := updateAccCode(db, &id, &acc_code)
 
 	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -180,7 +188,8 @@ func AccCodeDelete(c *gin.Context) {
 		return
 	}
 
-	deletedRows, err := deleteAccCode(&id)
+	db := c.Keys["db"].(*sql.DB)
+	deletedRows, err := deleteAccCode(db, &id)
 
 	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -199,7 +208,7 @@ func AccCodeDelete(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func getAccCode(id *int) (models.AccInfo, error) {
+func getAccCode(db *sql.DB, id *int) (models.AccInfo, error) {
 
 	var p models.AccInfo
 
@@ -213,7 +222,7 @@ func getAccCode(id *int) (models.AccInfo, error) {
 	b.WriteString(" INNER JOIN acc_group g ON g.id = t.group_id")
 	b.WriteString(" WHERE c.id=$1")
 
-	rs := Sql().QueryRow(b.String(), id)
+	rs := db.QueryRow(b.String(), id)
 
 	err := rs.Scan(
 		&p.TypeID,
@@ -243,7 +252,7 @@ func getAccCode(id *int) (models.AccInfo, error) {
 	return p, err
 }
 
-func getAccCodeByType(id *int) ([]models.AccCode, error) {
+func getAccCodeByType(db *sql.DB, id *int) ([]models.AccCode, error) {
 
 	var results []models.AccCode
 
@@ -253,7 +262,7 @@ func getAccCodeByType(id *int) ([]models.AccCode, error) {
 	WHERE type_id=$1 OR 0=$1
 	ORDER BY id`
 
-	rs, err := Sql().Query(sqlStatement, id)
+	rs, err := db.Query(sqlStatement, id)
 
 	if err != nil {
 		log.Printf("Unable to execute account code query %v", err)
@@ -285,7 +294,7 @@ func getAccCodeByType(id *int) ([]models.AccCode, error) {
 	return results, err
 }
 
-func searchAccCodeByName(txt *string) ([]models.AccCode, error) {
+func searchAccCodeByName(db *sql.DB, txt *string) ([]models.AccCode, error) {
 
 	var results []models.AccCode
 
@@ -295,7 +304,7 @@ func searchAccCodeByName(txt *string) ([]models.AccCode, error) {
 	WHERE token_name @@ to_tsquery('indonesian', $1)
 	ORDER BY id`
 
-	rs, err := Sql().Query(sqlStatement, txt)
+	rs, err := db.Query(sqlStatement, txt)
 
 	if err != nil {
 		log.Printf("Unable to execute account code query %v", err)
@@ -327,7 +336,7 @@ func searchAccCodeByName(txt *string) ([]models.AccCode, error) {
 	return results, err
 }
 
-func getAllAccCodes() ([]models.AccCode, error) {
+func getAllAccCodes(db *sql.DB) ([]models.AccCode, error) {
 
 	var results []models.AccCode
 
@@ -336,7 +345,7 @@ func getAllAccCodes() ([]models.AccCode, error) {
 	FROM acc_code
 	ORDER BY id`
 
-	rs, err := Sql().Query(sqlStatement)
+	rs, err := db.Query(sqlStatement)
 
 	if err != nil {
 		log.Printf("Unable to execute account code query %v", err)
@@ -368,7 +377,7 @@ func getAllAccCodes() ([]models.AccCode, error) {
 	return results, err
 }
 
-func createAccCode(p *models.AccCode) (int64, error) {
+func createAccCode(db *sql.DB, p *models.AccCode) (int64, error) {
 
 	sqlStatement := `INSERT INTO 
 	acc_code (type_id, id, name, descriptions, is_active, is_auto_debet, receivable_option, token_name)
@@ -376,7 +385,7 @@ func createAccCode(p *models.AccCode) (int64, error) {
 
 	token := fmt.Sprintf("%s %s", p.Name, p.Descriptions)
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		p.TypeID,
 		p.ID,
 		p.Name,
@@ -401,7 +410,7 @@ func createAccCode(p *models.AccCode) (int64, error) {
 	return rowsAffected, err
 }
 
-func updateAccCode(id *int, p *models.AccCode) (int64, error) {
+func updateAccCode(db *sql.DB, id *int, p *models.AccCode) (int64, error) {
 
 	sqlStatement := `UPDATE acc_code SET 
 	type_id=$2, name=$3, descriptions=$4, is_active=$5, is_auto_debet=$6,
@@ -411,7 +420,7 @@ func updateAccCode(id *int, p *models.AccCode) (int64, error) {
 
 	token := fmt.Sprintf("%s %s", p.Name, p.Descriptions)
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		id,
 		p.TypeID,
 		p.Name,
@@ -438,11 +447,11 @@ func updateAccCode(id *int, p *models.AccCode) (int64, error) {
 	return rowsAffected, err
 }
 
-func deleteAccCode(id *int) (int64, error) {
+func deleteAccCode(db *sql.DB, id *int) (int64, error) {
 
 	sqlStatement := `DELETE FROM acc_code WHERE id=$1`
 
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		log.Printf("Unable to delete account code. %v", err)
@@ -459,7 +468,7 @@ func deleteAccCode(id *int) (int64, error) {
 	return rowsAffected, err
 }
 
-func getAllAccCodeProps() ([]models.AccCodeType, error) {
+func getAllAccCodeProps(db *sql.DB) ([]models.AccCodeType, error) {
 
 	var results []models.AccCodeType
 
@@ -469,7 +478,7 @@ func getAllAccCodeProps() ([]models.AccCodeType, error) {
 	INNER JOIN acc_type t ON t.id = c.type_id
 	ORDER BY c.id`
 
-	rs, err := Sql().Query(sqlStatement)
+	rs, err := db.Query(sqlStatement)
 
 	if err != nil {
 		log.Printf("Unable to execute account code property query %v", err)
@@ -500,7 +509,7 @@ func getAllAccCodeProps() ([]models.AccCodeType, error) {
 	return results, err
 }
 
-func get_accounts_spec(specId *int) ([]account_specific, error) {
+func get_accounts_spec(db *sql.DB, specId *int) ([]account_specific, error) {
 
 	var results []account_specific
 
@@ -510,7 +519,7 @@ func get_accounts_spec(specId *int) ([]account_specific, error) {
 	WHERE receivable_option = $1
 	ORDER BY id`
 
-	rs, err := Sql().Query(sqlStatement, specId)
+	rs, err := db.Query(sqlStatement, specId)
 
 	if err != nil {
 		log.Printf("Unable to execute account code property query %v", err)

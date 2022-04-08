@@ -72,7 +72,8 @@ func ActionUploadFile(c *gin.Context) {
 		return
 	}
 
-	rowsAffected, err := update_file_name(&id, &sfile)
+	db := c.Keys["db"].(*sql.DB)
+	rowsAffected, err := update_file_name(db, &id, &sfile)
 
 	if err != nil {
 		c.JSON(http.StatusRequestURITooLong, gin.H{"error": err.Error()})
@@ -96,7 +97,8 @@ func ActionGetByOrder(c *gin.Context) {
 		return
 	}
 
-	actions, err := action_getByOrder(&id)
+	db := c.Keys["db"].(*sql.DB)
+	actions, err := action_getByOrder(db, &id)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -115,7 +117,8 @@ func ActionGetItem(c *gin.Context) {
 		return
 	}
 
-	act, err := getAction(&id)
+	db := c.Keys["db"].(*sql.DB)
+	act, err := getAction(db, &id)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -134,7 +137,8 @@ func ActionDelete(c *gin.Context) {
 		return
 	}
 
-	deletedRows, err := deleteAction(&id)
+	db := c.Keys["db"].(*sql.DB)
+	deletedRows, err := deleteAction(db, &id)
 
 	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -165,7 +169,8 @@ func ActionCreate(c *gin.Context) {
 		return
 	}
 
-	id, err := createAction(&act)
+	db := c.Keys["db"].(*sql.DB)
+	id, err := createAction(db, &act)
 
 	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -190,7 +195,8 @@ func ActionUpdate(c *gin.Context) {
 		return
 	}
 
-	updatedRows, err := updateAction(&id, &act)
+	db := c.Keys["db"].(*sql.DB)
+	updatedRows, err := updateAction(db, &id, &act)
 
 	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -210,8 +216,8 @@ func ActionUpdate(c *gin.Context) {
 
 }
 
-func action_getByOrder(OrderID *int64) ([]models.Action, error) {
-	// defer Sql().Close()
+func action_getByOrder(db *sql.DB, OrderID *int64) ([]models.Action, error) {
+	// defer db.Close()
 	var actions []models.Action
 
 	sqlStatement := `SELECT
@@ -219,7 +225,7 @@ func action_getByOrder(OrderID *int64) ([]models.Action, error) {
   FROM actions
   WHERE order_id=$1`
 
-	rows, err := Sql().Query(sqlStatement, OrderID)
+	rows, err := db.Query(sqlStatement, OrderID)
 
 	if err != nil {
 		log.Fatalf("Unable to execute actions query %v", err)
@@ -249,17 +255,17 @@ func action_getByOrder(OrderID *int64) ([]models.Action, error) {
 	return actions, err
 }
 
-func getAction(id *int64) (models.Action, error) {
+func getAction(db *sql.DB, id *int64) (models.Action, error) {
 	var act models.Action
 
 	sqlStatement := `SELECT
     id, action_at, pic, descriptions, order_id, file_name
   FROM actions
   WHERE id=$1`
-	//stmt, _ := Sql().Prepare(sqlStatement)
+	//stmt, _ := db.Prepare(sqlStatement)
 
 	//defer stmt.Close()
-	row := Sql().QueryRow(sqlStatement, id)
+	row := db.QueryRow(sqlStatement, id)
 
 	err := row.Scan(
 		&act.ID,
@@ -285,12 +291,12 @@ func getAction(id *int64) (models.Action, error) {
 	return act, err
 }
 
-func deleteAction(id *int64) (int64, error) {
+func deleteAction(db *sql.DB, id *int64) (int64, error) {
 	// create the delete sql query
 	sqlStatement := `DELETE FROM actions WHERE id=$1`
 
 	// execute the sql statement
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		log.Fatalf("Unable to delete action. %v", err)
@@ -302,7 +308,7 @@ func deleteAction(id *int64) (int64, error) {
 	return rowsAffected, err
 }
 
-func createAction(act *models.Action) (int64, error) {
+func createAction(db *sql.DB, act *models.Action) (int64, error) {
 
 	sqlStatement := `INSERT INTO actions
     (action_at, pic, descriptions, order_id)
@@ -312,7 +318,7 @@ func createAction(act *models.Action) (int64, error) {
 
 	var id int64
 
-	err := Sql().QueryRow(sqlStatement,
+	err := db.QueryRow(sqlStatement,
 		act.ActionAt,
 		//	act.Code,
 		act.Pic,
@@ -327,13 +333,13 @@ func createAction(act *models.Action) (int64, error) {
 	return id, err
 }
 
-func updateAction(id *int64, act *models.Action) (int64, error) {
+func updateAction(db *sql.DB, id *int64, act *models.Action) (int64, error) {
 
 	sqlStatement := `UPDATE actions SET
     action_at=$2, pic=$3, descriptions=$4, order_id=$5
   WHERE id=$1`
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		id,
 		act.ActionAt,
 		// act.Code,
@@ -357,11 +363,11 @@ func updateAction(id *int64, act *models.Action) (int64, error) {
 	return rowsAffected, err
 }
 
-func update_file_name(id *int64, file_name *string) (int64, error) {
+func update_file_name(db *sql.DB, id *int64, file_name *string) (int64, error) {
 
 	sqlStatement := `UPDATE actions SET file_name=$2 WHERE id=$1`
 
-	res, err := Sql().Exec(sqlStatement, id, file_name)
+	res, err := db.Exec(sqlStatement, id, file_name)
 
 	if err != nil {
 		log.Printf("Unable to update action. %v", err)

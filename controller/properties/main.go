@@ -1,6 +1,7 @@
 package properties
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 
@@ -11,7 +12,7 @@ import (
 
 func GetCategoryProps(c *gin.Context) {
 
-	props, err := getProperties("categories")
+	props, err := getProperties(c.Keys["db"].(*sql.DB), "categories")
 
 	if err != nil {
 		log.Fatalf("Unable to get all property. %v", err)
@@ -22,7 +23,7 @@ func GetCategoryProps(c *gin.Context) {
 
 func GetProductsProps(c *gin.Context) {
 
-	props, err := getProductProps()
+	props, err := getProductProps(c.Keys["db"].(*sql.DB))
 
 	if err != nil {
 		log.Fatalf("Unable to get all property. %v", err)
@@ -31,13 +32,13 @@ func GetProductsProps(c *gin.Context) {
 	c.JSON(http.StatusOK, &props)
 }
 
-func getProperties(table string) ([]models.Property, error) {
-	// defer Sql().Close()
+func getProperties(db *sql.DB, table string) ([]models.Property, error) {
+	// defer db.Close()
 	var props []models.Property
 
 	sqlStatement := "SELECT id, name FROM " + table + " ORDER BY name"
 
-	rows, err := mid.Sql().Query(sqlStatement)
+	rows, err := db.Query(sqlStatement)
 
 	if err != nil {
 		log.Fatalf("Unable to execute products query %v", err)
@@ -60,8 +61,8 @@ func getProperties(table string) ([]models.Property, error) {
 	return props, err
 }
 
-func getProductProps() ([]models.Property, error) {
-	// defer Sql().Close()
+func getProductProps(db *sql.DB) ([]models.Property, error) {
+	// defer db.Close()
 	var props []models.Property
 
 	sqlStatement := `SELECT
@@ -69,7 +70,7 @@ func getProductProps() ([]models.Property, error) {
 	FROM products 
 	ORDER BY name`
 
-	rows, err := mid.Sql().Query(sqlStatement)
+	rows, err := db.Query(sqlStatement)
 
 	if err != nil {
 		log.Fatalf("Unable to execute products query %v", err)

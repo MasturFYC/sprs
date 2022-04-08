@@ -38,7 +38,8 @@ func GetUnit(c *gin.Context) {
 		return
 	}
 
-	units, err := getUnit(&id)
+	db := c.Keys["db"].(*sql.DB)
+	units, err := getUnit(db, &id)
 
 	if err != nil {
 		//log.Fatalf("Unable to get unit. %v", err)
@@ -60,7 +61,7 @@ func DeleteUnit(c *gin.Context) {
 		return
 	}
 
-	deletedRows, err := deleteUnit(&id)
+	deletedRows, err := deleteUnit(c.Keys["db"].(*sql.DB), &id)
 
 	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -93,7 +94,8 @@ func CreateUnit(c *gin.Context) {
 		return
 	}
 
-	rowAffected, err := createUnit(&unit)
+	db := c.Keys["db"].(*sql.DB)
+	rowAffected, err := createUnit(db, &unit)
 
 	if err != nil {
 		//log.Printf("Unable to decode the request body.  %v", err)
@@ -103,7 +105,7 @@ func CreateUnit(c *gin.Context) {
 
 	msg := fmt.Sprintf("Unit created successfully. Total rows/record affected %v", rowAffected)
 
-	order_update_unit_token(&unit)
+	order_update_unit_token(db, &unit)
 	// format the reponse message
 	res := Response{
 		ID:      rowAffected,
@@ -129,7 +131,8 @@ func UpdateUnit(c *gin.Context) {
 		return
 	}
 
-	updatedRows, err := updateUnit(&id, &unit)
+	db := c.Keys["db"].(*sql.DB)
+	updatedRows, err := updateUnit(db, &id, &unit)
 
 	if err != nil {
 		//	log.Printf("Unable to decode the request body.  %v", err)
@@ -137,7 +140,7 @@ func UpdateUnit(c *gin.Context) {
 		return
 	}
 
-	order_update_unit_token(&unit)
+	order_update_unit_token(db, &unit)
 
 	msg := fmt.Sprintf("Unit updated successfully. Total rows/record affected %v", updatedRows)
 
@@ -151,7 +154,7 @@ func UpdateUnit(c *gin.Context) {
 	c.JSON(http.StatusOK, &res)
 }
 
-func getUnit(id *int64) (models.Unit, error) {
+func getUnit(db *sql.DB, id *int64) (models.Unit, error) {
 
 	var unit models.Unit
 
@@ -161,7 +164,7 @@ func getUnit(id *int64) (models.Unit, error) {
 	FROM units
 	WHERE order_id=$1`
 
-	rs := Sql().QueryRow(sqlStatement, id)
+	rs := db.QueryRow(sqlStatement, id)
 
 	err := rs.Scan(&unit.OrderID,
 		&unit.Nopol,
@@ -181,12 +184,12 @@ func getUnit(id *int64) (models.Unit, error) {
 		fmt.Println("No rows were returned!")
 		return unit, nil
 	case nil:
-		t, err := getType(&unit.TypeID)
+		t, err := getType(db, &unit.TypeID)
 		if err == nil {
 			unit.Type = t
 		}
 
-		w, err := getWarehouse(&unit.WarehouseID)
+		w, err := getWarehouse(db, &unit.WarehouseID)
 
 		if err == nil {
 			unit.Warehouse = w
@@ -210,7 +213,7 @@ func getUnit(id *int64) (models.Unit, error) {
 // 		color, dealer, surveyor, type_id, warehouse_id
 // 	FROM units`
 
-// 	rs, err := Sql().Query(sqlStatement)
+// 	rs, err := db.Query(sqlStatement)
 
 // 	if err != nil {
 // 		log.Fatalf("Unable to execute units query %v", err)
@@ -244,12 +247,12 @@ func getUnit(id *int64) (models.Unit, error) {
 // 	return units, err
 // }
 
-func deleteUnit(id *int64) (int64, error) {
+func deleteUnit(db *sql.DB, id *int64) (int64, error) {
 	// create the delete sql query
 	sqlStatement := `DELETE FROM units WHERE order_id=$1`
 
 	// execute the sql statement
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		log.Fatalf("Unable to delete unit. %v", err)
@@ -304,26 +307,26 @@ func create_unit_token(p *models.Unit) string {
 	return sb.String()
 }
 
-func order_update_unit_token(p *models.Unit) {
+func order_update_unit_token(db *sql.DB, p *models.Unit) {
 
 	token := create_unit_token(p)
 
 	sqlStatement := `UPDATE orders SET token=token || ' ' || to_tsvector('indonesian', $2)	WHERE id=$1`
 
-	Sql().Exec(sqlStatement,
+	db.Exec(sqlStatement,
 		p.OrderID,
 		token,
 	)
 
 }
 
-func createUnit(t *models.Unit) (int64, error) {
+func createUnit(db *sql.DB, t *models.Unit) (int64, error) {
 
 	sqlStatement := `INSERT INTO units 
 	(order_id, nopol, year, frame_number, machine_number, color, type_id, warehouse_id)
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		t.OrderID,
 		t.Nopol,
 		t.Year,
@@ -346,14 +349,14 @@ func createUnit(t *models.Unit) (int64, error) {
 	return rowsAffected, err
 }
 
-func updateUnit(id *int64, t *models.Unit) (int64, error) {
+func updateUnit(db *sql.DB, id *int64, t *models.Unit) (int64, error) {
 
 	sqlStatement := `UPDATE units SET
 		nopol=$2, year=$3, frame_number=$4, machine_number=$5,
 		color=$6, type_id=$7, warehouse_id=$8
 	WHERE order_id=$1`
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		id,
 		t.Nopol,
 		t.Year,

@@ -28,7 +28,8 @@ func SearchOrders(c *gin.Context) {
 		return
 	}
 
-	orders, err := searchOrders(&t.Txt)
+	db := c.Keys["db"].(*sql.DB)
+	orders, err := searchOrders(db, &t.Txt)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -48,7 +49,8 @@ func GetOrdersByFinance(c *gin.Context) {
 		return
 	}
 
-	orders, err := get_order_by_finance(&id)
+	db := c.Keys["db"].(*sql.DB)
+	orders, err := get_order_by_finance(db, &id)
 
 	if err != nil || len(orders) == 0 {
 		//log.Printf("Unable to get all account codes. %v", err)
@@ -72,7 +74,8 @@ func GetOrdersByBranch(c *gin.Context) {
 		return
 	}
 
-	acc_codes, err := get_order_by_branch(&id)
+	db := c.Keys["db"].(*sql.DB)
+	acc_codes, err := get_order_by_branch(db, &id)
 
 	if err != nil || len(acc_codes) == 0 {
 		//log.Printf("Unable to get all account codes. %v", err)
@@ -87,7 +90,6 @@ func GetOrdersByBranch(c *gin.Context) {
 }
 
 func GetOrdersByMonth(c *gin.Context) {
-
 	id, err := strconv.Atoi(c.Param("id"))
 
 	//log.Printf("%d============", id)
@@ -98,7 +100,8 @@ func GetOrdersByMonth(c *gin.Context) {
 		return
 	}
 
-	acc_codes, err := get_order_by_month(&id)
+	db := c.Keys["db"].(*sql.DB)
+	acc_codes, err := get_order_by_month(db, &id)
 
 	if err != nil || len(acc_codes) == 0 {
 		//log.Printf("Unable to get all account codes. %v", err)
@@ -114,7 +117,9 @@ func GetOrdersByMonth(c *gin.Context) {
 
 func GetOrders(c *gin.Context) {
 
-	addresses, err := getAllOrders()
+	db := c.Keys["db"].(*sql.DB)
+
+	addresses, err := getAllOrders(db)
 
 	if err != nil {
 		//log.Fatalf("Unable to get all orderes. %v", err)
@@ -136,7 +141,8 @@ func GetOrder(c *gin.Context) {
 		return
 	}
 
-	rv, err := getOrder(&id)
+	db := c.Keys["db"].(*sql.DB)
+	rv, err := getOrder(db, &id)
 
 	if err != nil {
 		//log.Printf("Unable to get order. %v", err)
@@ -160,7 +166,8 @@ func DeleteOrder(c *gin.Context) {
 		return
 	}
 
-	deletedRows := deleteOrder(&id)
+	db := c.Keys["db"].(*sql.DB)
+	deletedRows := deleteOrder(db, &id)
 
 	msg := fmt.Sprintf("Order deleted successfully. Total rows/record affected %v", deletedRows)
 
@@ -176,7 +183,8 @@ func DeleteOrder(c *gin.Context) {
 
 func Order_GetNameSeq(c *gin.Context) {
 
-	id, err := create_name_seq()
+	db := c.Keys["db"].(*sql.DB)
+	id, err := create_name_seq(db)
 
 	if err != nil {
 		//log.Printf("Nama order tidak boleh sama.  %v", err)
@@ -213,7 +221,8 @@ func CreateOrder(c *gin.Context) {
 		return
 	}
 
-	id, err := createOrder(&order)
+	db := c.Keys["db"].(*sql.DB)
+	id, err := createOrder(db, &order)
 
 	if err != nil {
 		//log.Printf("Nomor order tidak boleh sama.  %v", err)
@@ -243,7 +252,8 @@ func UpdateOrder(c *gin.Context) {
 		return
 	}
 
-	updatedRows, err := updateOrder(&id, &rv)
+	db := c.Keys["db"].(*sql.DB)
+	updatedRows, err := updateOrder(db, &id, &rv)
 
 	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -280,7 +290,8 @@ func Order_GetInvoiced(c *gin.Context) {
 	// 	return
 	// }
 
-	orders, err := order_get_invoiced(&m, &y, &fid)
+	db := c.Keys["db"].(*sql.DB)
+	orders, err := order_get_invoiced(db, &m, &y, &fid)
 
 	if err != nil || len(orders) == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -290,14 +301,14 @@ func Order_GetInvoiced(c *gin.Context) {
 	c.JSON(http.StatusOK, &orders)
 }
 
-func getOrder(id *int64) (order_all, error) {
+func getOrder(db *sql.DB, id *int64) (order_all, error) {
 
 	var o order_all
 	b := create_order_query()
 	b.WriteString(" FROM orders AS o")
 	b.WriteString(" WHERE o.id=$1")
 
-	rs := Sql().QueryRow(b.String(), id)
+	rs := db.QueryRow(b.String(), id)
 
 	err := rs.Scan(
 		&o.ID,
@@ -363,7 +374,7 @@ type order_all struct {
 	Unit    *json.RawMessage `json:"unit,omitempty"`
 }
 
-func getAllOrders() ([]order_all, error) {
+func getAllOrders(db *sql.DB) ([]order_all, error) {
 
 	var orders []order_all
 
@@ -373,7 +384,7 @@ func getAllOrders() ([]order_all, error) {
 
 	//log.Println(b.String())
 
-	rs, err := Sql().Query(b.String())
+	rs, err := db.Query(b.String())
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)
@@ -421,12 +432,12 @@ func getAllOrders() ([]order_all, error) {
 	return orders, err
 }
 
-func deleteOrder(id *int64) int64 {
+func deleteOrder(db *sql.DB, id *int64) int64 {
 	// create the delete sql query
 	sqlStatement := `DELETE FROM orders WHERE id=$1`
 
 	// execute the sql statement
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		log.Fatalf("Unable to delete order. %v", err)
@@ -442,13 +453,13 @@ func deleteOrder(id *int64) int64 {
 	return rowsAffected
 }
 
-func create_name_seq() (int64, error) {
+func create_name_seq(db *sql.DB) (int64, error) {
 
 	sqlStatement := "SELECT nextval('order_name_seq'::regclass) AS id"
 
 	var id int64
 
-	err := Sql().QueryRow(sqlStatement).Scan(&id)
+	err := db.QueryRow(sqlStatement).Scan(&id)
 
 	if err != nil {
 		log.Printf("Unable to create order name sequence. %v", err)
@@ -457,7 +468,7 @@ func create_name_seq() (int64, error) {
 	return id, err
 }
 
-func createOrder(p *st_order_create) (int64, error) {
+func createOrder(db *sql.DB, p *st_order_create) (int64, error) {
 
 	sqlStatement := `INSERT INTO orders (
 		name, order_at, printed_at, bt_finance, bt_percent, bt_matel,
@@ -469,10 +480,9 @@ func createOrder(p *st_order_create) (int64, error) {
 	RETURNING id`
 
 	var id int64
-
 	token := create_new_token(p)
 
-	err := Sql().QueryRow(sqlStatement,
+	err := db.QueryRow(sqlStatement,
 		p.Name,
 		p.OrderAt,
 		p.PrintedAt,
@@ -562,7 +572,7 @@ func create_token(p *st_order_update) string {
 
 }
 
-func updateOrder(id *int64, p *st_order_update) (int64, error) {
+func updateOrder(db *sql.DB, id *int64, p *st_order_update) (int64, error) {
 
 	sqlStatement := `UPDATE orders SET
 		name=$2, order_at=$3, printed_at=$4, bt_finance=$5, bt_percent=$6, bt_matel=$7, 
@@ -572,7 +582,7 @@ func updateOrder(id *int64, p *st_order_update) (int64, error) {
 
 	token := create_token(p)
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		id,
 		p.Name,
 		p.OrderAt,
@@ -644,7 +654,7 @@ func create_order_query() *strings.Builder {
 	return &b
 }
 
-func searchOrders(txt *string) ([]order_all, error) {
+func searchOrders(db *sql.DB, txt *string) ([]order_all, error) {
 
 	var orders []order_all
 	b := create_order_query()
@@ -654,7 +664,7 @@ func searchOrders(txt *string) ([]order_all, error) {
 	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM lents)")
 	b.WriteString(" ORDER BY o.order_at, o.id")
 
-	rs, err := Sql().Query(b.String(), txt)
+	rs, err := db.Query(b.String(), txt)
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)
@@ -702,7 +712,7 @@ func searchOrders(txt *string) ([]order_all, error) {
 	return orders, err
 }
 
-func get_order_by_finance(id *int) ([]order_all, error) {
+func get_order_by_finance(db *sql.DB, id *int) ([]order_all, error) {
 
 	var orders []order_all
 	b := create_order_query()
@@ -712,7 +722,7 @@ func get_order_by_finance(id *int) ([]order_all, error) {
 	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM lents)")
 	b.WriteString(" ORDER BY o.order_at, o.id")
 
-	rs, err := Sql().Query(b.String(), id)
+	rs, err := db.Query(b.String(), id)
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)
@@ -760,7 +770,7 @@ func get_order_by_finance(id *int) ([]order_all, error) {
 	return orders, err
 }
 
-func get_order_by_branch(id *int) ([]order_all, error) {
+func get_order_by_branch(db *sql.DB, id *int) ([]order_all, error) {
 
 	var orders []order_all
 	b := create_order_query()
@@ -770,7 +780,7 @@ func get_order_by_branch(id *int) ([]order_all, error) {
 	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM lents)")
 	b.WriteString(" ORDER BY o.order_at, o.id")
 
-	rs, err := Sql().Query(b.String(), id)
+	rs, err := db.Query(b.String(), id)
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)
@@ -855,7 +865,7 @@ func get_order_by_branch(id *int) ([]order_all, error) {
 // }
 */
 
-func get_order_by_month(id *int) ([]order_all, error) {
+func get_order_by_month(db *sql.DB, id *int) ([]order_all, error) {
 
 	var orders []order_all
 	b := create_order_query()
@@ -864,7 +874,7 @@ func get_order_by_month(id *int) ([]order_all, error) {
 	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM invoice_details)")
 	b.WriteString(" AND o.id NOT IN (SELECT order_id FROM lents)")
 	b.WriteString(" ORDER BY o.order_at, o.id")
-	rs, err := Sql().Query(b.String(), id)
+	rs, err := db.Query(b.String(), id)
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)
@@ -933,7 +943,7 @@ type order_invoiced struct {
 	Finance json.RawMessage  `json:"finance,omitempty"`
 }
 
-func order_get_invoiced(m *int, y *int, fid *int) ([]order_invoiced, error) {
+func order_get_invoiced(db *sql.DB, m *int, y *int, fid *int) ([]order_invoiced, error) {
 	var orders []order_invoiced
 
 	var q_finance = `SELECT f.name, f.short_name "shortName" FROM finances f WHERE f.id = t.finance_id`
@@ -1007,7 +1017,7 @@ func order_get_invoiced(m *int, y *int, fid *int) ([]order_invoiced, error) {
 	//b.WriteString(" WHERE t.id=1")
 	b.WriteString(" ORDER BY t.status DESC, t.order_at")
 
-	rs, err := Sql().Query(b.String(), m, y, fid)
+	rs, err := db.Query(b.String(), m, y, fid)
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)

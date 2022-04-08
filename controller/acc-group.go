@@ -23,8 +23,8 @@ type all_accounts struct {
 }
 
 func AccGroupGetAllAccount(c *gin.Context) {
-
-	accounts, err := get_all_accounts()
+	db := c.Keys["db"].(*sql.DB)
+	accounts, err := get_all_accounts(db)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -35,8 +35,8 @@ func AccGroupGetAllAccount(c *gin.Context) {
 }
 
 func AccGroupGetAll(c *gin.Context) {
-
-	groups, err := getAllAccGroups()
+	db := c.Keys["db"].(*sql.DB)
+	groups, err := getAllAccGroups(db)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -54,8 +54,8 @@ func AccGroupGetTypes(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	acc_group, err := group_get_types(&id)
+	db := c.Keys["db"].(*sql.DB)
+	acc_group, err := group_get_types(db, &id)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -94,8 +94,8 @@ func GetAccGroup(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	acc_group, err := getAccGroup(&id)
+	db := c.Keys["db"].(*sql.DB)
+	acc_group, err := getAccGroup(db, &id)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -113,8 +113,8 @@ func AccGroupCreate(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	rowsAffected, err := createAccGroup(&acc_group)
+	db := c.Keys["db"].(*sql.DB)
+	rowsAffected, err := createAccGroup(db, &acc_group)
 
 	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -141,7 +141,8 @@ func AccGroupUpdate(c *gin.Context) {
 		return
 	}
 
-	updatedRows, err := updateAccGroup(&id, &acc_group)
+	db := c.Keys["db"].(*sql.DB)
+	updatedRows, err := updateAccGroup(db, &id, &acc_group)
 
 	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -159,8 +160,8 @@ func AccGroupDelete(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	deletedRows, err := deleteAccGroup(&id)
+	db := c.Keys["db"].(*sql.DB)
+	deletedRows, err := deleteAccGroup(db, &id)
 
 	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -171,14 +172,12 @@ func AccGroupDelete(c *gin.Context) {
 
 }
 
-func group_get_types(id *int) ([]models.AccType, error) {
+func group_get_types(db *sql.DB, id *int) ([]models.AccType, error) {
 	var results []models.AccType
 
-	var sqlStatement = `SELECT group_id, id, name, descriptions FROM acc_type
-	WHERE group_id=$1 OR 0 = $1
-	ORDER BY id`
+	var sqlStatement = `SELECT group_id, id, name, descriptions FROM acc_type WHERE group_id=$1 OR 0 = $1 ORDER BY id`
 
-	rs, err := Sql().Query(sqlStatement, id)
+	rs, err := db.Query(sqlStatement, id)
 
 	if err != nil {
 		log.Printf("Unable to execute account type query %v", err)
@@ -202,13 +201,13 @@ func group_get_types(id *int) ([]models.AccType, error) {
 	return results, err
 }
 
-func getAccGroup(id *int) (models.AccGroup, error) {
+func getAccGroup(db *sql.DB, id *int) (models.AccGroup, error) {
 
 	var acc_group models.AccGroup
 
 	var sqlStatement = "SELECT id, name, descriptions FROM acc_group WHERE id=$1"
 
-	rs := Sql().QueryRow(sqlStatement, id)
+	rs := db.QueryRow(sqlStatement, id)
 
 	err := rs.Scan(&acc_group.ID, &acc_group.Name, &acc_group.Descriptions)
 
@@ -226,13 +225,13 @@ func getAccGroup(id *int) (models.AccGroup, error) {
 	return acc_group, err
 }
 
-func getAllAccGroups() ([]models.AccGroup, error) {
+func getAllAccGroups(db *sql.DB) ([]models.AccGroup, error) {
 
 	var results []models.AccGroup
 
 	var sqlStatement = `SELECT id, name, descriptions FROM acc_group ORDER BY id`
 
-	rs, err := Sql().Query(sqlStatement)
+	rs, err := db.Query(sqlStatement)
 
 	if err != nil {
 		log.Printf("Unable to execute account group query %v", err)
@@ -256,11 +255,11 @@ func getAllAccGroups() ([]models.AccGroup, error) {
 	return results, err
 }
 
-func createAccGroup(p *models.AccGroup) (int64, error) {
+func createAccGroup(db *sql.DB, p *models.AccGroup) (int64, error) {
 
 	sqlStatement := `INSERT INTO acc_group (id, name, descriptions) VALUES ($1, $2, $3)`
 
-	res, err := Sql().Exec(sqlStatement, p.ID, p.Name, p.Descriptions)
+	res, err := db.Exec(sqlStatement, p.ID, p.Name, p.Descriptions)
 
 	if err != nil {
 		log.Printf("Unable to create account group. %v", err)
@@ -272,13 +271,13 @@ func createAccGroup(p *models.AccGroup) (int64, error) {
 	return rowsAffected, err
 }
 
-func updateAccGroup(id *int, p *models.AccGroup) (int64, error) {
+func updateAccGroup(db *sql.DB, id *int, p *models.AccGroup) (int64, error) {
 
 	sqlStatement := `UPDATE acc_group SET
 	name=$2, descriptions=$3
 	WHERE id=$1`
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		id,
 		p.Name,
 		p.Descriptions,
@@ -295,11 +294,11 @@ func updateAccGroup(id *int, p *models.AccGroup) (int64, error) {
 	return rowsAffected, err
 }
 
-func deleteAccGroup(id *int) (int64, error) {
+func deleteAccGroup(db *sql.DB, id *int) (int64, error) {
 
 	sqlStatement := `DELETE FROM acc_group WHERE id=$1`
 
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		log.Printf("Unable to delete account group. %v", err)
@@ -312,7 +311,7 @@ func deleteAccGroup(id *int) (int64, error) {
 	return rowsAffected, err
 }
 
-func get_all_accounts() ([]all_accounts, error) {
+func get_all_accounts(db *sql.DB) ([]all_accounts, error) {
 	var accounts []all_accounts
 
 	sb := strings.Builder{}
@@ -336,7 +335,7 @@ func get_all_accounts() ([]all_accounts, error) {
 	sb.WriteString(" FROM rs t")
 	sb.WriteString(" ORDER BY t.is_group, t.is_account, t.id;")
 
-	rs, err := Sql().Query(sb.String())
+	rs, err := db.Query(sb.String())
 
 	if err != nil {
 		log.Printf("Unable to execute saldo query %v", err)

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"strings"
@@ -102,8 +103,9 @@ func GetRepotTrxByMonth(c *gin.Context) {
 		return
 	}
 
-	log.Printf("%d %d", m, y)
-	rpt, err := get_report_trx_by_month(&m, &y)
+	//log.Printf("%d %d", m, y)
+	db := c.Keys["db"].(*sql.DB)
+	rpt, err := get_report_trx_by_month(db, &m, &y)
 
 	if err != nil || len(rpt) == 0 {
 		//log.Printf("Unable to get all account codes. %v", err)
@@ -117,7 +119,7 @@ func GetRepotTrxByMonth(c *gin.Context) {
 	c.JSON(http.StatusOK, &rpt)
 }
 
-func get_report_trx_by_month(m *int, y *int) ([]reportMonth, error) {
+func get_report_trx_by_month(db *sql.DB, m *int, y *int) ([]reportMonth, error) {
 	/*
 		var reports []reportMonth
 
@@ -160,7 +162,7 @@ func get_report_trx_by_month(m *int, y *int) ([]reportMonth, error) {
 		b.WriteString(" ORDER BY t.group, t.id;")
 
 		//log.Println(b.String())
-		rs, err := Sql().Query(b.String(), m, y)
+		rs, err := db.Query(b.String(), m, y)
 	*/
 
 	var reports []reportMonth
@@ -208,7 +210,7 @@ func get_report_trx_by_month(m *int, y *int) ([]reportMonth, error) {
 	b.WriteString(" ORDER BY t.group, t.id;")
 
 	// log.Println(fmt.Sprintf("%d-%02d-%02d", *y, *m, 1))
-	rs, err := Sql().Query(b.String(), m, y, fmt.Sprintf("%d-%02d-%02d", (*y), (*m), 1))
+	rs, err := db.Query(b.String(), m, y, fmt.Sprintf("%d-%02d-%02d", (*y), (*m), 1))
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)
@@ -234,7 +236,7 @@ func get_report_trx_by_month(m *int, y *int) ([]reportMonth, error) {
 		}
 
 		if o.ID > 0 {
-			t, _ := get_report_trx_by_type_month(&o.ID, m, y)
+			t, _ := get_report_trx_by_type_month(db, &o.ID, m, y)
 			o.Types = t
 		}
 
@@ -244,7 +246,7 @@ func get_report_trx_by_month(m *int, y *int) ([]reportMonth, error) {
 	return reports, err
 }
 
-func get_report_trx_by_type_month(group_id *int32, m *int, y *int) ([]reportType, error) {
+func get_report_trx_by_type_month(db *sql.DB, group_id *int32, m *int, y *int) ([]reportType, error) {
 
 	var reports []reportType
 
@@ -275,7 +277,7 @@ func get_report_trx_by_type_month(group_id *int32, m *int, y *int) ([]reportType
 	FROM rs t
 	ORDER BY t.id;`
 
-	rs, err := Sql().Query(sqlStatement, group_id, m, y)
+	rs, err := db.Query(sqlStatement, group_id, m, y)
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)
@@ -299,7 +301,7 @@ func get_report_trx_by_type_month(group_id *int32, m *int, y *int) ([]reportType
 			log.Fatalf("Unable to scan the row. %v", err)
 		}
 
-		t, _ := get_trx_details_by_acc(&o.ID, group_id, m, y)
+		t, _ := get_trx_details_by_acc(db, &o.ID, group_id, m, y)
 		o.Accounts = t
 
 		reports = append(reports, o)
@@ -308,7 +310,7 @@ func get_report_trx_by_type_month(group_id *int32, m *int, y *int) ([]reportType
 	return reports, err
 }
 
-func get_trx_details_by_acc(acc *int32, group_id *int32, m *int, y *int) ([]reportAccount, error) {
+func get_trx_details_by_acc(db *sql.DB, acc *int32, group_id *int32, m *int, y *int) ([]reportAccount, error) {
 
 	var reports []reportAccount
 
@@ -336,7 +338,7 @@ func get_trx_details_by_acc(acc *int32, group_id *int32, m *int, y *int) ([]repo
 	FROM rs t
 	ORDER BY t.trx_date, t.id;`
 
-	rs, err := Sql().Query(sqlStatement, acc, group_id, m, y)
+	rs, err := db.Query(sqlStatement, acc, group_id, m, y)
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)

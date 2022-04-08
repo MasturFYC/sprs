@@ -39,7 +39,8 @@ func TransactionGetByMonth(c *gin.Context) {
 		return
 	}
 
-	acc_codes, err := get_trx_by_month(&id)
+	db := c.Keys["db"].(*sql.DB)
+	acc_codes, err := get_trx_by_month(db, &id)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -58,7 +59,8 @@ func TransactionGetByGroup(c *gin.Context) {
 		return
 	}
 
-	acc_codes, err := getTransactionsByGroup(&id)
+	db := c.Keys["db"].(*sql.DB)
+	acc_codes, err := getTransactionsByGroup(db, &id)
 
 	if err != nil {
 		//log.Printf("Unable to get all transactions. %v", err)
@@ -80,7 +82,8 @@ func TransactionSearch(c *gin.Context) {
 		return
 	}
 
-	trxs, err := searchTransactions(&t.Txt)
+	db := c.Keys["db"].(*sql.DB)
+	trxs, err := searchTransactions(db, &t.Txt)
 
 	if err != nil {
 		//log.Printf("Unable to get all account codes. %v", err)
@@ -93,7 +96,8 @@ func TransactionSearch(c *gin.Context) {
 
 func TransactionGetAll(c *gin.Context) {
 
-	trxs, err := get_all_transactions()
+	db := c.Keys["db"].(*sql.DB)
+	trxs, err := get_all_transactions(db)
 
 	if err != nil {
 		//log.Printf("Unable to get all transaction. %v", err)
@@ -113,8 +117,8 @@ func GetTransaction(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	trx, err := getTransaction(&id)
+	db := c.Keys["db"].(*sql.DB)
+	trx, err := getTransaction(db, &id)
 
 	if err != nil {
 		//log.Printf("Unable to get transaction. %v", err)
@@ -136,7 +140,8 @@ func TransactionCreate(c *gin.Context) {
 		return
 	}
 
-	id, err := createTransaction(&param.Trx, param.Token)
+	db := c.Keys["db"].(*sql.DB)
+	id, err := createTransaction(db, &param.Trx, param.Token)
 
 	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -145,7 +150,7 @@ func TransactionCreate(c *gin.Context) {
 
 	if len(param.Details) > 0 {
 
-		err = bulkInsertDetails(param.Details, &id)
+		err = bulkInsertDetails(db, param.Details, &id)
 
 		if err != nil {
 			//log.Printf("Unable to insert transaction details.  %v", err)
@@ -182,8 +187,8 @@ func TransactionUpdate(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	updatedRows, err := updateTransaction(&id, &trx.Trx, trx.Token)
+	db := c.Keys["db"].(*sql.DB)
+	updatedRows, err := updateTransaction(db, &id, &trx.Trx, trx.Token)
 
 	if err != nil {
 		//log.Printf("Unable to update transaction.  %v", err)
@@ -193,7 +198,7 @@ func TransactionUpdate(c *gin.Context) {
 
 	if len(trx.Details) > 0 {
 
-		_, err = deleteDetailsByOrder(&id)
+		_, err = deleteDetailsByOrder(db, &id)
 		if err != nil {
 			//log.Printf("Unable to delete all details by transaction.  %v", err)
 			c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -203,7 +208,7 @@ func TransactionUpdate(c *gin.Context) {
 
 		// 	var newId int64 = 0
 
-		err = bulkInsertDetails(trx.Details, &id)
+		err = bulkInsertDetails(db, trx.Details, &id)
 
 		if err != nil {
 			//log.Printf("Unable to insert transaction details (message from command).  %v", err)
@@ -224,10 +229,10 @@ func TransactionUpdate(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func deleteDetailsByOrder(id *int64) (int64, error) {
+func deleteDetailsByOrder(db *sql.DB, id *int64) (int64, error) {
 	sqlStatement := `DELETE FROM trx_detail WHERE trx_id=$1`
 
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		//log.Printf("Unable to delete transaction. %v", err)
@@ -245,7 +250,7 @@ func deleteDetailsByOrder(id *int64) (int64, error) {
 
 }
 
-func bulkInsertDetails(rows []models.TrxDetail, id *int64) error {
+func bulkInsertDetails(db *sql.DB, rows []models.TrxDetail, id *int64) error {
 	valueStrings := make([]string, 0, len(rows))
 	valueArgs := make([]interface{}, 0, len(rows)*5)
 	i := 0
@@ -260,7 +265,7 @@ func bulkInsertDetails(rows []models.TrxDetail, id *int64) error {
 	}
 	stmt := fmt.Sprintf("INSERT INTO trx_detail (id, code_id, trx_id, debt, cred) VALUES %s",
 		strings.Join(valueStrings, ","))
-	_, err := Sql().Exec(stmt+" ON CONFLICT (trx_id, id) DO UPDATE SET code_id=EXCLUDED.code_id, trx_id=EXCLUDED.trx_id, debt=EXCLUDED.debt, cred=EXCLUDED.cred", valueArgs...)
+	_, err := db.Exec(stmt+" ON CONFLICT (trx_id, id) DO UPDATE SET code_id=EXCLUDED.code_id, trx_id=EXCLUDED.trx_id, debt=EXCLUDED.debt, cred=EXCLUDED.cred", valueArgs...)
 
 	//log.Printf("%s %s", strings.Join(valueStrings, ","), valueArgs)
 	return err
@@ -283,7 +288,9 @@ func TransactionDelete(c *gin.Context) {
 		return
 	}
 
-	deletedRows, err := deleteTransaction(&id)
+	db := c.Keys["db"].(*sql.DB)
+
+	deletedRows, err := deleteTransaction(db, &id)
 
 	if err != nil {
 		log.Printf("Unable to delete transaction.  %v", err)
@@ -303,7 +310,7 @@ func TransactionDelete(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func getTransaction(id *int64) (local_trx, error) {
+func getTransaction(db *sql.DB, id *int64) (local_trx, error) {
 
 	var p local_trx
 	builder := strings.Builder{}
@@ -316,7 +323,7 @@ func getTransaction(id *int64) (local_trx, error) {
 	builder.WriteString(" FROM trx t")
 	builder.WriteString(" WHERE t.id=$1")
 
-	rs := Sql().QueryRow(builder.String(), id)
+	rs := db.QueryRow(builder.String(), id)
 
 	err := rs.Scan(
 		&p.ID,
@@ -354,7 +361,7 @@ const (
 	ORDER BY d.id`
 )
 
-func get_all_transactions() ([]local_trx, error) {
+func get_all_transactions(db *sql.DB) ([]local_trx, error) {
 
 	var results []local_trx
 
@@ -388,7 +395,7 @@ func get_all_transactions() ([]local_trx, error) {
 	// FROM trx t
 	// ORDER BY t.id DESC`
 
-	rs, err := Sql().Query(builder.String())
+	rs, err := db.Query(builder.String())
 
 	if err != nil {
 		log.Printf("Unable to execute transaction query %v", err)
@@ -424,7 +431,7 @@ func get_all_transactions() ([]local_trx, error) {
 	return results, err
 }
 
-func createTransaction(p *models.Trx, token string) (int64, error) {
+func createTransaction(db *sql.DB, p *models.Trx, token string) (int64, error) {
 
 	sqlStatement := `INSERT INTO trx 
 	(ref_id, division, trx_date, descriptions, memo, trx_token)
@@ -433,7 +440,7 @@ func createTransaction(p *models.Trx, token string) (int64, error) {
 
 	var id int64
 
-	err := Sql().QueryRow(sqlStatement,
+	err := db.QueryRow(sqlStatement,
 		p.RefID,
 		p.Division,
 		p.TrxDate,
@@ -450,11 +457,11 @@ func createTransaction(p *models.Trx, token string) (int64, error) {
 	return id, err
 }
 
-func trxGetOrder(orderId *int64) (int64, error) {
+func trxGetOrder(db *sql.DB, orderId *int64) (int64, error) {
 
 	var id int64
 
-	rs := Sql().QueryRow("SELECT t.id FROM trx t WHERE t.ref_id=$1 AND division='trx-order'", orderId)
+	rs := db.QueryRow("SELECT t.id FROM trx t WHERE t.ref_id=$1 AND division='trx-order'", orderId)
 
 	err := rs.Scan(&id)
 
@@ -471,7 +478,7 @@ func trxGetOrder(orderId *int64) (int64, error) {
 	return id, err
 }
 
-func trxMoveToLent(id *int64, p *models.Trx, token string) (int64, error) {
+func trxMoveToLent(db *sql.DB, id *int64, p *models.Trx, token string) (int64, error) {
 
 	sb := strings.Builder{}
 	sb.WriteString("UPDATE trx SET")
@@ -482,7 +489,7 @@ func trxMoveToLent(id *int64, p *models.Trx, token string) (int64, error) {
 
 	//var trxid int64
 
-	_, err := Sql().Exec(sb.String(),
+	_, err := db.Exec(sb.String(),
 		id, p.Descriptions, p.Memo, token,
 	)
 
@@ -491,7 +498,7 @@ func trxMoveToLent(id *int64, p *models.Trx, token string) (int64, error) {
 		return 0, err
 	}
 
-	res, err := Sql().Exec("UPDATE trx_detail SET code_id = 5513 WHERE trx_id = $1", id)
+	res, err := db.Exec("UPDATE trx_detail SET code_id = 5513 WHERE trx_id = $1", id)
 
 	if err != nil {
 		log.Printf("Unable move trx to lent. %v", err)
@@ -503,7 +510,7 @@ func trxMoveToLent(id *int64, p *models.Trx, token string) (int64, error) {
 	return rowsAffected, err
 }
 
-func updateTransaction(id *int64, p *models.Trx, token string) (int64, error) {
+func updateTransaction(db *sql.DB, id *int64, p *models.Trx, token string) (int64, error) {
 
 	sqlStatement := `UPDATE trx SET 
 		ref_id=$2,
@@ -514,7 +521,7 @@ func updateTransaction(id *int64, p *models.Trx, token string) (int64, error) {
 		trx_token=to_tsvector('indonesian', $7)
 	WHERE id=$1`
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		id,
 		p.RefID,
 		p.Division,
@@ -540,11 +547,11 @@ func updateTransaction(id *int64, p *models.Trx, token string) (int64, error) {
 	return rowsAffected, err
 }
 
-func deleteTransaction(id *int) (int64, error) {
+func deleteTransaction(db *sql.DB, id *int) (int64, error) {
 
 	sqlStatement := `DELETE FROM trx WHERE id=$1`
 
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		log.Printf("Unable to delete transaction. %v", err)
@@ -561,7 +568,7 @@ func deleteTransaction(id *int) (int64, error) {
 	return rowsAffected, err
 }
 
-func searchTransactions(txt *string) ([]local_trx, error) {
+func searchTransactions(db *sql.DB, txt *string) ([]local_trx, error) {
 
 	var results []local_trx
 
@@ -576,7 +583,7 @@ func searchTransactions(txt *string) ([]local_trx, error) {
 	builder.WriteString(" WHERE t.trx_token @@ to_tsquery('indonesian', $1)")
 	builder.WriteString(" ORDER BY t.id DESC")
 
-	rs, err := Sql().Query(builder.String(), txt)
+	rs, err := db.Query(builder.String(), txt)
 
 	if err != nil {
 		log.Printf("Unable to execute transactions code query %v", err)
@@ -612,7 +619,7 @@ func searchTransactions(txt *string) ([]local_trx, error) {
 	return results, err
 }
 
-func getTransactionsByGroup(id *int64) ([]local_trx, error) {
+func getTransactionsByGroup(db *sql.DB, id *int64) ([]local_trx, error) {
 
 	var results []local_trx
 
@@ -630,7 +637,7 @@ func getTransactionsByGroup(id *int64) ([]local_trx, error) {
 	builder.WriteString(" WHERE c.group_id=$1")
 	builder.WriteString(" ORDER BY t.id DESC")
 
-	rs, err := Sql().Query(builder.String(), id)
+	rs, err := db.Query(builder.String(), id)
 
 	if err != nil {
 		log.Printf("Unable to execute transactions query %v", err)
@@ -678,7 +685,7 @@ func get_details(trxID *int64) ([]local_detail, error) {
 	-- AND c.receivable_option != 1
 	ORDER BY d.id`
 
-	rs, err := Sql().Query(sqlStatement, trxID)
+	rs, err := db.Query(sqlStatement, trxID)
 
 	if err != nil {
 		log.Printf("Unable to execute transaction details query %v", err)
@@ -707,7 +714,7 @@ func get_details(trxID *int64) ([]local_detail, error) {
 	return details, err
 }
 */
-func get_trx_by_month(id *int) ([]local_trx, error) {
+func get_trx_by_month(db *sql.DB, id *int) ([]local_trx, error) {
 
 	var results []local_trx
 
@@ -722,7 +729,7 @@ func get_trx_by_month(id *int) ([]local_trx, error) {
 	builder.WriteString(" WHERE EXTRACT(MONTH from t.trx_date)=$1")
 	builder.WriteString(" ORDER BY t.id DESC")
 
-	rs, err := Sql().Query(builder.String(), id)
+	rs, err := db.Query(builder.String(), id)
 
 	if err != nil {
 		log.Printf("Unable to execute transactions query %v", err)

@@ -16,7 +16,8 @@ import (
 
 func FinanceGetAll(c *gin.Context) {
 
-	finances, err := getAllFinances()
+	db := c.Keys["db"].(*sql.DB)
+	finances, err := getAllFinances(db)
 
 	if err != nil {
 		//		log.Fatalf("Unable to get all finances. %v", err)
@@ -37,8 +38,8 @@ func FinanceGetItem(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	finances, err := getFinance(&id)
+	db := c.Keys["db"].(*sql.DB)
+	finances, err := getFinance(db, &id)
 
 	if err != nil {
 		//log.Fatalf("Unable to get finance. %v", err)
@@ -59,8 +60,8 @@ func FinanceDelete(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	deletedRows, err := deleteFinance(&id)
+	db := c.Keys["db"].(*sql.DB)
+	deletedRows, err := deleteFinance(db, &id)
 
 	if err != nil {
 		//log.Fatalf("Unable to convert the string into int.  %v", err)
@@ -91,8 +92,8 @@ func FinanceCreate(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	id, err := createFinance(&finance)
+	db := c.Keys["db"].(*sql.DB)
+	id, err := createFinance(db, &finance)
 
 	if err != nil {
 		//log.Fatalf("Nama finance tidak boleh sama.  %v", err)
@@ -119,8 +120,8 @@ func FinanceUpdate(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	updatedRows, err := updateFinance(&id, &finance)
+	db := c.Keys["db"].(*sql.DB)
+	updatedRows, err := updateFinance(db, &id, &finance)
 
 	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -139,7 +140,7 @@ func FinanceUpdate(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func getFinance(id *int) (models.Finance, error) {
+func getFinance(db *sql.DB, id *int) (models.Finance, error) {
 
 	var p models.Finance
 
@@ -148,7 +149,7 @@ func getFinance(id *int) (models.Finance, error) {
 	FROM finances
 	WHERE id=$1`
 
-	rs := Sql().QueryRow(sqlStatement, id)
+	rs := db.QueryRow(sqlStatement, id)
 
 	err := rs.Scan(
 		&p.ID,
@@ -177,7 +178,7 @@ func getFinance(id *int) (models.Finance, error) {
 	return p, err
 }
 
-func getAllFinances() ([]models.Finance, error) {
+func getAllFinances(db *sql.DB) ([]models.Finance, error) {
 
 	var finances []models.Finance
 
@@ -186,7 +187,7 @@ func getAllFinances() ([]models.Finance, error) {
 	FROM finances
 	ORDER BY name`
 
-	rs, err := Sql().Query(sqlStatement)
+	rs, err := db.Query(sqlStatement)
 
 	if err != nil {
 		// log.Fatalf("Unable to execute finances query %v", err)
@@ -220,12 +221,12 @@ func getAllFinances() ([]models.Finance, error) {
 	return finances, err
 }
 
-func deleteFinance(id *int) (int64, error) {
+func deleteFinance(db *sql.DB, id *int) (int64, error) {
 	// create the delete sql query
 	sqlStatement := `DELETE FROM finances WHERE id=$1`
 
 	// execute the sql statement
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		//log.Fatalf("Unable to delete finance. %v", err)
@@ -242,7 +243,7 @@ func deleteFinance(id *int) (int64, error) {
 	return rowsAffected, err
 }
 
-func createFinance(finance *models.Finance) (int, error) {
+func createFinance(db *sql.DB, finance *models.Finance) (int, error) {
 
 	sqlStatement := `INSERT INTO finances 
 	(name, short_name, street, city, phone, cell, zip, email, group_id) 
@@ -252,7 +253,7 @@ func createFinance(finance *models.Finance) (int, error) {
 
 	var id int
 
-	err := Sql().QueryRow(sqlStatement,
+	err := db.QueryRow(sqlStatement,
 		finance.Name,
 		finance.ShortName,
 		finance.Street,
@@ -271,13 +272,13 @@ func createFinance(finance *models.Finance) (int, error) {
 	return id, err
 }
 
-func updateFinance(id *int, finance *models.Finance) (int64, error) {
+func updateFinance(db *sql.DB, id *int, finance *models.Finance) (int64, error) {
 
 	sqlStatement := `UPDATE finances SET
 		name=$2, short_name=$3, street=$4, city=$5, phone=$6, cell=$7, zip=$8, email=$9, group_id=$10
 	WHERE id=$1`
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		id,
 		finance.Name,
 		finance.ShortName,

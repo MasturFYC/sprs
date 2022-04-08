@@ -2,6 +2,7 @@ package controller
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	_ "image/jpeg"
@@ -23,7 +24,8 @@ func Mtf_GetInvoice(c *gin.Context) {
 
 	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
 
-	invoice, err := invoice_get_item_customer(&id)
+	db := c.Keys["db"].(*sql.DB)
+	invoice, err := invoice_get_item_customer(db, &id)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})

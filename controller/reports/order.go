@@ -1,6 +1,7 @@
 package reports
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -8,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"fyc.com/sprs/controller"
 	"github.com/MasturFYC/fyc"
 	"github.com/gin-gonic/gin"
 )
@@ -43,7 +43,8 @@ func ReportOrder(c *gin.Context) {
 	dateTo := c.Param("to")
 
 	if dateFrom == "-" {
-		orders, err := rptOrder1(&financeId, &branchId, &typeId, &month, &year)
+
+		orders, err := rptOrder1(c.Keys["db"].(*sql.DB), &financeId, &branchId, &typeId, &month, &year)
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return
@@ -52,7 +53,7 @@ func ReportOrder(c *gin.Context) {
 		return
 	}
 
-	orders, err := rptOrder2(&financeId, &branchId, &typeId, &dateFrom, &dateTo)
+	orders, err := rptOrder2(c.Keys["db"].(*sql.DB), &financeId, &branchId, &typeId, &dateFrom, &dateTo)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -68,7 +69,7 @@ func ReportOrderAllWaiting(c *gin.Context) {
 	branchId, _ := strconv.Atoi(c.Param("branch"))
 	typeId, _ := strconv.Atoi(c.Param("type"))
 
-	orders, err := rptOrder3(&financeId, &branchId, &typeId)
+	orders, err := rptOrder3(c.Keys["db"].(*sql.DB), &financeId, &branchId, &typeId)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -229,7 +230,7 @@ func rptOrder(filter *report_order_request) ([]order_invoiced, error) {
 	b.WriteString(" FROM rs AS t")
 	b.WriteString(" ORDER BY t.status DESC, t.order_at")
 
-	rs, err := controller.Sql().Query(b.String())
+	rs, err := controller.db.Query(b.String())
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)
@@ -281,7 +282,7 @@ func create_query() (string, string, string) {
 	return qBranch, qFinance, qUnit
 }
 
-func rptOrder1(financeId *int, branchId *int, typeId *int, month *int, year *int) ([]order_invoiced, error) {
+func rptOrder1(db *sql.DB, financeId *int, branchId *int, typeId *int, month *int, year *int) ([]order_invoiced, error) {
 	var orders []order_invoiced
 
 	qBranch, qFinance, qUnit := create_query()
@@ -367,7 +368,7 @@ func rptOrder1(financeId *int, branchId *int, typeId *int, month *int, year *int
 	b.WriteString(" FROM rs AS t")
 	b.WriteString(" ORDER BY t.order_at, t.id")
 
-	rs, err := controller.Sql().Query(b.String(), financeId, branchId, typeId, month, year)
+	rs, err := db.Query(b.String(), financeId, branchId, typeId, month, year)
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)
@@ -398,7 +399,7 @@ func rptOrder1(financeId *int, branchId *int, typeId *int, month *int, year *int
 	return orders, err
 }
 
-func rptOrder2(financeId *int, branchId *int, typeId *int, dateFrom *string, dateTo *string) ([]order_invoiced, error) {
+func rptOrder2(db *sql.DB, financeId *int, branchId *int, typeId *int, dateFrom *string, dateTo *string) ([]order_invoiced, error) {
 	var orders []order_invoiced
 
 	qBranch, qFinance, qUnit := create_query()
@@ -485,7 +486,7 @@ func rptOrder2(financeId *int, branchId *int, typeId *int, dateFrom *string, dat
 	b.WriteString(" FROM rs AS t")
 	b.WriteString(" ORDER BY t.order_at, t.id")
 
-	rs, err := controller.Sql().Query(b.String(), financeId, branchId, typeId, dateFrom, dateTo)
+	rs, err := db.Query(b.String(), financeId, branchId, typeId, dateFrom, dateTo)
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)
@@ -521,7 +522,7 @@ Mencari semua data order yang belum dicairkan
 termasuk yang belum diverifikasi
 */
 
-func rptOrder3(financeId *int, branchId *int, typeId *int) ([]order_invoiced, error) {
+func rptOrder3(db *sql.DB, financeId *int, branchId *int, typeId *int) ([]order_invoiced, error) {
 	var orders []order_invoiced
 
 	qBranch, qFinance, qUnit := create_query()
@@ -585,7 +586,7 @@ func rptOrder3(financeId *int, branchId *int, typeId *int) ([]order_invoiced, er
 	b.WriteString(" FROM rs AS t")
 	b.WriteString(" ORDER BY t.order_at, t.id")
 
-	rs, err := controller.Sql().Query(b.String(), financeId, branchId, typeId)
+	rs, err := db.Query(b.String(), financeId, branchId, typeId)
 
 	if err != nil {
 		log.Printf("Unable to execute orderes query %v", err)

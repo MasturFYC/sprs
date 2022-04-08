@@ -18,8 +18,9 @@ import (
 )
 
 func LoanGetAll(c *gin.Context) {
+	db := c.Keys["db"].(*sql.DB)
 
-	loans, err := loan_get_all()
+	loans, err := loan_get_all(db)
 
 	if err != nil {
 		//		log.Fatalf("Unable to get all finances. %v", err)
@@ -40,8 +41,9 @@ func LoanGetItem(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	db := c.Keys["db"].(*sql.DB)
 
-	loan, err := loan_get_item(&id)
+	loan, err := loan_get_item(db, &id)
 
 	if err != nil {
 		//log.Fatalf("Unable to get finance. %v", err)
@@ -62,8 +64,9 @@ func LoanDelete(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	db := c.Keys["db"].(*sql.DB)
 
-	deletedRows, err := loan_delete(&id)
+	deletedRows, err := loan_delete(db, &id)
 
 	if err != nil {
 		//log.Fatalf("Unable to convert the string into int.  %v", err)
@@ -101,7 +104,8 @@ func LoanCreate(c *gin.Context) {
 		return
 	}
 
-	newLoanId, err := loan_create(&loan.Loan)
+	db := c.Keys["db"].(*sql.DB)
+	newLoanId, err := loan_create(db, &loan.Loan)
 	if err != nil {
 		log.Fatalf("Fatal %v", err)
 		//log.Fatalf("Nama finance tidak boleh sama.  %v", err)
@@ -111,7 +115,7 @@ func LoanCreate(c *gin.Context) {
 
 	loan.Loan.ID = newLoanId
 	loan.Trx.RefID = newLoanId
-	trxid, err := createTransaction(&loan.Trx, loan.Token)
+	trxid, err := createTransaction(db, &loan.Trx, loan.Token)
 
 	if err != nil {
 		log.Fatalf("Fatal %v", err)
@@ -122,7 +126,7 @@ func LoanCreate(c *gin.Context) {
 
 	if len(loan.Trx.Details) > 0 {
 
-		err = bulkInsertDetails(loan.Trx.Details, &trxid)
+		err = bulkInsertDetails(db, loan.Trx.Details, &trxid)
 
 		if err != nil {
 			log.Fatalf("Fatal %v", err)
@@ -157,11 +161,12 @@ func LoanPayment(c *gin.Context) {
 	}
 
 	var updatedRows int64 = 0
+	db := c.Keys["db"].(*sql.DB)
 
 	if trxid == 0 {
-		trxid, err = createTransaction(&data.Trx, data.Token)
+		trxid, err = createTransaction(db, &data.Trx, data.Token)
 	} else {
-		_, err = updateTransaction(&trxid, &data.Trx, data.Token)
+		_, err = updateTransaction(db, &trxid, &data.Trx, data.Token)
 
 	}
 
@@ -174,7 +179,7 @@ func LoanPayment(c *gin.Context) {
 
 	if len(data.Trx.Details) > 0 {
 
-		_, err = deleteDetailsByOrder(&trxid)
+		_, err = deleteDetailsByOrder(db, &trxid)
 		if err != nil {
 			log.Fatalf("Unable to delete trx detail query %v", err)
 			//c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -184,7 +189,7 @@ func LoanPayment(c *gin.Context) {
 
 		// 	var newId int64 = 0
 
-		err = bulkInsertDetails(data.Trx.Details, &trxid)
+		err = bulkInsertDetails(db, data.Trx.Details, &trxid)
 
 		if err != nil {
 			log.Fatalf("Unable to execute finances query %v", err)
@@ -223,7 +228,8 @@ func LoanUpdate(c *gin.Context) {
 		return
 	}
 
-	_, err = loan_update(&id, &loan.Loan)
+	db := c.Keys["db"].(*sql.DB)
+	_, err = loan_update(db, &id, &loan.Loan)
 
 	if err != nil {
 		log.Fatalf("Loan update error.  %v", err)
@@ -231,7 +237,7 @@ func LoanUpdate(c *gin.Context) {
 		return
 	}
 
-	updatedRows, err := updateTransaction(&loan.Trx.ID, &loan.Trx, loan.Token)
+	updatedRows, err := updateTransaction(db, &loan.Trx.ID, &loan.Trx, loan.Token)
 
 	if err != nil {
 		//log.Printf("Unable to update transaction.  %v", err)
@@ -242,7 +248,7 @@ func LoanUpdate(c *gin.Context) {
 
 	if len(loan.Trx.Details) > 0 {
 
-		_, err = deleteDetailsByOrder(&id)
+		_, err = deleteDetailsByOrder(db, &id)
 		if err != nil {
 			log.Fatalf("Unable to delete trx detail query %v", err)
 			//c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -252,7 +258,7 @@ func LoanUpdate(c *gin.Context) {
 
 		// 	var newId int64 = 0
 
-		err = bulkInsertDetails(loan.Trx.Details, &loan.Trx.ID)
+		err = bulkInsertDetails(db, loan.Trx.Details, &loan.Trx.ID)
 
 		if err != nil {
 			log.Fatalf("Unable to execute finances query %v", err)
@@ -279,7 +285,7 @@ type loan_item struct {
 	Trxs *json.RawMessage `json:"trxs,omitempty"`
 }
 
-func loan_get_item(id *int64) (loan_item, error) {
+func loan_get_item(db *sql.DB, id *int64) (loan_item, error) {
 
 	var p loan_item
 	sb := strings.Builder{}
@@ -320,7 +326,7 @@ func loan_get_item(id *int64) (loan_item, error) {
 	sb.WriteString(" FROM loans AS t")
 	sb.WriteString(" WHERE t.id=$1")
 
-	rs := Sql().QueryRow(sb.String(), id)
+	rs := db.QueryRow(sb.String(), id)
 
 	err := rs.Scan(
 		&p.ID,
@@ -367,7 +373,7 @@ type loan_all struct {
 	Loan *json.RawMessage `json:"loan,omitempty"`
 }
 
-func loan_get_all() ([]loan_all, error) {
+func loan_get_all(db *sql.DB) ([]loan_all, error) {
 
 	var loans []loan_all
 
@@ -397,7 +403,7 @@ func loan_get_all() ([]loan_all, error) {
 
 	//	log.Println(sb.String())
 
-	rs, err := Sql().Query(sb.String())
+	rs, err := db.Query(sb.String())
 
 	if err != nil {
 		log.Fatalf("Unable to execute finances query %v", err)
@@ -436,17 +442,17 @@ func loan_get_all() ([]loan_all, error) {
 	return loans, err
 }
 
-func loan_delete(id *int64) (int64, error) {
+func loan_delete(db *sql.DB, id *int64) (int64, error) {
 
 	//log.Printf("%d", id)
 	sqlStatement := `DELETE FROM loans WHERE id=$1`
-	_, err := Sql().Exec(sqlStatement, id)
+	_, err := db.Exec(sqlStatement, id)
 	if err != nil {
 		log.Fatal(err)
 		return 0, err
 	}
 	sqlStatement = `DELETE FROM trx WHERE ref_id=$1 AND (division='trx-loan' OR division='trx-angsuran')`
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 	if err != nil {
 		log.Fatal(err)
 		return 0, err
@@ -455,7 +461,7 @@ func loan_delete(id *int64) (int64, error) {
 	return rowsAffected, err
 }
 
-func loan_create(loan *models.Loan) (int64, error) {
+func loan_create(db *sql.DB, loan *models.Loan) (int64, error) {
 
 	sb := strings.Builder{}
 	sb.WriteString("INSERT INTO loans")
@@ -466,7 +472,7 @@ func loan_create(loan *models.Loan) (int64, error) {
 
 	var id int64
 
-	err := Sql().QueryRow(sb.String(),
+	err := db.QueryRow(sb.String(),
 		loan.Name,
 		loan.Street,
 		loan.City,
@@ -479,13 +485,13 @@ func loan_create(loan *models.Loan) (int64, error) {
 	return id, err
 }
 
-func loan_update(id *int64, loan *models.Loan) (int64, error) {
+func loan_update(db *sql.DB, id *int64, loan *models.Loan) (int64, error) {
 	sb := strings.Builder{}
 	sb.WriteString("UPDATE loans SET")
 	sb.WriteString(" name=$2, street=$3, city=$4, phone=$5, cell=$6, zip=$7, persen=$8")
 	sb.WriteString(" WHERE id=$1")
 
-	res, err := Sql().Exec(sb.String(),
+	res, err := db.Exec(sb.String(),
 		id,
 		loan.Name,
 		loan.Street,

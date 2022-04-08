@@ -16,7 +16,8 @@ import (
 
 func AccTypeGetAll(c *gin.Context) {
 
-	allTypes, err := getAllAccTypes()
+	db := c.Keys["db"].(*sql.DB)
+	allTypes, err := getAllAccTypes(db)
 
 	if err != nil || len(allTypes) == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -35,7 +36,7 @@ func AccTypeGetItem(c *gin.Context) {
 		return
 	}
 
-	acc_type, err := getAccType(&id)
+	acc_type, err := getAccType(c.Keys["db"].(*sql.DB), &id)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -56,7 +57,7 @@ func AccTypeCreate(c *gin.Context) {
 		return
 	}
 
-	rowsAffected, err := createAccType(&newType)
+	rowsAffected, err := createAccType(c.Keys["db"].(*sql.DB), &newType)
 
 	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -80,7 +81,7 @@ func AccTypeUpdate(c *gin.Context) {
 		return
 	}
 
-	updatedRows, err := updateAccType(&id, &acc_type)
+	updatedRows, err := updateAccType(c.Keys["db"].(*sql.DB), &id, &acc_type)
 
 	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -101,7 +102,8 @@ func AccTypeDelete(c *gin.Context) {
 		return
 	}
 
-	deletedRows, err := deleteAccType(&id)
+	db := c.Keys["db"].(*sql.DB)
+	deletedRows, err := deleteAccType(db, &id)
 
 	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -113,7 +115,7 @@ func AccTypeDelete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"rows": deletedRows, "message": msg})
 }
 
-func getAccType(id *int) (models.AccType, error) {
+func getAccType(db *sql.DB, id *int) (models.AccType, error) {
 
 	var acc models.AccType
 
@@ -122,7 +124,7 @@ func getAccType(id *int) (models.AccType, error) {
 	FROM acc_type
 	WHERE id=$1`
 
-	rs := Sql().QueryRow(sqlStatement, id)
+	rs := db.QueryRow(sqlStatement, id)
 
 	err := rs.Scan(&acc.GroupID, &acc.ID, &acc.Name, acc.Descriptions)
 
@@ -140,13 +142,13 @@ func getAccType(id *int) (models.AccType, error) {
 	return acc, err
 }
 
-func getAllAccTypes() ([]models.AccType, error) {
+func getAllAccTypes(db *sql.DB) ([]models.AccType, error) {
 
 	var results []models.AccType
 
 	var sqlStatement = `SELECT group_id, id, name, descriptions FROM acc_type ORDER BY id`
 
-	rs, err := Sql().Query(sqlStatement)
+	rs, err := db.Query(sqlStatement)
 
 	if err != nil {
 		log.Printf("Unable to execute account type query %v", err)
@@ -170,11 +172,11 @@ func getAllAccTypes() ([]models.AccType, error) {
 	return results, err
 }
 
-func createAccType(p *models.AccType) (int64, error) {
+func createAccType(db *sql.DB, p *models.AccType) (int64, error) {
 
 	sqlStatement := `INSERT INTO acc_type (group_id, id, name, descriptions) VALUES ($1, $2, $3, $4)`
 
-	res, err := Sql().Exec(sqlStatement, p.GroupID, p.ID, p.Name, p.Descriptions)
+	res, err := db.Exec(sqlStatement, p.GroupID, p.ID, p.Name, p.Descriptions)
 
 	if err != nil {
 		log.Printf("Unable to create account type. %v", err)
@@ -190,13 +192,13 @@ func createAccType(p *models.AccType) (int64, error) {
 	return rowsAffected, err
 }
 
-func updateAccType(id *int, p *models.AccType) (int64, error) {
+func updateAccType(db *sql.DB, id *int, p *models.AccType) (int64, error) {
 
 	sqlStatement := `UPDATE acc_type SET
 		group_id=$2, name=$3, descriptions=$4
 		WHERE id=$1`
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		id,
 		p.GroupID,
 		p.Name,
@@ -219,11 +221,11 @@ func updateAccType(id *int, p *models.AccType) (int64, error) {
 	return rowsAffected, err
 }
 
-func deleteAccType(id *int) (int64, error) {
+func deleteAccType(db *sql.DB, id *int) (int64, error) {
 
 	sqlStatement := `DELETE FROM acc_type WHERE id=$1`
 
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		log.Printf("Unable to delete account type. %v", err)

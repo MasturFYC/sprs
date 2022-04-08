@@ -16,7 +16,8 @@ import (
 
 func GetWheels(c *gin.Context) {
 
-	wheels, err := getAllWheels()
+	db := c.Keys["db"].(*sql.DB)
+	wheels, err := getAllWheels(db)
 
 	if err != nil {
 		log.Fatalf("Unable to get all wheels. %v", err)
@@ -34,7 +35,8 @@ func GetWheel(c *gin.Context) {
 		log.Fatalf("Unable to convert the string into int.  %v", err)
 	}
 
-	wheels, err := getWheel(&id)
+	db := c.Keys["db"].(*sql.DB)
+	wheels, err := getWheel(db, &id)
 
 	if err != nil {
 		log.Fatalf("Unable to get wheel. %v", err)
@@ -52,7 +54,8 @@ func DeleteWheel(c *gin.Context) {
 		log.Fatalf("Unable to convert the string into int.  %v", err)
 	}
 
-	deletedRows := deleteWheel(&id)
+	db := c.Keys["db"].(*sql.DB)
+	deletedRows := deleteWheel(db, &id)
 
 	msg := fmt.Sprintf("Wheel deleted successfully. Total rows/record affected %v", deletedRows)
 
@@ -77,7 +80,8 @@ func CreateWheel(c *gin.Context) {
 		return
 	}
 
-	id, err := createWheel(&wheel)
+	db := c.Keys["db"].(*sql.DB)
+	id, err := createWheel(db, &wheel)
 
 	if err != nil {
 		//log.Fatalf("Nama wheel tidak boleh sama.  %v", err)
@@ -106,7 +110,8 @@ func UpdateWheel(c *gin.Context) {
 		return
 	}
 
-	updatedRows, err := updateWheel(&id, &wheel)
+	db := c.Keys["db"].(*sql.DB)
+	updatedRows, err := updateWheel(db, &id, &wheel)
 
 	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -125,13 +130,13 @@ func UpdateWheel(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func getWheel(id *int) (models.Wheel, error) {
+func getWheel(db *sql.DB, id *int) (models.Wheel, error) {
 
 	var wheel models.Wheel
 
 	var sqlStatement = `SELECT id, name, short_name FROM wheels WHERE id=$1`
 
-	rs := Sql().QueryRow(sqlStatement, id)
+	rs := db.QueryRow(sqlStatement, id)
 
 	err := rs.Scan(&wheel.ID, &wheel.Name, &wheel.ShortName)
 
@@ -149,7 +154,7 @@ func getWheel(id *int) (models.Wheel, error) {
 	return wheel, err
 }
 
-func getAllWheels() ([]models.Wheel, error) {
+func getAllWheels(db *sql.DB) ([]models.Wheel, error) {
 
 	var wheels []models.Wheel
 
@@ -157,7 +162,7 @@ func getAllWheels() ([]models.Wheel, error) {
 
 	var sqlStatement = `SELECT id, name, short_name	FROM wheels ORDER BY short_name`
 
-	rs, err := Sql().Query(sqlStatement)
+	rs, err := db.Query(sqlStatement)
 
 	if err != nil {
 		log.Fatalf("Unable to execute wheels query %v", err)
@@ -180,12 +185,12 @@ func getAllWheels() ([]models.Wheel, error) {
 	return wheels, err
 }
 
-func deleteWheel(id *int) int64 {
+func deleteWheel(db *sql.DB, id *int) int64 {
 	// create the delete sql query
 	sqlStatement := `DELETE FROM wheels WHERE id=$1`
 
 	// execute the sql statement
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		log.Fatalf("Unable to delete wheel. %v", err)
@@ -201,13 +206,13 @@ func deleteWheel(id *int) int64 {
 	return rowsAffected
 }
 
-func createWheel(wheel *models.Wheel) (int, error) {
+func createWheel(db *sql.DB, wheel *models.Wheel) (int, error) {
 
 	sqlStatement := `INSERT INTO wheels (name, short_name) VALUES ($1, $2) RETURNING id`
 
 	var id int
 
-	err := Sql().QueryRow(sqlStatement, wheel.Name, wheel.ShortName).Scan(&id)
+	err := db.QueryRow(sqlStatement, wheel.Name, wheel.ShortName).Scan(&id)
 
 	if err != nil {
 		log.Printf("Unable to create wheel. %v", err)
@@ -216,11 +221,11 @@ func createWheel(wheel *models.Wheel) (int, error) {
 	return id, err
 }
 
-func updateWheel(id *int, wheel *models.Wheel) (int64, error) {
+func updateWheel(db *sql.DB, id *int, wheel *models.Wheel) (int64, error) {
 
 	sqlStatement := `UPDATE wheels SET name=$2, short_name=$3 WHERE id=$1`
 
-	res, err := Sql().Exec(sqlStatement, id, wheel.Name, wheel.ShortName)
+	res, err := db.Exec(sqlStatement, id, wheel.Name, wheel.ShortName)
 
 	if err != nil {
 		log.Printf("Unable to update wheel. %v", err)

@@ -16,7 +16,8 @@ import (
 
 func GetTypes(c *gin.Context) {
 
-	types, err := getAllTypes()
+	db := c.Keys["db"].(*sql.DB)
+	types, err := getAllTypes(db)
 
 	if err != nil {
 		log.Fatalf("Unable to get all types. %v", err)
@@ -36,7 +37,8 @@ func GetType(c *gin.Context) {
 		return
 	}
 
-	types, err := getType(&id)
+	db := c.Keys["db"].(*sql.DB)
+	types, err := getType(db, &id)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -56,7 +58,8 @@ func DeleteType(c *gin.Context) {
 		return
 	}
 
-	deletedRows := deleteType(&id)
+	db := c.Keys["db"].(*sql.DB)
+	deletedRows := deleteType(db, &id)
 
 	msg := fmt.Sprintf("Type deleted successfully. Total rows/record affected %v", deletedRows)
 
@@ -82,7 +85,8 @@ func CreateType(c *gin.Context) {
 		return
 	}
 
-	id, err := createType(&t)
+	db := c.Keys["db"].(*sql.DB)
+	id, err := createType(db, &t)
 
 	if err != nil {
 		//log.Fatalf("Nama type tidak boleh sama.  %v", err)
@@ -112,7 +116,8 @@ func UpdateType(c *gin.Context) {
 		return
 	}
 
-	updatedRows, err := updateType(&id, &t)
+	db := c.Keys["db"].(*sql.DB)
+	updatedRows, err := updateType(db, &id, &t)
 
 	if err != nil {
 		//log.Fatalf("Unable to decode the request body.  %v", err)
@@ -132,14 +137,12 @@ func UpdateType(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func getType(id *int64) (models.Type, error) {
+func getType(db *sql.DB, id *int64) (models.Type, error) {
 
 	var t models.Type
-
 	var sqlStatement = `SELECT id, name, wheel_id, merk_id FROM types WHERE id=$1`
 
-	rs := Sql().QueryRow(sqlStatement, id)
-
+	rs := db.QueryRow(sqlStatement, id)
 	err := rs.Scan(&t.ID, &t.Name, &t.WheelID, &t.MerkID)
 
 	switch err {
@@ -148,11 +151,11 @@ func getType(id *int64) (models.Type, error) {
 		return t, nil
 	case nil:
 
-		w, err := getWheel(&t.WheelID)
+		w, err := getWheel(db, &t.WheelID)
 		if err == nil {
 			t.Wheel = w
 		}
-		m, err := getMerk(&t.MerkID)
+		m, err := getMerk(db, &t.MerkID)
 		if err == nil {
 			t.Merk = m
 		}
@@ -166,7 +169,7 @@ func getType(id *int64) (models.Type, error) {
 	return t, err
 }
 
-func getAllTypes() ([]models.Type, error) {
+func getAllTypes(db *sql.DB) ([]models.Type, error) {
 
 	var types []models.Type
 
@@ -175,7 +178,7 @@ func getAllTypes() ([]models.Type, error) {
 	FROM types
 	ORDER BY name`
 
-	rs, err := Sql().Query(sqlStatement)
+	rs, err := db.Query(sqlStatement)
 
 	if err != nil {
 		log.Fatalf("Unable to execute types query %v", err)
@@ -192,8 +195,8 @@ func getAllTypes() ([]models.Type, error) {
 			log.Fatalf("Unable to scan the row. %v", err)
 		}
 
-		wheel, _ := getWheel(&t.WheelID)
-		merk, _ := getMerk(&t.MerkID)
+		wheel, _ := getWheel(db, &t.WheelID)
+		merk, _ := getMerk(db, &t.MerkID)
 		t.Wheel = wheel
 		t.Merk = merk
 
@@ -203,12 +206,12 @@ func getAllTypes() ([]models.Type, error) {
 	return types, err
 }
 
-func deleteType(id *int64) int64 {
+func deleteType(db *sql.DB, id *int64) int64 {
 	// create the delete sql query
 	sqlStatement := `DELETE FROM types WHERE id=$1`
 
 	// execute the sql statement
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		log.Fatalf("Unable to delete type. %v", err)
@@ -224,13 +227,13 @@ func deleteType(id *int64) int64 {
 	return rowsAffected
 }
 
-func createType(t *models.Type) (int64, error) {
+func createType(db *sql.DB, t *models.Type) (int64, error) {
 
 	sqlStatement := `INSERT INTO types (name, wheel_id, merk_id) VALUES ($1, $2, $3) RETURNING id`
 
 	var id int64
 
-	err := Sql().QueryRow(sqlStatement, t.Name, t.WheelID, t.MerkID).Scan(&id)
+	err := db.QueryRow(sqlStatement, t.Name, t.WheelID, t.MerkID).Scan(&id)
 
 	if err != nil {
 		//log.Fatalf("Unable to create type. %v", err)
@@ -242,11 +245,11 @@ func createType(t *models.Type) (int64, error) {
 	return id, err
 }
 
-func updateType(id *int64, t *models.Type) (int64, error) {
+func updateType(db *sql.DB, id *int64, t *models.Type) (int64, error) {
 
 	sqlStatement := `UPDATE types SET name=$2, wheel_id=$3, merk_id=$4 WHERE id=$1`
 
-	res, err := Sql().Exec(sqlStatement, id, t.Name, t.WheelID, t.MerkID)
+	res, err := db.Exec(sqlStatement, id, t.Name, t.WheelID, t.MerkID)
 
 	if err != nil {
 		//log.Fatalf("Unable to update type. %v", err)

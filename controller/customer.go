@@ -15,7 +15,8 @@ import (
 
 func GetCustomers(c *gin.Context) {
 
-	customers, err := getAllCustomer()
+	db := c.Keys["db"].(*sql.DB)
+	customers, err := getAllCustomer(db)
 
 	if err != nil {
 		//		log.Fatalf("Unable to get all customers. %v", err)
@@ -37,7 +38,8 @@ func CustomerGetItem(c *gin.Context) {
 		return
 	}
 
-	customers, err := getCustomer(&id)
+	db := c.Keys["db"].(*sql.DB)
+	customers, err := getCustomer(db, &id)
 
 	if err != nil {
 		//log.Fatalf("Unable to get category. %v", err)
@@ -59,7 +61,8 @@ func CustomerDelete(c *gin.Context) {
 		return
 	}
 
-	deletedRows, err := deleteCustomer(&id)
+	db := c.Keys["db"].(*sql.DB)
+	deletedRows, err := deleteCustomer(db, &id)
 
 	if err != nil {
 		//log.Fatalf("Unable to convert the string into int.  %v", err)
@@ -94,7 +97,8 @@ func CustomerCreate(c *gin.Context) {
 
 	//log.Printf("%v", cust)
 
-	_, err = createCustomer(&cust)
+	db := c.Keys["db"].(*sql.DB)
+	_, err = createCustomer(db, &cust)
 
 	if err != nil {
 		//log.Printf("Nama customers tidak boleh sama.  %v", err)
@@ -121,7 +125,8 @@ func CustomerUpdate(c *gin.Context) {
 		return
 	}
 
-	_, err = updateCustomer(&id, &cust)
+	db := c.Keys["db"].(*sql.DB)
+	_, err = updateCustomer(db, &id, &cust)
 
 	if err != nil {
 		//log.Printf("Unable to update customer.  %v", err)
@@ -132,7 +137,7 @@ func CustomerUpdate(c *gin.Context) {
 	c.JSON(http.StatusOK, cust)
 }
 
-func getCustomer(id *int64) (models.Customer, error) {
+func getCustomer(db *sql.DB, id *int64) (models.Customer, error) {
 
 	var cust models.Customer
 
@@ -141,7 +146,7 @@ func getCustomer(id *int64) (models.Customer, error) {
 	FROM customers
 	WHERE order_id=$1`
 
-	rs := Sql().QueryRow(sqlStatement, id)
+	rs := db.QueryRow(sqlStatement, id)
 
 	err := rs.Scan(&cust.OrderID, &cust.Name, &cust.AgreementNumber, &cust.PaymentType)
 
@@ -159,7 +164,7 @@ func getCustomer(id *int64) (models.Customer, error) {
 	return cust, err
 }
 
-func getAllCustomer() ([]models.Customer, error) {
+func getAllCustomer(db *sql.DB) ([]models.Customer, error) {
 
 	var customers []models.Customer
 
@@ -168,7 +173,7 @@ func getAllCustomer() ([]models.Customer, error) {
 	FROM customers
 	ORDER BY name`
 
-	rs, err := Sql().Query(sqlStatement)
+	rs, err := db.Query(sqlStatement)
 
 	if err != nil {
 		//log.Fatalf("Unable to execute customers query %v", err)
@@ -192,12 +197,12 @@ func getAllCustomer() ([]models.Customer, error) {
 	return customers, err
 }
 
-func deleteCustomer(id *int64) (int64, error) {
+func deleteCustomer(db *sql.DB, id *int64) (int64, error) {
 	// create the delete sql query
 	sqlStatement := `DELETE FROM customers WHERE order_id=$1`
 
 	// execute the sql statement
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		//log.Fatalf("Unable to delete customer. %v", err)
@@ -214,14 +219,14 @@ func deleteCustomer(id *int64) (int64, error) {
 	return rowsAffected, err
 }
 
-func createCustomer(cust *models.Customer) (int64, error) {
+func createCustomer(db *sql.DB, cust *models.Customer) (int64, error) {
 
 	sqlStatement := `INSERT INTO customers 
 	(order_id, name, agreement_number, payment_type) 
 	VALUES 
 	($1, $2, $3, $4)`
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		cust.OrderID,
 		cust.Name,
 		cust.AgreementNumber,
@@ -242,13 +247,13 @@ func createCustomer(cust *models.Customer) (int64, error) {
 	return rowsAffected, err
 }
 
-func updateCustomer(id *int64, cust *models.Customer) (int64, error) {
+func updateCustomer(db *sql.DB, id *int64, cust *models.Customer) (int64, error) {
 
 	sqlStatement := `UPDATE customers SET
 		name=$2, agreement_number=$3, payment_type=$4
 	WHERE order_id=$1`
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		id,
 		cust.Name,
 		cust.AgreementNumber,

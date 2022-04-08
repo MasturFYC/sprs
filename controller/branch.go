@@ -13,7 +13,8 @@ import (
 
 func BranchGetAll(c *gin.Context) {
 
-	branchs, err := getAllBranchs()
+	db := c.Keys["db"].(*sql.DB)
+	branchs, err := getAllBranchs(db)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -32,7 +33,8 @@ func BranchGetItem(c *gin.Context) {
 		return
 	}
 
-	branch, err := getBranch(&id)
+	db := c.Keys["db"].(*sql.DB)
+	branch, err := getBranch(db, &id)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -50,7 +52,8 @@ func BranchDelete(c *gin.Context) {
 		return
 	}
 
-	deletedRows := deleteBranch(&id)
+	db := c.Keys["db"].(*sql.DB)
+	deletedRows := deleteBranch(db, &id)
 
 	msg := fmt.Sprintf("Branch deleted successfully. Total rows/record affected %v", deletedRows)
 
@@ -75,7 +78,8 @@ func BranchCreate(c *gin.Context) {
 		return
 	}
 
-	id, err := createBranch(&branch)
+	db := c.Keys["db"].(*sql.DB)
+	id, err := createBranch(db, &branch)
 
 	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -102,7 +106,8 @@ func BranchUpdate(c *gin.Context) {
 		return
 	}
 
-	updatedRows, err := updateBranch(&id, &branch)
+	db := c.Keys["db"].(*sql.DB)
+	updatedRows, err := updateBranch(db, &id, &branch)
 
 	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -121,7 +126,7 @@ func BranchUpdate(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func getBranch(id *int) (models.Branch, error) {
+func getBranch(db *sql.DB, id *int) (models.Branch, error) {
 
 	var branch models.Branch
 
@@ -130,7 +135,7 @@ func getBranch(id *int) (models.Branch, error) {
 	FROM branchs
 	WHERE id=$1`
 
-	rs := Sql().QueryRow(sqlStatement, id)
+	rs := db.QueryRow(sqlStatement, id)
 
 	err := rs.Scan(&branch.ID, &branch.Name, &branch.HeadBranch, &branch.Street,
 		&branch.City, &branch.Phone, &branch.Cell, &branch.Zip, &branch.Email)
@@ -149,7 +154,7 @@ func getBranch(id *int) (models.Branch, error) {
 	return branch, err
 }
 
-func getAllBranchs() ([]models.Branch, error) {
+func getAllBranchs(db *sql.DB) ([]models.Branch, error) {
 
 	var branchs []models.Branch
 
@@ -158,7 +163,7 @@ func getAllBranchs() ([]models.Branch, error) {
 	FROM branchs
 	ORDER BY name`
 
-	rs, err := Sql().Query(sqlStatement)
+	rs, err := db.Query(sqlStatement)
 
 	if err != nil {
 		log.Fatalf("Unable to execute branch query %v", err)
@@ -182,12 +187,12 @@ func getAllBranchs() ([]models.Branch, error) {
 	return branchs, err
 }
 
-func deleteBranch(id *int) int64 {
+func deleteBranch(db *sql.DB, id *int) int64 {
 	// create the delete sql query
 	sqlStatement := `DELETE FROM branchs WHERE id=$1`
 
 	// execute the sql statement
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		log.Fatalf("Unable to delete branch. %v", err)
@@ -203,7 +208,7 @@ func deleteBranch(id *int) int64 {
 	return rowsAffected
 }
 
-func createBranch(branch *models.Branch) (int, error) {
+func createBranch(db *sql.DB, branch *models.Branch) (int, error) {
 
 	sqlStatement := `INSERT INTO branchs
 		(name, head_branch, street, city, phone, cell, zip, email) 
@@ -213,7 +218,7 @@ func createBranch(branch *models.Branch) (int, error) {
 
 	var id int
 
-	err := Sql().QueryRow(sqlStatement,
+	err := db.QueryRow(sqlStatement,
 		branch.Name,
 		branch.HeadBranch,
 		branch.Street,
@@ -231,14 +236,14 @@ func createBranch(branch *models.Branch) (int, error) {
 	return id, err
 }
 
-func updateBranch(id *int, branch *models.Branch) (int64, error) {
+func updateBranch(db *sql.DB, id *int, branch *models.Branch) (int64, error) {
 
 	sqlStatement := `UPDATE branchs SET
 		name=$2, head_branch=$3, street=$4, city=$5,
 		phone=$6, cell=$7, zip=$8, email=$9
 	WHERE id=$1`
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		id,
 		branch.Name,
 		branch.HeadBranch,

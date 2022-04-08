@@ -36,7 +36,8 @@ func GetPostAddress(c *gin.Context) {
 		return
 	}
 
-	ha, err := getPostAddress(&id)
+	db := c.Keys["db"].(*sql.DB)
+	ha, err := getPostAddress(db, &id)
 
 	if err != nil {
 		//log.Fatalf("Unable to get post address. %v", err)
@@ -57,8 +58,8 @@ func DeletePostAddress(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	deletedRows := deletePostAddress(&id)
+	db := c.Keys["db"].(*sql.DB)
+	deletedRows := deletePostAddress(db, &id)
 
 	msg := fmt.Sprintf("Post address deleted successfully. Total rows/record affected %v", deletedRows)
 
@@ -83,8 +84,8 @@ func CreatePostAddress(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	rowAffected, err := createPostAddress(&ha)
+	db := c.Keys["db"].(*sql.DB)
+	rowAffected, err := createPostAddress(db, &ha)
 
 	if err != nil {
 		//log.Fatalf("Nama post address tidak boleh sama.  %v", err)
@@ -119,8 +120,8 @@ func UpdatePostAddress(c *gin.Context) {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
 		return
 	}
-
-	updatedRows := updatePostAddress(&id, &ha)
+	db := c.Keys["db"].(*sql.DB)
+	updatedRows := updatePostAddress(db, &id, &ha)
 
 	msg := fmt.Sprintf("Post address updated successfully. Total rows/record affected %v", updatedRows)
 
@@ -134,7 +135,7 @@ func UpdatePostAddress(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func getPostAddress(id *int64) (models.PostAddress, error) {
+func getPostAddress(db *sql.DB, id *int64) (models.PostAddress, error) {
 
 	var ha models.PostAddress
 
@@ -143,7 +144,7 @@ func getPostAddress(id *int64) (models.PostAddress, error) {
 	FROM post_addresses
 	WHERE order_id=$1`
 
-	rs := Sql().QueryRow(sqlStatement, id)
+	rs := db.QueryRow(sqlStatement, id)
 
 	err := rs.Scan(&ha.OrderID, &ha.Street, &ha.Region, &ha.City, &ha.Phone, &ha.Zip)
 
@@ -170,7 +171,7 @@ func getPostAddress(id *int64) (models.PostAddress, error) {
 // 	FROM post_addresses
 // 	ORDER BY name`
 
-// 	rs, err := Sql().Query(sqlStatement)
+// 	rs, err := db.Query(sqlStatement)
 
 // 	if err != nil {
 // 		log.Fatalf("Unable to execute post addresses query %v", err)
@@ -193,12 +194,12 @@ func getPostAddress(id *int64) (models.PostAddress, error) {
 // 	return addresses, err
 // }
 
-func deletePostAddress(id *int64) int64 {
+func deletePostAddress(db *sql.DB, id *int64) int64 {
 	// create the delete sql query
 	sqlStatement := `DELETE FROM post_addresses WHERE order_id=$1`
 
 	// execute the sql statement
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		log.Fatalf("Unable to delete post address. %v", err)
@@ -214,14 +215,14 @@ func deletePostAddress(id *int64) int64 {
 	return rowsAffected
 }
 
-func createPostAddress(ha *models.PostAddress) (int64, error) {
+func createPostAddress(db *sql.DB, ha *models.PostAddress) (int64, error) {
 
 	sqlStatement := `INSERT INTO post_addresses
 	(order_id, street, region, city, phone, zip) 
 	VALUES 
 	($1, $2, $3, $4, $5, $6)`
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		ha.OrderID,
 		ha.Street,
 		ha.Region,
@@ -243,13 +244,13 @@ func createPostAddress(ha *models.PostAddress) (int64, error) {
 	return rowsAffected, err
 }
 
-func updatePostAddress(id *int64, ha *models.PostAddress) int64 {
+func updatePostAddress(db *sql.DB, id *int64, ha *models.PostAddress) int64 {
 
 	sqlStatement := `UPDATE post_addresses SET
 		street=$2, region=$3, city=$4, phone=$5, zip=$6
 	WHERE order_id=$1`
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		id,
 		ha.Street,
 		ha.Region,

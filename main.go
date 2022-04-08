@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"os"
 	"time"
 
 	"log"
@@ -23,11 +25,23 @@ func loadEnvirontment() {
 	}
 }
 
+func database(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set("db", db)
+		c.Next()
+	}
+}
+
 func runServer() {
 
-	//if os.Getenv("GIN_MODE") == "release" {
-	gin.SetMode(gin.ReleaseMode)
-	//}
+	db := InitDatabase()
+	defer db().Close()
+
+	if os.Getenv("GIN_MODE") == "release" {
+		gin.SetMode(gin.ReleaseMode)
+	} else {
+		gin.SetMode(gin.DebugMode)
+	}
 
 	router := gin.Default()
 	// CORS for https://foo.com and https://github.com origins, allowing:
@@ -46,6 +60,7 @@ func runServer() {
 		},
 		MaxAge: 12 * time.Hour,
 	}))
+	router.Use(database(db()))
 
 	apiRouter := router.Group("/api")
 	{

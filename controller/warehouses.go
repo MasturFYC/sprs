@@ -16,7 +16,8 @@ import (
 
 func GetWarehouses(c *gin.Context) {
 
-	warehouses, err := getAllWarehouses()
+	db := c.Keys["db"].(*sql.DB)
+	warehouses, err := getAllWarehouses(db)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -38,7 +39,8 @@ func GetWarehouse(c *gin.Context) {
 		return
 	}
 
-	warehouses, err := getWarehouse(&id)
+	db := c.Keys["db"].(*sql.DB)
+	warehouses, err := getWarehouse(db, &id)
 
 	if err != nil {
 		//log.Fatalf("Unable to get warehouse. %v", err)
@@ -60,7 +62,8 @@ func DeleteWarehouse(c *gin.Context) {
 		return
 	}
 
-	deletedRows, err := deleteWarehouse(&id)
+	db := c.Keys["db"].(*sql.DB)
+	deletedRows, err := deleteWarehouse(db, &id)
 
 	if err != nil {
 		//log.Fatalf("Unable to convert the string into int.  %v", err)
@@ -92,7 +95,8 @@ func CreateWarehouse(c *gin.Context) {
 		return
 	}
 
-	id, err := createWarehouse(&warehouse)
+	db := c.Keys["db"].(*sql.DB)
+	id, err := createWarehouse(db, &warehouse)
 
 	if err != nil {
 		//log.Fatalf("Nama warehouse tidak boleh sama.  %v", err)
@@ -123,7 +127,8 @@ func UpdateWarehouse(c *gin.Context) {
 
 	}
 
-	updatedRows, err := updateWarehouse(&id, &warehouse)
+	db := c.Keys["db"].(*sql.DB)
+	updatedRows, err := updateWarehouse(db, &id, &warehouse)
 
 	if err != nil {
 		//		log.Fatalf("Unable to decode the request body.  %v", err)
@@ -144,13 +149,13 @@ func UpdateWarehouse(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func getWarehouse(id *int) (models.Warehouse, error) {
+func getWarehouse(db *sql.DB, id *int) (models.Warehouse, error) {
 
 	var warehouse models.Warehouse
 
 	var sqlStatement = `SELECT id, name, descriptions FROM warehouses WHERE id=$1`
 
-	rs := Sql().QueryRow(sqlStatement, id)
+	rs := db.QueryRow(sqlStatement, id)
 
 	err := rs.Scan(&warehouse.ID, &warehouse.Name, &warehouse.Descriptions)
 
@@ -168,13 +173,13 @@ func getWarehouse(id *int) (models.Warehouse, error) {
 	return warehouse, err
 }
 
-func getAllWarehouses() ([]models.Warehouse, error) {
+func getAllWarehouses(db *sql.DB) ([]models.Warehouse, error) {
 
 	var warehouses []models.Warehouse
 
 	var sqlStatement = `SELECT id, name, descriptions FROM warehouses`
 
-	rs, err := Sql().Query(sqlStatement)
+	rs, err := db.Query(sqlStatement)
 
 	if err != nil {
 		log.Fatalf("Unable to execute warehouses query %v", err)
@@ -197,12 +202,12 @@ func getAllWarehouses() ([]models.Warehouse, error) {
 	return warehouses, err
 }
 
-func deleteWarehouse(id *int) (int64, error) {
+func deleteWarehouse(db *sql.DB, id *int) (int64, error) {
 	// create the delete sql query
 	sqlStatement := `DELETE FROM warehouses WHERE id=$1`
 
 	// execute the sql statement
-	res, err := Sql().Exec(sqlStatement, id)
+	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		//log.Fatalf("Unable to delete warehouse. %v", err)
@@ -219,13 +224,13 @@ func deleteWarehouse(id *int) (int64, error) {
 	return rowsAffected, err
 }
 
-func createWarehouse(warehouse *models.Warehouse) (int, error) {
+func createWarehouse(db *sql.DB, warehouse *models.Warehouse) (int, error) {
 
 	sqlStatement := `INSERT INTO warehouses (name, descriptions) VALUES ($1, $2) RETURNING id`
 
 	var id int
 
-	err := Sql().QueryRow(sqlStatement,
+	err := db.QueryRow(sqlStatement,
 		warehouse.Name,
 		warehouse.Descriptions,
 	).Scan(&id)
@@ -240,11 +245,11 @@ func createWarehouse(warehouse *models.Warehouse) (int, error) {
 	return id, nil
 }
 
-func updateWarehouse(id *int, warehouse *models.Warehouse) (int64, error) {
+func updateWarehouse(db *sql.DB, id *int, warehouse *models.Warehouse) (int64, error) {
 
 	sqlStatement := `UPDATE warehouses SET name=$2, descriptions=$3 WHERE id=$1`
 
-	res, err := Sql().Exec(sqlStatement,
+	res, err := db.Exec(sqlStatement,
 		id,
 		warehouse.Name,
 		warehouse.Descriptions,
