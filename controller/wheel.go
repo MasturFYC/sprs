@@ -156,7 +156,7 @@ func getWheel(db *sql.DB, id *int) (models.Wheel, error) {
 
 func getAllWheels(db *sql.DB) ([]models.Wheel, error) {
 
-	var wheels []models.Wheel
+	var wheels = make([]models.Wheel, 0)
 
 	// wheels = append(wheels, models.Wheel{ID: 0, Name: "", ShortName: ""})
 
@@ -214,10 +214,6 @@ func createWheel(db *sql.DB, wheel *models.Wheel) (int, error) {
 
 	err := db.QueryRow(sqlStatement, wheel.Name, wheel.ShortName).Scan(&id)
 
-	if err != nil {
-		log.Printf("Unable to create wheel. %v", err)
-	}
-
 	return id, err
 }
 
@@ -234,10 +230,6 @@ func updateWheel(db *sql.DB, id *int, wheel *models.Wheel) (int64, error) {
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
-
-	if err != nil {
-		log.Printf("Error while updating wheel. %v", err)
-	}
 
 	return rowsAffected, err
 }

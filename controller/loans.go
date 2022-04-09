@@ -46,7 +46,6 @@ func LoanGetItem(c *gin.Context) {
 	loan, err := loan_get_item(db, &id)
 
 	if err != nil {
-		//log.Fatalf("Unable to get finance. %v", err)
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
@@ -261,9 +260,9 @@ func LoanUpdate(c *gin.Context) {
 		err = bulkInsertDetails(db, loan.Trx.Details, &loan.Trx.ID)
 
 		if err != nil {
-			log.Fatalf("Unable to execute finances query %v", err)
+			// log.Fatalf("Unable to execute finances query %v", err)
 			//log.Printf("Unable to insert transaction details (message from command).  %v", err)
-			//c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
+			c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
 			return
 		}
 	}
@@ -287,7 +286,7 @@ type loan_item struct {
 
 func loan_get_item(db *sql.DB, id *int64) (loan_item, error) {
 
-	var p loan_item
+	var p = loan_item{}
 	sb := strings.Builder{}
 	sbTrxDetail := strings.Builder{}
 	sbTrx := strings.Builder{}
@@ -307,8 +306,6 @@ func loan_get_item(db *sql.DB, id *int64) (loan_item, error) {
 	sbTrxDetail.WriteString(" INNER JOIN trx ON trx.id = rs.trx_id")
 	sbTrxDetail.WriteString(" WHERE rs.trx_id = x.id")
 	sbTrxDetail.WriteString(" AND (trx.division ='trx-loan' OR trx.division ='trx-angsuran')")
-
-	//log.Printf("%s", sbTrxDetail.String())
 
 	sbTrx.WriteString(`SELECT x.id, x.ref_id AS "refId", x.division, x.descriptions, x.trx_date AS "trxDate", x.memo`)
 	sbTrx.WriteString(", ")
@@ -375,7 +372,7 @@ type loan_all struct {
 
 func loan_get_all(db *sql.DB) ([]loan_all, error) {
 
-	var loans []loan_all
+	var loans = make([]loan_all, 0)
 
 	sb := strings.Builder{}
 	sb2 := strings.Builder{}
@@ -400,8 +397,6 @@ func loan_get_all(db *sql.DB) ([]loan_all, error) {
 	sb.WriteString(" FROM loans AS t")
 	sb.WriteString(" INNER JOIN trx AS x on x.ref_id = t.id AND x.division = 'trx-loan'")
 	sb.WriteString(" ORDER BY t.serial_num")
-
-	//	log.Println(sb.String())
 
 	rs, err := db.Query(sb.String())
 
@@ -444,7 +439,6 @@ func loan_get_all(db *sql.DB) ([]loan_all, error) {
 
 func loan_delete(db *sql.DB, id *int64) (int64, error) {
 
-	//log.Printf("%d", id)
 	sqlStatement := `DELETE FROM loans WHERE id=$1`
 	_, err := db.Exec(sqlStatement, id)
 	if err != nil {

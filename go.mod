@@ -12,13 +12,15 @@ require (
 	github.com/gin-gonic/gin v1.5.0
 )
 
+require google.golang.org/protobuf v1.26.0 // indirect
+
 require (
 	github.com/MasturFYC/fyc v0.3.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.12.1 // indirect
 	github.com/go-playground/universal-translator v0.16.0 // indirect
-	github.com/golang/protobuf v1.3.2 // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/json-iterator/go v1.1.7 // indirect
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/leodido/go-urn v1.1.0 // indirect
@@ -30,5 +32,5 @@ require (
 	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
 	golang.org/x/text v0.3.7
 	gopkg.in/go-playground/validator.v9 v9.29.1 // indirect
-	gopkg.in/yaml.v2 v2.2.2 // indirect
+	gopkg.in/yaml.v2 v2.2.4 // indirect
 )

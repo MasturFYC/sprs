@@ -32,7 +32,7 @@ func GetRemainSaldo(c *gin.Context) {
 
 func get_remain_saldo(db *sql.DB) ([]remain_saldo, error) {
 
-	var saldos []remain_saldo
+	var saldos = make([]remain_saldo, 0)
 	/*
 
 	   union all

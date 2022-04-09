@@ -161,11 +161,10 @@ func get_report_trx_by_month(db *sql.DB, m *int, y *int) ([]reportMonth, error) 
 		b.WriteString(" FROM rs t")
 		b.WriteString(" ORDER BY t.group, t.id;")
 
-		//log.Println(b.String())
 		rs, err := db.Query(b.String(), m, y)
 	*/
 
-	var reports []reportMonth
+	var reports = make([]reportMonth, 0)
 
 	b := strings.Builder{}
 
@@ -209,7 +208,6 @@ func get_report_trx_by_month(db *sql.DB, m *int, y *int) ([]reportMonth, error) 
 	b.WriteString(" FROM rs t")
 	b.WriteString(" ORDER BY t.group, t.id;")
 
-	// log.Println(fmt.Sprintf("%d-%02d-%02d", *y, *m, 1))
 	rs, err := db.Query(b.String(), m, y, fmt.Sprintf("%d-%02d-%02d", (*y), (*m), 1))
 
 	if err != nil {
@@ -248,7 +246,7 @@ func get_report_trx_by_month(db *sql.DB, m *int, y *int) ([]reportMonth, error) 
 
 func get_report_trx_by_type_month(db *sql.DB, group_id *int32, m *int, y *int) ([]reportType, error) {
 
-	var reports []reportType
+	var reports = make([]reportType, 0)
 
 	var sqlStatement = `WITH RECURSIVE rs AS (
 		SELECT 
@@ -312,7 +310,7 @@ func get_report_trx_by_type_month(db *sql.DB, group_id *int32, m *int, y *int) (
 
 func get_trx_details_by_acc(db *sql.DB, acc *int32, group_id *int32, m *int, y *int) ([]reportAccount, error) {
 
-	var reports []reportAccount
+	var reports = make([]reportAccount, 0)
 
 	var sqlStatement = `WITH RECURSIVE rs AS (
 		SELECT x.id, x.trx_date, x.descriptions as name, SUM(d.debt) debt, SUM(d.cred) cred

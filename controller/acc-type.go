@@ -19,7 +19,7 @@ func AccTypeGetAll(c *gin.Context) {
 	db := c.Keys["db"].(*sql.DB)
 	allTypes, err := getAllAccTypes(db)
 
-	if err != nil || len(allTypes) == 0 {
+	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
@@ -144,7 +144,7 @@ func getAccType(db *sql.DB, id *int) (models.AccType, error) {
 
 func getAllAccTypes(db *sql.DB) ([]models.AccType, error) {
 
-	var results []models.AccType
+	var results = make([]models.AccType, 0)
 
 	var sqlStatement = `SELECT group_id, id, name, descriptions FROM acc_type ORDER BY id`
 
@@ -185,10 +185,6 @@ func createAccType(db *sql.DB, p *models.AccType) (int64, error) {
 
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Printf("Unable to create account type. %v", err)
-	}
-
 	return rowsAffected, err
 }
 
@@ -213,11 +209,6 @@ func updateAccType(db *sql.DB, id *int, p *models.AccType) (int64, error) {
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Printf("Error while updating account type. %v", err)
-		return 0, err
-	}
-
 	return rowsAffected, err
 }
 
@@ -234,10 +225,6 @@ func deleteAccType(db *sql.DB, id *int) (int64, error) {
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
-
-	if err != nil {
-		log.Fatalf("Error while checking the affected rows. %v", err)
-	}
 
 	return rowsAffected, err
 }

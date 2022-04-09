@@ -227,13 +227,18 @@ func LentCreate(c *gin.Context) {
 
 }
 
+type TsLentUpdate struct {
+	models.Lent
+	Descriptions string `json:"descriptions"`
+}
+
 func LentUpdate(c *gin.Context) {
 
 	// create the postgres db connection
 
 	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
 
-	var data models.Lent
+	var data TsLentUpdate
 
 	err := c.BindJSON(&data)
 
@@ -254,7 +259,7 @@ func LentUpdate(c *gin.Context) {
 		return
 	}
 
-	// updatedRows, err := updateTransaction(&data.Trx.ID, &data.Trx, data.Token)
+	//updatedRows, err := updateTransaction(&data.Trx.ID, &data.Trx, data.Token)
 
 	// if err != nil {
 	// 	//log.Printf("Unable to update transaction.  %v", err)
@@ -415,7 +420,7 @@ type lent_all_unit struct {
 
 func lent_get_units(db *sql.DB) ([]lent_all_unit, error) {
 
-	var units []lent_all_unit
+	var units = make([]lent_all_unit, 0)
 
 	qunit := lent_create_unit_query()
 
@@ -464,7 +469,7 @@ func lent_get_units(db *sql.DB) ([]lent_all_unit, error) {
 
 func lent_get_all(db *sql.DB) ([]ts_lent_all, error) {
 
-	var lents []ts_lent_all
+	var lents = make([]ts_lent_all, 0)
 
 	qunit := lent_create_unit_query()
 	qunit.WriteString(" WHERE o.id = t.order_id")
@@ -546,9 +551,17 @@ func lent_delete(db *sql.DB, id *int64) (int64, error) {
 	}
 
 	sqlStatement = `UPDATE trx SET division='trx-order', descriptions='Batal dipiutangkan' WHERE ref_id=$1 AND division='trx-lent'`
-	res, err := db.Exec(sqlStatement, id)
+
+	_, err = db.Exec(sqlStatement, id)
 	if err != nil {
 		log.Fatal(err)
+		return 0, err
+	}
+
+	res, err := db.Exec("UPDATE trx_detail SET code_id = 5511 WHERE trx_id = $1 AND code_id = 5513", id)
+
+	if err != nil {
+		log.Printf("Unable move trx to lent. %v", err)
 		return 0, err
 	}
 
@@ -584,13 +597,13 @@ func lent_create(db *sql.DB, lent *models.Lent) (int64, error) {
 	return rowsAffected, err
 }
 
-func lent_update(db *sql.DB, id *int64, lent *models.Lent) (int64, error) {
+func lent_update(db *sql.DB, id *int64, lent *TsLentUpdate) (int64, error) {
 	sb := strings.Builder{}
 	sb.WriteString("UPDATE lents SET")
 	sb.WriteString(" name=$2, street=$3, city=$4, phone=$5, cell=$6, zip=$7")
 	sb.WriteString(" WHERE order_id=$1")
 
-	rs, err := db.Exec(sb.String(),
+	_, err := db.Exec(sb.String(),
 		id,
 		lent.Name,
 		lent.Street,
@@ -599,9 +612,13 @@ func lent_update(db *sql.DB, id *int64, lent *models.Lent) (int64, error) {
 		lent.Cell,
 		lent.Zip,
 	)
+
 	if err != nil {
 		return 0, err
 	}
+
+	rs, _ := db.Exec("UPDATE trx SET descriptions=$2 WHERE ref_id = $1 AND division='trx-lent'", id, lent.Descriptions)
+
 	rowsAffected, err := rs.RowsAffected()
 	return rowsAffected, err
 }

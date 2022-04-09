@@ -37,7 +37,7 @@ func Invoice_GetSearch(c *gin.Context) {
 	db := c.Keys["db"].(*sql.DB)
 	invoices, err := invoices_search(db, &t.Txt)
 
-	if err != nil || len(invoices) == 0 {
+	if err != nil {
 		//log.Printf("Unable to get all account codes. %v", err)
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -47,13 +47,13 @@ func Invoice_GetSearch(c *gin.Context) {
 
 }
 
-func Invoice_GetByFinance(c *gin.Context) {
+func InvoiceGetByFinance(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
 	db := c.Keys["db"].(*sql.DB)
 	invoices, err := invoices_by_finance(db, &id)
 
-	if err != nil || len(invoices) == 0 {
+	if err != nil {
 		//log.Printf("Unable to get all account codes. %v", err)
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -63,7 +63,7 @@ func Invoice_GetByFinance(c *gin.Context) {
 
 }
 
-func Invoice_GetByMonth(c *gin.Context) {
+func InvoiceGetByMonth(c *gin.Context) {
 
 	m, _ := strconv.Atoi(c.Param("month"))
 	y, _ := strconv.Atoi(c.Param("year"))
@@ -71,7 +71,7 @@ func Invoice_GetByMonth(c *gin.Context) {
 	db := c.Keys["db"].(*sql.DB)
 	invoices, err := invoices_by_month(db, &m, &y)
 
-	if err != nil || len(invoices) == 0 {
+	if err != nil {
 		//log.Printf("Unable to get all account codes. %v", err)
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -81,7 +81,7 @@ func Invoice_GetByMonth(c *gin.Context) {
 
 }
 
-func Invoice_GetAll(c *gin.Context) {
+func InvoiceGetAll(c *gin.Context) {
 
 	db := c.Keys["db"].(*sql.DB)
 	invoices, err := invoice_get_all(db)
@@ -96,7 +96,7 @@ func Invoice_GetAll(c *gin.Context) {
 
 // router invoice.go
 
-func Invoice_GetOrders(c *gin.Context) {
+func InvoiceGetOrders(c *gin.Context) {
 
 	finance_id, err := strconv.Atoi(c.Param("financeId"))
 
@@ -115,7 +115,7 @@ func Invoice_GetOrders(c *gin.Context) {
 
 	invoices, err := invoice_get_orders(db, &finance_id, &invoice_id)
 
-	if err != nil || len(invoices) == 0 {
+	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
@@ -123,7 +123,8 @@ func Invoice_GetOrders(c *gin.Context) {
 	c.JSON(http.StatusOK, &invoices)
 }
 
-func Invoice_GetItem(c *gin.Context) {
+// /api/invoice/item/:id
+func InvoiceGetItem(c *gin.Context) {
 
 	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
 
@@ -139,7 +140,7 @@ func Invoice_GetItem(c *gin.Context) {
 	c.JSON(http.StatusOK, &invoice)
 }
 
-func Invoice_Create(c *gin.Context) {
+func InvoiceCreate(c *gin.Context) {
 	var param invoice_create_param
 
 	err := c.BindJSON(&param)
@@ -196,7 +197,7 @@ func Invoice_Create(c *gin.Context) {
 
 }
 
-func Invoice_Delete(c *gin.Context) {
+func InvoiceDelete(c *gin.Context) {
 
 	invoice_id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 
@@ -228,7 +229,7 @@ func Invoice_Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func Invoice_Update(c *gin.Context) {
+func InvoiceUpdate(c *gin.Context) {
 
 	invoice_id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 
@@ -321,11 +322,6 @@ func invoice_update_transaction(db *sql.DB, id *int64, p *models.Trx, token stri
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
-
-	if err != nil {
-		log.Printf("Error while updating transaction. %v", err)
-		return 0, err
-	}
 
 	return rowsAffected, err
 }
@@ -592,7 +588,7 @@ type invoice_all struct {
 }
 
 func invoice_get_all(db *sql.DB) ([]invoice_all, error) {
-	var invoices []invoice_all
+	var invoices = make([]invoice_all, 0)
 
 	builder := strings.Builder{}
 
@@ -677,7 +673,7 @@ type invoice_order struct {
 
 func invoice_get_orders(db *sql.DB, finance_id *int, invoice_id *int64) ([]invoice_order, error) {
 
-	var invoices []invoice_order
+	var invoices = make([]invoice_order, 0)
 
 	var queryWheel = `SELECT id, name, short_name as "shortName" FROM wheels WHERE id = t.wheel_id`
 	var queryMerk = `SELECT id, name FROM merks WHERE id = t.merk_id`
@@ -788,7 +784,7 @@ func invoice_get_orders(db *sql.DB, finance_id *int, invoice_id *int64) ([]invoi
 }
 
 func invoices_search(db *sql.DB, txt *string) ([]invoice_all, error) {
-	var invoices []invoice_all
+	var invoices = make([]invoice_all, 0)
 
 	b := strings.Builder{}
 
@@ -845,7 +841,7 @@ func invoices_search(db *sql.DB, txt *string) ([]invoice_all, error) {
 }
 
 func invoices_by_month(db *sql.DB, month *int, year *int) ([]invoice_all, error) {
-	var invoices []invoice_all
+	var invoices = make([]invoice_all, 0)
 
 	builder := strings.Builder{}
 
@@ -912,7 +908,7 @@ func invoices_by_month(db *sql.DB, month *int, year *int) ([]invoice_all, error)
 }
 
 func invoices_by_finance(db *sql.DB, finance_id *int) ([]invoice_all, error) {
-	var invoices []invoice_all
+	var invoices = make([]invoice_all, 0)
 	var querFinance = `SELECT f.id, f.name, f.short_name "shortName", f.street, f.city, f.phone, f.cell, f.zip, f.email, f.group_id AS "groupId" FROM finances f WHERE f.id = v.finance_id`
 	var queryAccount = `SELECT c.id, c.name, c.type_id AS "typeId", c.descriptions, c.is_active AS "isActive", c.receivable_option AS "receivableOption", c.is_auto_debet AS "isAutoDebet" FROM acc_code c WHERE c.id = v.account_id`
 
@@ -929,8 +925,6 @@ func invoices_by_finance(db *sql.DB, finance_id *int) ([]invoice_all, error) {
 	b.WriteString(" ORDER BY v.id DESC")
 
 	rs, err := db.Query(b.String(), finance_id)
-
-	//log.Println(b.String())
 
 	if err != nil {
 		log.Fatalf("Unable to execute merks query %v", err)

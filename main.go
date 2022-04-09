@@ -260,20 +260,20 @@ func runServer() {
 
 			invoiceRouter.POST("/search", conn.Invoice_GetSearch)
 
-			invoiceRouter.GET("/finance/:id", conn.Invoice_GetByFinance)
-			invoiceRouter.GET("/month-year/:month/:year", conn.Invoice_GetByMonth) // need attention
-			invoiceRouter.GET("/order/:financeId/:id", conn.Invoice_GetOrders)
+			invoiceRouter.GET("/finance/:id", conn.InvoiceGetByFinance)
+			invoiceRouter.GET("/month-year/:month/:year", conn.InvoiceGetByMonth) // need attention
+			invoiceRouter.GET("/order/:financeId/:id", conn.InvoiceGetOrders)
 			invoiceRouter.GET("/download/1/:id", conn.Pdf_GetInvoice)
 			//CLIPAN  : 2
 			invoiceRouter.GET("/download/2/:id", conn.Clipan_GetInvoice)
 			// MTF  : 3
 			invoiceRouter.GET("/download/3/:id", conn.Mtf_GetInvoice)
 
-			invoiceRouter.GET("/item/:id", conn.Invoice_GetItem)
-			invoiceRouter.GET("", conn.Invoice_GetAll)
-			invoiceRouter.POST("", conn.Invoice_Create)
-			invoiceRouter.PUT("/:id", conn.Invoice_Update)
-			invoiceRouter.DELETE("/:id", conn.Invoice_Delete)
+			invoiceRouter.GET("/item/:id", conn.InvoiceGetItem)
+			invoiceRouter.GET("", conn.InvoiceGetAll)
+			invoiceRouter.POST("", conn.InvoiceCreate)
+			invoiceRouter.PUT("/:id", conn.InvoiceUpdate)
+			invoiceRouter.DELETE("/:id", conn.InvoiceDelete)
 		}
 		loanRouter := apiRouter.Group("/loan")
 		{
@@ -298,6 +298,10 @@ func runServer() {
 		{
 			labaRugiRouter.GET("/bydate/:from/:to", conn.LabaRugiGetByDate)
 		}
+		// testRouter := apiRouter.Group("/test")
+		// {
+		// 	testRouter.GET("/trx", conn.Test1)
+		// }
 	}
 	router.Run(":8181") // ":8080"
 }
@@ -307,3 +311,7 @@ func main() {
 	//	createRouter()
 	runServer()
 }
+
+// shraed liberary references
+// https://blog.ralch.com/articles/golang-sharing-libraries/
+// https://sclem.dev/posts/go-abi/

@@ -18,6 +18,7 @@ type LabaRugi struct {
 	Profit   float64 `json:"profit"`
 }
 
+//api/labarugi/bydate/:from/to
 func LabaRugiGetByDate(c *gin.Context) {
 	db := c.Keys["db"].(*sql.DB)
 	fd := c.Param("from")

@@ -1,0 +1,115 @@
+package controller
+
+import (
+	"database/sql"
+	"net/http"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/jackskj/carta"
+)
+
+type Trx struct {
+	Id           int64       `db:"trx_id" json:"id"`
+	Division     string      `db:"trx_division" json:"division"`
+	Descriptions string      `db:"trx_descriptions" json:"descriptions"`
+	Memo         *string     `db:"trx_memo" json:"memo,omitempty"`
+	TrxDate      *time.Time  `db:"trx_date" json:"trxDate"`
+	RefId        int64       `db:"trx_refid" json:"refId"`
+	Order        Order       `db:"order" json:"order"`
+	Details      []TrxDetail `db:"details" json:"details"`
+}
+
+type TrxDetail struct {
+	Id     int64   `db:"detail_id" json:"id"`
+	CodeId int     `db:"detail_code_id" json:"codeId"`
+	TrxId  int64   `db:"detail_trx_id" json:"trxId"`
+	Debt   float64 `db:"detail_debt" json:"debt"`
+	Cred   float64 `db:"detail_cred" json:"cred"`
+}
+
+type Order struct {
+	Id      int64      `db:"order_id" json:"id"`
+	Name    string     `db:"order_name" json:"name"`
+	OrderAt *time.Time `db:"order_at" json:"orderAt"`
+	Unit    *Unit      `db:"unit" json:"unit,omitempty"`
+}
+
+type Unit struct {
+	OrderId       int64    `db:"unit_order_id" json:"orderId"`
+	Nopol         string   `db:"unit_nopol" json:"nopol"`
+	Year          int      `db:"unit_year" json:"year"`
+	FrameNumber   *string  `db:"unit_frame_number" json:"frameNumber,omitempty"`
+	MachineNumber *string  `db:"unit_machine_number" json:"machineNumber,omitempty"`
+	Vehicle       *Vehicle `db:"vehicle" json:"vehicle,omitempty"`
+}
+
+type Vehicle struct {
+	Id    int64  `db:"vehicle_id" json:"id"`
+	Name  string `db:"vehicle_name" json:"name"`
+	Merk  *Merk  `db:"merk" json:"merk,omitempty"`
+	Wheel *Wheel `db:"wheel" json:"wheel,omitempty"`
+}
+
+type Merk struct {
+	Id   int64  `db:"merk_id" json:"id"`
+	Name string `db:"merk_name" json:"name"`
+}
+
+type Wheel struct {
+	Id        int64  `db:"wheel_id" json:"id"`
+	Name      string `db:"wheel_name" json:"name"`
+	ShortName string `db:"wheel_short_name" json:"shortName"`
+}
+
+func Test1(c *gin.Context) {
+	db := c.Keys["db"].(*sql.DB)
+	rows, err := db.Query(`
+	select 
+					x.id							as trx_id,
+					x.division 				as trx_division,
+					x.descriptions 	 	as trx_descriptions,
+					x.memo	 			 	 	as trx_memo,
+					x.trx_date 				as trx_date,
+					x.ref_id 					as trx_refid,
+					o.id							as order_id,
+					o.name						as order_name,
+					o.order_at				as order_at,
+					u.order_id				as unit_order_id,
+					u.nopol						as unit_nopol,
+					u.year						as unit_year,
+					u.frame_number		as unit_frame_number,
+					u.machine_number	as unit_machine_number,
+					v.id							as vehicle_id,
+					v.name						as vehicle_name,
+					m.id							as merk_id,
+					m.name						as merk_name,
+					w.id							as wheel_id,
+					w.name						as wheel_name,
+					w.short_name			as wheel_short_name,
+					d.id							as detail_id,
+					d.code_id					as detail_code_id,
+					d.trx_id					as detail_trx_id,
+					d.debt						as detail_debt,
+					d.cred						as detail_cred
+	from trx x
+					left outer join trx_detail d		ON d.trx_id = x.id
+					inner join orders o							ON o.id = x.ref_id
+					inner join units as u						ON u.order_id = o.id
+					inner join types as v						ON v.id = u.type_id
+					inner join wheels as w					ON w.id = v.wheel_id
+					inner join merks as m						ON m.id = v.merk_id
+	where x.division = 'trx-lent'
+	`)
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	trx := []Trx{}
+	carta.Map(rows, &trx)
+
+	c.JSON(http.StatusOK, &trx)
+
+}

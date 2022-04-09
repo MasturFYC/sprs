@@ -272,10 +272,6 @@ func createTask(db *sql.DB, t *models.Task) (int64, error) {
 
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Printf("No task created. %v", err)
-	}
-
 	return rowsAffected, err
 }
 
@@ -305,10 +301,6 @@ func updateTask(db *sql.DB, id *int64, t *models.Task) (int64, error) {
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
-
-	if err != nil {
-		log.Fatalf("Error while updating task. %v", err)
-	}
 
 	return rowsAffected, err
 }

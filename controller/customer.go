@@ -139,7 +139,7 @@ func CustomerUpdate(c *gin.Context) {
 
 func getCustomer(db *sql.DB, id *int64) (models.Customer, error) {
 
-	var cust models.Customer
+	var cust = models.Customer{}
 
 	var sqlStatement = `SELECT 
 		order_id, name, agreement_number, payment_type
@@ -152,7 +152,7 @@ func getCustomer(db *sql.DB, id *int64) (models.Customer, error) {
 
 	switch err {
 	case sql.ErrNoRows:
-		fmt.Println("No rows were returned!")
+		log.Println("No rows were returned!")
 		return cust, err
 	case nil:
 		return cust, nil
@@ -166,7 +166,7 @@ func getCustomer(db *sql.DB, id *int64) (models.Customer, error) {
 
 func getAllCustomer(db *sql.DB) ([]models.Customer, error) {
 
-	var customers []models.Customer
+	var customers = make([]models.Customer, 0)
 
 	var sqlStatement = `SELECT 
 		order_id, name, agreement_number, payment_type
@@ -198,24 +198,15 @@ func getAllCustomer(db *sql.DB) ([]models.Customer, error) {
 }
 
 func deleteCustomer(db *sql.DB, id *int64) (int64, error) {
-	// create the delete sql query
 	sqlStatement := `DELETE FROM customers WHERE order_id=$1`
 
-	// execute the sql statement
 	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
-		//log.Fatalf("Unable to delete customer. %v", err)
 		return 0, err
 	}
 
-	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
-
-	// if err != nil {
-	// 	log.Fatalf("Error while checking the affected rows. %v", err)
-	// }
-
 	return rowsAffected, err
 }
 
@@ -234,15 +225,10 @@ func createCustomer(db *sql.DB, cust *models.Customer) (int64, error) {
 	)
 
 	if err != nil {
-		//log.Printf("Unable to create customer. %v", err)
 		return 0, err
 	}
 
 	rowsAffected, err := res.RowsAffected()
-
-	// if err != nil || rowsAffected == 0 {
-	// 	log.Printf("Unable to create customer. %v", err)
-	// }
 
 	return rowsAffected, err
 }

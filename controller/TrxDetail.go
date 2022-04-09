@@ -19,7 +19,7 @@ func GetTransactionDetails(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 
 	if err != nil {
-		log.Printf("Unable to convert the string into int.  %v", err)
+		//log.Printf("Unable to convert the string into int.  %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -27,8 +27,9 @@ func GetTransactionDetails(c *gin.Context) {
 	details, err := getTransactionDetails(db, &id)
 
 	if err != nil {
-		log.Printf("Unable to get transaction detail. %v", err)
+		//log.Printf("Unable to get transaction detail. %v", err)
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
 	}
 
 	c.JSON(http.StatusOK, &details)
@@ -136,7 +137,7 @@ func DeleteTransactionDetail(c *gin.Context) {
 
 func getTransactionDetails(db *sql.DB, trxID *int64) ([]models.TrxDetail, error) {
 
-	var details []models.TrxDetail
+	var details = make([]models.TrxDetail, 0)
 
 	var sqlStatement = `SELECT 
 		id, code_id, trx_id, debt, cred
@@ -221,11 +222,6 @@ func updateTransactionDetail(db *sql.DB, id *int64, p *models.TrxDetail) (int64,
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Printf("Error while updating transaction detail. %v", err)
-		return 0, err
-	}
-
 	return rowsAffected, err
 }
 
@@ -242,10 +238,6 @@ func deleteTransactionDetail(db *sql.DB, trxid *int64, id *int) (int64, error) {
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
-
-	if err != nil {
-		log.Fatalf("Error while checking the affected rows. %v", err)
-	}
 
 	return rowsAffected, err
 }

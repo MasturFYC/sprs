@@ -179,7 +179,7 @@ type FgFinances struct {
 }
 
 func fg_get_finances(db *sql.DB) ([]FgFinances, error) {
-	var fgs []FgFinances
+	var fgs = make([]FgFinances, 0)
 	var querFinance = `SELECT id, name, short_name AS "shortName" FROM finances WHERE group_id = g.id ORDER BY name`
 
 	var sqlStatement = fmt.Sprintf("SELECT g.id, g.name, %s AS finances	FROM finance_groups AS g ORDER BY g.name",
@@ -217,7 +217,7 @@ func fg_get_finances(db *sql.DB) ([]FgFinances, error) {
 
 func get_all_finance_groups(db *sql.DB) ([]models.FinanceGroup, error) {
 
-	var fgs []models.FinanceGroup
+	var fgs = make([]models.FinanceGroup, 0)
 
 	var sqlStatement = `SELECT id, name FROM finance_groups ORDER BY name`
 

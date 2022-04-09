@@ -173,7 +173,7 @@ func AccGroupDelete(c *gin.Context) {
 }
 
 func group_get_types(db *sql.DB, id *int) ([]models.AccType, error) {
-	var results []models.AccType
+	var results = make([]models.AccType, 0)
 
 	var sqlStatement = `SELECT group_id, id, name, descriptions FROM acc_type WHERE group_id=$1 OR 0 = $1 ORDER BY id`
 
@@ -227,7 +227,7 @@ func getAccGroup(db *sql.DB, id *int) (models.AccGroup, error) {
 
 func getAllAccGroups(db *sql.DB) ([]models.AccGroup, error) {
 
-	var results []models.AccGroup
+	var results = make([]models.AccGroup, 0)
 
 	var sqlStatement = `SELECT id, name, descriptions FROM acc_group ORDER BY id`
 
@@ -312,7 +312,7 @@ func deleteAccGroup(db *sql.DB, id *int) (int64, error) {
 }
 
 func get_all_accounts(db *sql.DB) ([]all_accounts, error) {
-	var accounts []all_accounts
+	var accounts = make([]all_accounts, 0)
 
 	sb := strings.Builder{}
 	sb.WriteString("WITH RECURSIVE rs AS (")

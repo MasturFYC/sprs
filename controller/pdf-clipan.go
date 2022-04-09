@@ -47,7 +47,7 @@ func Clipan_GetInvoice(c *gin.Context) {
 		return
 	}
 
-	var orders []order_unit_customer
+	var orders = make([]order_unit_customer, 0)
 	source = (*json.RawMessage)(&invoice.Details)
 	err = json.Unmarshal(*source, &orders)
 
@@ -108,7 +108,6 @@ func clipan_create_invoice(w io.Writer, invoice_id *int64, inv *invoice_item, fi
 
 	p.SetY(10)
 
-	//log.Println()
 	p.Image(filepath.Join(os.Getenv("UPLOADFILE_LOCATION"), "logo.jpg"), ml, p.GetY(), box1, 0, false, "", 0, "")
 	p.SetX(x)
 	p.SetFont(font, "B", 18)

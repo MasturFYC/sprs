@@ -52,7 +52,7 @@ func GetOrdersByFinance(c *gin.Context) {
 	db := c.Keys["db"].(*sql.DB)
 	orders, err := get_order_by_finance(db, &id)
 
-	if err != nil || len(orders) == 0 {
+	if err != nil {
 		//log.Printf("Unable to get all account codes. %v", err)
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -77,7 +77,7 @@ func GetOrdersByBranch(c *gin.Context) {
 	db := c.Keys["db"].(*sql.DB)
 	acc_codes, err := get_order_by_branch(db, &id)
 
-	if err != nil || len(acc_codes) == 0 {
+	if err != nil {
 		//log.Printf("Unable to get all account codes. %v", err)
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -103,7 +103,7 @@ func GetOrdersByMonth(c *gin.Context) {
 	db := c.Keys["db"].(*sql.DB)
 	acc_codes, err := get_order_by_month(db, &id)
 
-	if err != nil || len(acc_codes) == 0 {
+	if err != nil {
 		//log.Printf("Unable to get all account codes. %v", err)
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -158,8 +158,6 @@ func DeleteOrder(c *gin.Context) {
 	// id = order id
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 
-	log.Printf("id to remove.  %v", id)
-
 	if err != nil {
 		//		log.Fatalf("Unable to convert the string into int.  %v", err)
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
@@ -187,7 +185,6 @@ func Order_GetNameSeq(c *gin.Context) {
 	id, err := create_name_seq(db)
 
 	if err != nil {
-		//log.Printf("Nama order tidak boleh sama.  %v", err)
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
 		return
 	}
@@ -210,8 +207,6 @@ type st_order_create struct {
 func CreateOrder(c *gin.Context) {
 
 	var order st_order_create
-
-	//log.Printf("%v", r.Body)
 
 	err := c.BindJSON(&order)
 
@@ -293,7 +288,7 @@ func Order_GetInvoiced(c *gin.Context) {
 	db := c.Keys["db"].(*sql.DB)
 	orders, err := order_get_invoiced(db, &m, &y, &fid)
 
-	if err != nil || len(orders) == 0 {
+	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
@@ -376,13 +371,11 @@ type order_all struct {
 
 func getAllOrders(db *sql.DB) ([]order_all, error) {
 
-	var orders []order_all
+	var orders = make([]order_all, 0)
 
 	b := create_order_query()
 	b.WriteString(" FROM orders AS o")
 	b.WriteString(" ORDER BY o.id DESC")
-
-	//log.Println(b.String())
 
 	rs, err := db.Query(b.String())
 
@@ -612,10 +605,6 @@ func updateOrder(db *sql.DB, id *int64, p *st_order_update) (int64, error) {
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Printf("Error while updating order. %v", err)
-	}
-
 	return rowsAffected, err
 }
 
@@ -656,7 +645,7 @@ func create_order_query() *strings.Builder {
 
 func searchOrders(db *sql.DB, txt *string) ([]order_all, error) {
 
-	var orders []order_all
+	var orders = make([]order_all, 0)
 	b := create_order_query()
 	b.WriteString(" FROM orders AS o")
 	b.WriteString(" WHERE token @@ to_tsquery('indonesian', $1)")
@@ -714,7 +703,7 @@ func searchOrders(db *sql.DB, txt *string) ([]order_all, error) {
 
 func get_order_by_finance(db *sql.DB, id *int) ([]order_all, error) {
 
-	var orders []order_all
+	var orders = make([]order_all, 0)
 	b := create_order_query()
 	b.WriteString(" FROM orders AS o")
 	b.WriteString(" WHERE o.finance_id=$1 OR 0=$1")
@@ -772,7 +761,7 @@ func get_order_by_finance(db *sql.DB, id *int) ([]order_all, error) {
 
 func get_order_by_branch(db *sql.DB, id *int) ([]order_all, error) {
 
-	var orders []order_all
+	var orders = make([]order_all, 0)
 	b := create_order_query()
 	b.WriteString(" FROM orders AS o")
 	b.WriteString(" WHERE o.branch_id=$1 OR 0=$1")
@@ -867,7 +856,7 @@ func get_order_by_branch(db *sql.DB, id *int) ([]order_all, error) {
 
 func get_order_by_month(db *sql.DB, id *int) ([]order_all, error) {
 
-	var orders []order_all
+	var orders = make([]order_all, 0)
 	b := create_order_query()
 	b.WriteString(" FROM orders AS o")
 	b.WriteString(" WHERE EXTRACT(MONTH from o.order_at)=$1 OR 0 = $1")
@@ -944,7 +933,7 @@ type order_invoiced struct {
 }
 
 func order_get_invoiced(db *sql.DB, m *int, y *int, fid *int) ([]order_invoiced, error) {
-	var orders []order_invoiced
+	var orders = make([]order_invoiced, 0)
 
 	var q_finance = `SELECT f.name, f.short_name "shortName" FROM finances f WHERE f.id = t.finance_id`
 

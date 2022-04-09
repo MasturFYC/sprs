@@ -242,10 +242,6 @@ func deleteDetailsByOrder(db *sql.DB, id *int64) (int64, error) {
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	// if err != nil {
-	// 	log.Fatalf("Error while checking the affected rows. %v", err)
-	// }
-
 	return rowsAffected, err
 
 }
@@ -363,7 +359,7 @@ const (
 
 func get_all_transactions(db *sql.DB) ([]local_trx, error) {
 
-	var results []local_trx
+	var results = make([]local_trx, 0)
 
 	builder := strings.Builder{}
 
@@ -498,7 +494,7 @@ func trxMoveToLent(db *sql.DB, id *int64, p *models.Trx, token string) (int64, e
 		return 0, err
 	}
 
-	res, err := db.Exec("UPDATE trx_detail SET code_id = 5513 WHERE trx_id = $1", id)
+	res, err := db.Exec("UPDATE trx_detail SET code_id = 5513 WHERE trx_id = $1 AND code_id = 5511", id)
 
 	if err != nil {
 		log.Printf("Unable move trx to lent. %v", err)
@@ -539,11 +535,6 @@ func updateTransaction(db *sql.DB, id *int64, p *models.Trx, token string) (int6
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Printf("Error while updating transaction. %v", err)
-		return 0, err
-	}
-
 	return rowsAffected, err
 }
 
@@ -561,16 +552,12 @@ func deleteTransaction(db *sql.DB, id *int) (int64, error) {
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Fatalf("Error while checking the affected rows. %v", err)
-	}
-
 	return rowsAffected, err
 }
 
 func searchTransactions(db *sql.DB, txt *string) ([]local_trx, error) {
 
-	var results []local_trx
+	var results = make([]local_trx, 0)
 
 	builder := strings.Builder{}
 
@@ -621,7 +608,7 @@ func searchTransactions(db *sql.DB, txt *string) ([]local_trx, error) {
 
 func getTransactionsByGroup(db *sql.DB, id *int64) ([]local_trx, error) {
 
-	var results []local_trx
+	var results = make([]local_trx, 0)
 
 	builder := strings.Builder{}
 
@@ -716,7 +703,7 @@ func get_details(trxID *int64) ([]local_detail, error) {
 */
 func get_trx_by_month(db *sql.DB, id *int) ([]local_trx, error) {
 
-	var results []local_trx
+	var results = make([]local_trx, 0)
 
 	builder := strings.Builder{}
 

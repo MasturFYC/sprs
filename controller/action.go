@@ -218,7 +218,7 @@ func ActionUpdate(c *gin.Context) {
 
 func action_getByOrder(db *sql.DB, OrderID *int64) ([]models.Action, error) {
 	// defer db.Close()
-	var actions []models.Action
+	var actions = make([]models.Action, 0)
 
 	sqlStatement := `SELECT
     id, action_at, pic, descriptions, order_id, file_name
@@ -353,12 +353,7 @@ func updateAction(db *sql.DB, id *int64, act *models.Action) (int64, error) {
 		return 0, err
 	}
 
-	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
-
-	// if err != nil {
-	// 	log.Printf("Error while updating action. %v", err)
-	// }
 
 	return rowsAffected, err
 }
@@ -377,10 +372,6 @@ func update_file_name(db *sql.DB, id *int64, file_name *string) (int64, error) {
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	// if err != nil {
-	// 	log.Printf("Error while updating action. %v", err)
-	// }
-
 	return rowsAffected, err
 }
 
@@ -397,8 +388,8 @@ func ActionGetFile(c *gin.Context) {
 
 	targetPath := path.Join(os.Getenv("UPLOADFILE_LOCATION"), txt)
 
-	if exists(targetPath) {
-		http.NotFound(c.Writer, c.Request)
+	if !exists(targetPath) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
 		return
 	}
 	http.ServeFile(c.Writer, c.Request, targetPath)
@@ -414,7 +405,7 @@ func ActionGetPreview(c *gin.Context) {
 		targetPath = path.Join(os.Getenv("UPLOADFILE_LOCATION"), "default.jpg")
 	}
 
-	if exists(targetPath) {
+	if !exists(targetPath) {
 
 		c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
 		return

@@ -156,7 +156,7 @@ func getBranch(db *sql.DB, id *int) (models.Branch, error) {
 
 func getAllBranchs(db *sql.DB) ([]models.Branch, error) {
 
-	var branchs []models.Branch
+	var branchs = make([]models.Branch, 0)
 
 	var sqlStatement = `SELECT 
 		id, name, head_branch, street, city, phone, cell, zip, email
@@ -229,10 +229,6 @@ func createBranch(db *sql.DB, branch *models.Branch) (int, error) {
 		branch.Email,
 	).Scan(&id)
 
-	if err != nil {
-		log.Printf("Unable to create branch. %v", err)
-	}
-
 	return id, err
 }
 
@@ -261,10 +257,6 @@ func updateBranch(db *sql.DB, id *int, branch *models.Branch) (int64, error) {
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
-
-	if err != nil {
-		log.Printf("Error while updating category. %v", err)
-	}
 
 	return rowsAffected, err
 }

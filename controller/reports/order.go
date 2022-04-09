@@ -283,7 +283,7 @@ func create_query() (string, string, string) {
 }
 
 func rptOrder1(db *sql.DB, financeId *int, branchId *int, typeId *int, month *int, year *int) ([]order_invoiced, error) {
-	var orders []order_invoiced
+	var orders = make([]order_invoiced, 0)
 
 	qBranch, qFinance, qUnit := create_query()
 
@@ -400,7 +400,7 @@ func rptOrder1(db *sql.DB, financeId *int, branchId *int, typeId *int, month *in
 }
 
 func rptOrder2(db *sql.DB, financeId *int, branchId *int, typeId *int, dateFrom *string, dateTo *string) ([]order_invoiced, error) {
-	var orders []order_invoiced
+	var orders = make([]order_invoiced, 0)
 
 	qBranch, qFinance, qUnit := create_query()
 
@@ -523,7 +523,7 @@ termasuk yang belum diverifikasi
 */
 
 func rptOrder3(db *sql.DB, financeId *int, branchId *int, typeId *int) ([]order_invoiced, error) {
-	var orders []order_invoiced
+	var orders = make([]order_invoiced, 0)
 
 	qBranch, qFinance, qUnit := create_query()
 

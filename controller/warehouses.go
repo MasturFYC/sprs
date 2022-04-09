@@ -175,7 +175,7 @@ func getWarehouse(db *sql.DB, id *int) (models.Warehouse, error) {
 
 func getAllWarehouses(db *sql.DB) ([]models.Warehouse, error) {
 
-	var warehouses []models.Warehouse
+	var warehouses = make([]models.Warehouse, 0)
 
 	var sqlStatement = `SELECT id, name, descriptions FROM warehouses`
 

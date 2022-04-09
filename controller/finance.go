@@ -180,7 +180,7 @@ func getFinance(db *sql.DB, id *int) (models.Finance, error) {
 
 func getAllFinances(db *sql.DB) ([]models.Finance, error) {
 
-	var finances []models.Finance
+	var finances = make([]models.Finance, 0)
 
 	var sqlStatement = `SELECT 
 		id, name, short_name, street, city, phone, cell, zip, email, group_id

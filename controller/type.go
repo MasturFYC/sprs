@@ -171,7 +171,7 @@ func getType(db *sql.DB, id *int64) (models.Type, error) {
 
 func getAllTypes(db *sql.DB) ([]models.Type, error) {
 
-	var types []models.Type
+	var types = make([]models.Type, 0)
 
 	var sqlStatement = `SELECT
 		id, name, wheel_id, merk_id

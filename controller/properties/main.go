@@ -34,7 +34,7 @@ func GetProductsProps(c *gin.Context) {
 
 func getProperties(db *sql.DB, table string) ([]models.Property, error) {
 	// defer db.Close()
-	var props []models.Property
+	var props = make([]models.Property, 0)
 
 	sqlStatement := "SELECT id, name FROM " + table + " ORDER BY name"
 
@@ -63,7 +63,7 @@ func getProperties(db *sql.DB, table string) ([]models.Property, error) {
 
 func getProductProps(db *sql.DB) ([]models.Property, error) {
 	// defer db.Close()
-	var props []models.Property
+	var props = make([]models.Property, 0)
 
 	sqlStatement := `SELECT
 		id, name, spec

@@ -63,7 +63,7 @@ func Pdf_GetInvoice(c *gin.Context) {
 		return
 	}
 
-	var orders []order_unit
+	var orders = make([]order_unit, 0)
 	source = (*json.RawMessage)(&invoice.Details)
 	err = json.Unmarshal(*source, &orders)
 
@@ -107,7 +107,7 @@ func Pdf_GetInvoiceClipan(c *gin.Context) {
 		return
 	}
 
-	var orders []order_unit
+	var orders = make([]order_unit, 0)
 	source = (*json.RawMessage)(&invoice.Details)
 	err = json.Unmarshal(*source, &orders)
 

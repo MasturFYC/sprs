@@ -29,7 +29,7 @@ func AccCodeGetSpec(c *gin.Context) {
 	db := c.Keys["db"].(*sql.DB)
 	accounts, err := get_accounts_spec(db, &spec_id)
 
-	if err != nil || len(accounts) == 0 {
+	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
@@ -55,7 +55,7 @@ func AccCodeGetAll(c *gin.Context) {
 	db := c.Keys["db"].(*sql.DB)
 	acc_codes, err := getAllAccCodes(db)
 
-	if err != nil || len(acc_codes) == 0 {
+	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
@@ -70,7 +70,7 @@ func AccCodeSearchByName(c *gin.Context) {
 	db := c.Keys["db"].(*sql.DB)
 	acc_codes, err := searchAccCodeByName(db, &txt)
 
-	if err != nil || len(acc_codes) == 0 {
+	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
@@ -90,7 +90,7 @@ func AccCodeGetByType(c *gin.Context) {
 	db := c.Keys["db"].(*sql.DB)
 	acc_codes, err := getAccCodeByType(db, &id)
 
-	if err != nil || len(acc_codes) == 0 {
+	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
@@ -254,7 +254,7 @@ func getAccCode(db *sql.DB, id *int) (models.AccInfo, error) {
 
 func getAccCodeByType(db *sql.DB, id *int) ([]models.AccCode, error) {
 
-	var results []models.AccCode
+	var results = make([]models.AccCode, 0)
 
 	var sqlStatement = `SELECT 
 		type_id, id, name, descriptions, is_active, is_auto_debet, receivable_option
@@ -296,7 +296,7 @@ func getAccCodeByType(db *sql.DB, id *int) ([]models.AccCode, error) {
 
 func searchAccCodeByName(db *sql.DB, txt *string) ([]models.AccCode, error) {
 
-	var results []models.AccCode
+	var results = make([]models.AccCode, 0)
 
 	var sqlStatement = `SELECT 
 		type_id, id, name, descriptions, is_active, is_auto_debet, receivable_option
@@ -338,7 +338,7 @@ func searchAccCodeByName(db *sql.DB, txt *string) ([]models.AccCode, error) {
 
 func getAllAccCodes(db *sql.DB) ([]models.AccCode, error) {
 
-	var results []models.AccCode
+	var results = make([]models.AccCode, 0)
 
 	var sqlStatement = `SELECT 
 		type_id, id, name, descriptions, is_active, is_auto_debet, receivable_option
@@ -403,10 +403,6 @@ func createAccCode(db *sql.DB, p *models.AccCode) (int64, error) {
 
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Printf("Unable to create account code. %v", err)
-	}
-
 	return rowsAffected, err
 }
 
@@ -439,11 +435,6 @@ func updateAccCode(db *sql.DB, id *int, p *models.AccCode) (int64, error) {
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Printf("Error while updating account code. %v", err)
-		return 0, err
-	}
-
 	return rowsAffected, err
 }
 
@@ -461,16 +452,12 @@ func deleteAccCode(db *sql.DB, id *int) (int64, error) {
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Fatalf("Error while checking the affected rows. %v", err)
-	}
-
 	return rowsAffected, err
 }
 
 func getAllAccCodeProps(db *sql.DB) ([]models.AccCodeType, error) {
 
-	var results []models.AccCodeType
+	var results = make([]models.AccCodeType, 0)
 
 	var sqlStatement = `SELECT 
 		c.type_id, c.id, c.name, t.name AS type_name, c.descriptions, c.is_active
@@ -511,7 +498,7 @@ func getAllAccCodeProps(db *sql.DB) ([]models.AccCodeType, error) {
 
 func get_accounts_spec(db *sql.DB, specId *int) ([]account_specific, error) {
 
-	var results []account_specific
+	var results = make([]account_specific, 0)
 
 	var sqlStatement = `SELECT 
 		id, name, descriptions

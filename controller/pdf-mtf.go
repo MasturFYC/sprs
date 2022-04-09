@@ -41,7 +41,7 @@ func Mtf_GetInvoice(c *gin.Context) {
 		return
 	}
 
-	var orders []order_unit
+	var orders = make([]order_unit, 0)
 	source = (*json.RawMessage)(&invoice.Details)
 	err = json.Unmarshal(*source, &orders)
 
@@ -104,7 +104,6 @@ func mtf_create_invoice(w io.Writer, invoice_id *int64, inv *invoice_item, finan
 
 	p.SetY(10)
 
-	//log.Println()
 	p.Image(filepath.Join(os.Getenv("UPLOADFILE_LOCATION"), "logo.jpg"), ml, p.GetY(), box1, 0, false, "", 0, "")
 	p.SetX(x)
 	p.SetFont(font, "B", 18)
@@ -337,7 +336,6 @@ func mft_create_lampiran1(
 
 	p.AddPage()
 	p.SetY(10)
-	//log.Println()
 	p.SetX(ml)
 	p.Image(filepath.Join(os.Getenv("UPLOADFILE_LOCATION"), "logo.jpg"), ml, p.GetY(), box1, 0, false, "", 0, "")
 
@@ -495,7 +493,6 @@ func mft_create_lampiran2(
 
 	p.AddPage()
 	p.SetY(10)
-	//log.Println()
 	p.SetX(ml)
 	p.Image(filepath.Join(os.Getenv("UPLOADFILE_LOCATION"), "logo.jpg"), ml, p.GetY(), box1, 0, false, "", 0, "")
 

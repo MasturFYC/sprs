@@ -112,9 +112,9 @@ func MerkUpdate(c *gin.Context) {
 	}
 
 	db := c.Keys["db"].(*sql.DB)
-	updatedRows := updateMerk(db, &id, &merk)
+	updatedRows, err := updateMerk(db, &id, &merk)
 
-	if updatedRows == 0 {
+	if err != nil {
 		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": err.Error()})
 		return
 	}
@@ -157,7 +157,7 @@ func getMerk(db *sql.DB, id *int) (models.Merk, error) {
 
 func getAllMerks(db *sql.DB) ([]models.Merk, error) {
 
-	var merks []models.Merk
+	var merks = make([]models.Merk, 0)
 
 	var sqlStatement = `SELECT id, name FROM merks ORDER BY name`
 
@@ -213,14 +213,10 @@ func createMerk(db *sql.DB, merk *models.Merk) (int, error) {
 
 	err := db.QueryRow(sqlStatement, merk.Name).Scan(&id)
 
-	if err != nil {
-		log.Printf("Unable to create merk. %v\n", err)
-	}
-
 	return id, err
 }
 
-func updateMerk(db *sql.DB, id *int, merk *models.Merk) int64 {
+func updateMerk(db *sql.DB, id *int, merk *models.Merk) (int64, error) {
 
 	sqlStatement := `UPDATE merks SET name=$2 WHERE id=$1`
 
@@ -228,15 +224,11 @@ func updateMerk(db *sql.DB, id *int, merk *models.Merk) int64 {
 
 	if err != nil {
 		log.Printf("Unable to update merk. %v", err)
-		return 0
+		return 0, err
 	}
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
-	if err != nil {
-		log.Printf("Error while updating merk. %v", err)
-	}
-
-	return rowsAffected
+	return rowsAffected, err
 }
