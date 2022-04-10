@@ -37,6 +37,8 @@ func runServer() {
 	db := InitDatabase()
 	defer db().Close()
 
+	port := os.Getenv("PORT")
+
 	if os.Getenv("GIN_MODE") == "release" {
 		gin.SetMode(gin.ReleaseMode)
 	} else {
@@ -50,11 +52,11 @@ func runServer() {
 	// - Credentials share
 	// - Preflight requests cached for 12 hours
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:  []string{"http://localhost:3000"},
-		AllowMethods:  []string{"PUT", "POST", "DELETE", "GET"},
-		AllowHeaders:  []string{"Origin", "Content-Type"},
-		ExposeHeaders: []string{"Content-Length"},
-		// AllowCredentials: true,
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"PUT", "POST", "DELETE", "GET"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Token"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
 		AllowOriginFunc: func(origin string) bool {
 			return origin == "http://localhost:3000"
 		},
@@ -66,6 +68,7 @@ func runServer() {
 	{
 		accGroupRouter := apiRouter.Group("/acc-group")
 		{
+			accGroupRouter.Use(conn.IsAuthorized())
 			accGroupRouter.POST("", conn.AccGroupCreate)
 			accGroupRouter.PUT("/:id", conn.AccGroupUpdate)
 			accGroupRouter.DELETE("/:id", conn.AccGroupDelete)
@@ -303,7 +306,7 @@ func runServer() {
 		// 	testRouter.GET("/trx", conn.Test1)
 		// }
 	}
-	router.Run(":8181") // ":8080"
+	router.Run(":" + port) // ":8080"
 }
 
 func main() {

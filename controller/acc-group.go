@@ -35,6 +35,12 @@ func AccGroupGetAllAccount(c *gin.Context) {
 }
 
 func AccGroupGetAll(c *gin.Context) {
+
+	if c.Keys["Role"] == nil {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"message": "Not allowed"})
+		return
+	}
+
 	db := c.Keys["db"].(*sql.DB)
 	groups, err := getAllAccGroups(db)
 

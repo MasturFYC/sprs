@@ -52,10 +52,7 @@ func SignUp(c *gin.Context) {
 	err := c.BindJSON(&user)
 
 	if err != nil {
-		c.JSON(http.StatusOK, Response{
-			ID:      1,
-			Message: "Error in reading body",
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"Message": "Error in reading body"})
 		return
 	}
 
@@ -67,25 +64,19 @@ func SignUp(c *gin.Context) {
 	_ = rs.Scan(&email)
 
 	if email != "" {
-		c.JSON(http.StatusOK, Response{
-			ID:      1,
-			Message: "User email exist",
-		})
+		c.JSON(http.StatusOK, gin.H{"Message": "User email exist"})
 		return
 	}
 
 	sqlStatement = "SELECT name FROM users WHERE name=$1"
-	rs = db.QueryRow(sqlStatement, user.Email)
+	rs = db.QueryRow(sqlStatement, user.Name)
 
 	var name string
 
 	_ = rs.Scan(&name)
 
 	if name != "" {
-		c.JSON(http.StatusOK, Response{
-			ID:      1,
-			Message: "User name exist",
-		})
+		c.JSON(http.StatusOK, gin.H{"Message": "User name exist"})
 		return
 	}
 
@@ -94,19 +85,19 @@ func SignUp(c *gin.Context) {
 		log.Fatalln("error in password hash")
 	}
 
-	sqlStatement = `INSERT INTO users 
-	(name, email, password, role)
-	VALUES ($1, $2, $3, $4)
+	sqlStatement = `INSERT INTO users (
+			name,
+			email,
+			password,
+			role
+		)	VALUES ($1, $2, $3, $4)
 	RETURNING id`
 
 	err = db.QueryRow(sqlStatement,
 		user.Name, user.Email, user.Password, "user").Scan(&user.ID)
 
 	if err != nil {
-		c.JSON(http.StatusOK, Response{
-			ID:      1,
-			Message: "Error creating user",
-		})
+		c.JSON(http.StatusOK, gin.H{"Error ": err.Error()})
 		return
 	}
 
@@ -119,7 +110,7 @@ func SignIn(c *gin.Context) {
 	err := c.BindJSON(&authdetails)
 
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -156,7 +147,7 @@ func SignIn(c *gin.Context) {
 	validToken, err := GenerateJWT(authuser.Email, authuser.Role)
 
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -164,47 +155,42 @@ func SignIn(c *gin.Context) {
 	token.Email = authuser.Email
 	token.Role = authuser.Role
 	token.TokenString = validToken
-	//w.Header().Set("Content-Type", "application/json")
 	c.JSON(http.StatusOK, token)
 }
 
-// func IsAuthorized(c *gin.Context) http.HandlerFunc {
-// 	return func(c *gin.Context) {
+func IsAuthorized() gin.HandlerFunc {
+	return func(c *gin.Context) {
 
-// 		if r.Header["Token"] == nil {
-// 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-// 			return
-// 		}
+		if c.Request.Header.Get("Token") == "" {
+			c.JSON(http.StatusForbidden, gin.H{"message": "Not allowed"})
+			c.Abort()
+			return
+		}
 
-// 		secretkey := os.Getenv("SECRET_KEY")
-// 		var mySigningKey = []byte(secretkey)
+		secretkey := os.Getenv("SECRET_KEY")
+		var mySigningKey = []byte(secretkey)
 
-// 		token, err := jwt.Parse(r.Header["Token"][0], func(token *jwt.Token) (interface{}, error) {
-// 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-// 				return nil, fmt.Errorf("there was an error in parsing")
-// 			}
-// 			return mySigningKey, nil
-// 		})
+		token, err := jwt.Parse(c.Request.Header.Get("Token"), func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("there was an error in parsing")
+			}
+			return mySigningKey, nil
+		})
 
-// 		if err != nil {
-// 			http.Error(w, "Token has been expired", 404)
-// 			return
-// 		}
+		if err != nil {
+			c.JSON(http.StatusForbidden, gin.H{"message": "Token has been expired"})
+			c.Abort()
+			return
+		}
 
-// 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-// 			if claims["role"] == "admin" {
-
-// 				r.Header.Set("Role", "admin")
-// 				handler.ServeHTTP(w, r)
-// 				return
-
-// 			} else if claims["role"] == "user" {
-
-// 				r.Header.Set("Role", "user")
-// 				handler.ServeHTTP(w, r)
-// 				return
-// 			}
-// 		}
-// 		http.Error(w, "Not Authorized", 404)
-// 		c.JSON(http.StatusOK, err)
-// 	}
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			log.Println(claims["email"])
+			role := claims["role"]
+			c.Set("Role", role)
+			c.Next()
+			return
+		}
+		c.JSON(http.StatusNetworkAuthenticationRequired, gin.H{"message": "Authentication Required"})
+		c.Abort()
+	}
+}
