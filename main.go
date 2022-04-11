@@ -66,6 +66,11 @@ func runServer() {
 
 	apiRouter := router.Group("/api")
 	{
+		authRouter := apiRouter.Group("/auth")
+		{
+			authRouter.POST("/signup", conn.SignUp)
+			authRouter.POST("/signin", conn.SignIn)
+		}
 		accGroupRouter := apiRouter.Group("/acc-group")
 		{
 			accGroupRouter.Use(conn.IsAuthorized())

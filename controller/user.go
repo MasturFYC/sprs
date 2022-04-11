@@ -69,7 +69,7 @@ func SignUp(c *gin.Context) {
 	}
 
 	sqlStatement = "SELECT name FROM users WHERE name=$1"
-	rs = db.QueryRow(sqlStatement, user.Name)
+	rs = db.QueryRow(sqlStatement, user.Username)
 
 	var name string
 
@@ -94,7 +94,7 @@ func SignUp(c *gin.Context) {
 	RETURNING id`
 
 	err = db.QueryRow(sqlStatement,
-		user.Name, user.Email, user.Password, "user").Scan(&user.ID)
+		user.Username, user.Email, user.Password, "user").Scan(&user.ID)
 
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"Error ": err.Error()})
@@ -119,14 +119,14 @@ func SignIn(c *gin.Context) {
 	var sqlStatement = `SELECT
 		id, name, email, password, role
 	FROM users
-	WHERE email=$1`
+	WHERE name=$1`
 
 	db := c.Keys["db"].(*sql.DB)
-	rs := db.QueryRow(sqlStatement, authdetails.Email)
+	rs := db.QueryRow(sqlStatement, authdetails.Username)
 
 	err = rs.Scan(
 		&authuser.ID,
-		&authuser.Name,
+		&authuser.Username,
 		&authuser.Email,
 		&authuser.Password,
 		&authuser.Role,
@@ -155,6 +155,7 @@ func SignIn(c *gin.Context) {
 	token.Email = authuser.Email
 	token.Role = authuser.Role
 	token.TokenString = validToken
+
 	c.JSON(http.StatusOK, token)
 }
 
@@ -184,12 +185,13 @@ func IsAuthorized() gin.HandlerFunc {
 		}
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			log.Println(claims["email"])
+			// log.Println(claims["email"])
 			role := claims["role"]
 			c.Set("Role", role)
 			c.Next()
 			return
 		}
+
 		c.JSON(http.StatusNetworkAuthenticationRequired, gin.H{"message": "Authentication Required"})
 		c.Abort()
 	}
