@@ -15,6 +15,7 @@ type Authentication struct {
 
 type Token struct {
 	Role        string `json:"role"`
+	Username    string `json:"userName"`
 	Email       string `json:"email"`
 	TokenString string `json:"accessToken"`
 }

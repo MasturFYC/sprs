@@ -71,6 +71,11 @@ func runServer() {
 			authRouter.POST("/signup", conn.SignUp)
 			authRouter.POST("/signin", conn.SignIn)
 		}
+		commonRouter := apiRouter.Group("/common")
+		{
+			commonRouter.GET("/file/:txt", conn.ActionGetFile)
+			commonRouter.GET("/preview/:txt", conn.ActionGetPreview)
+		}
 		accGroupRouter := apiRouter.Group("/acc-group")
 		{
 			accGroupRouter.Use(conn.IsAuthorized())
@@ -83,6 +88,7 @@ func runServer() {
 		}
 		accTypeRouter := apiRouter.Group("/acc-type")
 		{
+			accTypeRouter.Use(conn.IsAuthorized())
 			accTypeRouter.POST("", conn.AccTypeCreate)
 			accTypeRouter.PUT("/:id", conn.AccTypeUpdate)
 			accTypeRouter.DELETE("/:id", conn.AccTypeDelete)
@@ -90,6 +96,7 @@ func runServer() {
 		}
 		accCodeRouter := apiRouter.Group("/acc-code")
 		{
+			accCodeRouter.Use(conn.IsAuthorized())
 			accCodeRouter.GET("", conn.AccCodeGetAll)
 			accCodeRouter.GET("/search-name/:txt", conn.AccCodeSearchByName)
 			accCodeRouter.GET("/group-type/:id", conn.AccCodeGetByType)
@@ -102,16 +109,16 @@ func runServer() {
 		}
 		actionRouter := apiRouter.Group("/action")
 		{
+			actionRouter.Use(conn.IsAuthorized())
 			actionRouter.POST("", conn.ActionCreate)
 			actionRouter.POST("/upload-file/:id", conn.ActionUploadFile)
 			actionRouter.PUT("/:id", conn.ActionUpdate)
 			actionRouter.DELETE("/:id", conn.ActionDelete)
 			actionRouter.GET("/order/:id", conn.ActionGetByOrder) // need attention
-			actionRouter.GET("/file/:txt", conn.ActionGetFile)
-			actionRouter.GET("/preview/:txt", conn.ActionGetPreview)
 		}
 		branchRouter := apiRouter.Group("/branch")
 		{
+			branchRouter.Use(conn.IsAuthorized())
 			branchRouter.GET("", conn.BranchGetAll)
 			branchRouter.GET("/:id", conn.BranchGetItem)
 			branchRouter.DELETE("/:id", conn.BranchDelete)
@@ -120,6 +127,7 @@ func runServer() {
 		}
 		customerRouter := apiRouter.Group("/customer")
 		{
+			customerRouter.Use(conn.IsAuthorized())
 			customerRouter.POST("", conn.CustomerCreate)
 			customerRouter.GET("/:id", conn.CustomerGetItem)
 			customerRouter.DELETE("/:id", conn.CustomerDelete)
@@ -127,6 +135,7 @@ func runServer() {
 		}
 		financeGroupRouter := apiRouter.Group("/finance-group")
 		{
+			financeGroupRouter.Use(conn.IsAuthorized())
 			financeGroupRouter.GET("", conn.FinanceGroup_GetAll)
 			financeGroupRouter.GET("/finances", conn.FinanceGroup_GetFinances)
 			financeGroupRouter.GET("/item/:id", conn.FinanceGroup_GetItem) // need attention
@@ -136,6 +145,7 @@ func runServer() {
 		}
 		financeRouter := apiRouter.Group("/finance") // need attention
 		{
+			financeRouter.Use(conn.IsAuthorized())
 			financeRouter.GET("", conn.FinanceGetAll)
 			financeRouter.GET("/:id", conn.FinanceGetItem)
 			financeRouter.DELETE("/:id", conn.FinanceDelete)
@@ -144,6 +154,7 @@ func runServer() {
 		}
 		homeAddressRouter := apiRouter.Group("/home-address")
 		{
+			homeAddressRouter.Use(conn.IsAuthorized())
 			homeAddressRouter.POST("", conn.CreateHomeAddress)
 			homeAddressRouter.GET("/:id", conn.GetHomeAddress)
 			homeAddressRouter.PUT("/:id", conn.UpdateHomeAddress)
@@ -151,6 +162,7 @@ func runServer() {
 		}
 		officeAddressRouter := apiRouter.Group("/office-address")
 		{
+			officeAddressRouter.Use(conn.IsAuthorized())
 			officeAddressRouter.POST("", conn.CreateOfficeAddress)
 			officeAddressRouter.GET("/:id", conn.GetOfficeAddress)
 			officeAddressRouter.PUT("/:id", conn.UpdateOfficeAddress)
@@ -158,6 +170,7 @@ func runServer() {
 		}
 		ktpAddressRouter := apiRouter.Group("/ktp-address")
 		{
+			ktpAddressRouter.Use(conn.IsAuthorized())
 			ktpAddressRouter.POST("", conn.CreateKTPAddress)
 			ktpAddressRouter.GET("/:id", conn.GetKTPAddress)
 			ktpAddressRouter.PUT("/:id", conn.UpdateKTPAddress)
@@ -165,6 +178,7 @@ func runServer() {
 		}
 		postAddressRouter := apiRouter.Group("/post-address")
 		{
+			postAddressRouter.Use(conn.IsAuthorized())
 			postAddressRouter.POST("", conn.CreatePostAddress)
 			postAddressRouter.GET("/:id", conn.GetPostAddress)
 			postAddressRouter.PUT("/:id", conn.UpdatePostAddress)
@@ -172,6 +186,7 @@ func runServer() {
 		}
 		merkRouter := apiRouter.Group("/merk")
 		{
+			merkRouter.Use(conn.IsAuthorized())
 			merkRouter.GET("", conn.MerkGetAll)
 			merkRouter.GET("/:id", conn.MerkGetItem)
 			merkRouter.DELETE("/:id", conn.MerkDelete)
@@ -180,6 +195,7 @@ func runServer() {
 		}
 		orderRouter := apiRouter.Group("/order")
 		{
+			orderRouter.Use(conn.IsAuthorized())
 			orderRouter.GET("", conn.GetOrders)
 			orderRouter.POST("/search/:item", conn.SearchOrders)
 			orderRouter.GET("/finance/:id", conn.GetOrdersByFinance)
@@ -196,6 +212,7 @@ func runServer() {
 		}
 		taskRouter := apiRouter.Group("/task")
 		{
+			taskRouter.Use(conn.IsAuthorized())
 			taskRouter.POST("", conn.CreateTask)
 			taskRouter.GET("/:id", conn.GetTask)
 			taskRouter.DELETE("/:id", conn.DeleteTask)
@@ -203,6 +220,7 @@ func runServer() {
 		}
 		typeRouter := apiRouter.Group("/type")
 		{
+			typeRouter.Use(conn.IsAuthorized())
 			typeRouter.GET("", conn.GetTypes)
 			typeRouter.GET("/:id", conn.GetType)
 			typeRouter.DELETE("/:id", conn.DeleteType)
@@ -211,6 +229,7 @@ func runServer() {
 		}
 		unitRouter := apiRouter.Group("/unit")
 		{
+			unitRouter.Use(conn.IsAuthorized())
 			unitRouter.GET("/:id", conn.GetUnit)
 			unitRouter.DELETE("/:id", conn.DeleteUnit)
 			unitRouter.POST("", conn.CreateUnit)
@@ -218,6 +237,7 @@ func runServer() {
 		}
 		warehouseRouter := apiRouter.Group("/warehouse")
 		{
+			warehouseRouter.Use(conn.IsAuthorized())
 			warehouseRouter.GET("", conn.GetWarehouses)
 			warehouseRouter.POST("", conn.CreateWarehouse)
 			warehouseRouter.GET("/:id", conn.GetWarehouse)
@@ -226,6 +246,7 @@ func runServer() {
 		}
 		wheelRouter := apiRouter.Group("/wheel")
 		{
+			wheelRouter.Use(conn.IsAuthorized())
 			wheelRouter.GET("", conn.GetWheels)
 			wheelRouter.GET("/:id", conn.GetWheel)
 			wheelRouter.DELETE("/:id", conn.DeleteWheel)
@@ -234,11 +255,13 @@ func runServer() {
 		}
 		propRouter := apiRouter.Group("/properties")
 		{
+			propRouter.Use(conn.IsAuthorized())
 			propRouter.GET("/product", properties.GetProductsProps)
 			propRouter.GET("/category", properties.GetCategoryProps)
 		}
 		trxRouter := apiRouter.Group("/trx") // need attention
 		{
+			trxRouter.Use(conn.IsAuthorized())
 			trxRouter.POST("", conn.TransactionCreate)
 			trxRouter.PUT("/:id", conn.TransactionUpdate)
 			trxRouter.DELETE("/:id", conn.TransactionDelete)
@@ -249,6 +272,7 @@ func runServer() {
 		}
 		trxDetailRouter := apiRouter.Group("/trx-detail")
 		{
+			trxDetailRouter.Use(conn.IsAuthorized())
 			trxDetailRouter.GET("/:id", conn.GetTransactionDetails)
 			//trxDetailRouter("/props", conn.GetTransactionDetailProps)
 			//trxDetailRouter("/:id", conn.GetTransactionDetail)
@@ -259,6 +283,7 @@ func runServer() {
 		apiRouter.GET("/saldo", conn.GetRemainSaldo)
 		reportRouter := apiRouter.Group("/report")
 		{
+			reportRouter.Use(conn.IsAuthorized())
 			reportRouter.GET("/trx/month/:month/:year", conn.GetRepotTrxByMonth)
 			reportRouter.GET("/order-status/:finance/:branch/:type/:month/:year/:from/:to", reports.ReportOrder)
 			reportRouter.GET("/order-all-waiting/:finance/:branch/:type", reports.ReportOrderAllWaiting)
@@ -266,6 +291,7 @@ func runServer() {
 		invoiceRouter := apiRouter.Group("/invoice") // need attention
 		{
 
+			invoiceRouter.Use(conn.IsAuthorized())
 			invoiceRouter.POST("/search", conn.Invoice_GetSearch)
 
 			invoiceRouter.GET("/finance/:id", conn.InvoiceGetByFinance)
@@ -285,6 +311,7 @@ func runServer() {
 		}
 		loanRouter := apiRouter.Group("/loan")
 		{
+			loanRouter.Use(conn.IsAuthorized())
 			loanRouter.GET("", conn.LoanGetAll)
 			loanRouter.GET("/:id", conn.LoanGetItem)
 			loanRouter.DELETE("/:id", conn.LoanDelete)
@@ -294,6 +321,7 @@ func runServer() {
 		}
 		lentRouter := apiRouter.Group("/lent")
 		{
+			lentRouter.Use(conn.IsAuthorized())
 			lentRouter.GET("", conn.LentGetAll)
 			lentRouter.GET("/item/:id", conn.LentGetItem) // need attention
 			lentRouter.GET("/get/units", conn.LentGetUnits)
@@ -304,6 +332,7 @@ func runServer() {
 		}
 		labaRugiRouter := apiRouter.Group("/labarugi")
 		{
+			labaRugiRouter.Use(conn.IsAuthorized())
 			labaRugiRouter.GET("/bydate/:from/:to", conn.LabaRugiGetByDate)
 		}
 		// testRouter := apiRouter.Group("/test")

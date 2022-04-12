@@ -153,6 +153,7 @@ func SignIn(c *gin.Context) {
 
 	var token models.Token
 	token.Email = authuser.Email
+	token.Username = authuser.Username
 	token.Role = authuser.Role
 	token.TokenString = validToken
 
