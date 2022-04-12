@@ -2,13 +2,13 @@ package controller
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
 
 	"fyc.com/sprs/models"
-	"github.com/MasturFYC/fyc"
 	"github.com/gin-gonic/gin"
+
+	"github.com/jackskj/carta"
 
 	"net/http"
 
@@ -173,21 +173,34 @@ func get_finance_group(db *sql.DB, id *int) (models.FinanceGroup, error) {
 	return fg, err
 }
 
-type FgFinances struct {
-	models.FinanceGroup
-	Finances json.RawMessage `json:"finances,omitempty"`
+type t_finance struct {
+	Id        int    `db:"finance_id" json:"id"`
+	Name      string `db:"finance_name" json:"name"`
+	ShortName string `db:"finance_short_name" json:"shortName"`
 }
 
-func fg_get_finances(db *sql.DB) ([]FgFinances, error) {
-	var fgs = make([]FgFinances, 0)
-	var querFinance = `SELECT id, name, short_name AS "shortName" FROM finances WHERE group_id = g.id ORDER BY name`
+type t_group_finance struct {
+	Id       int         `db:"group_id" json:"id"`
+	Name     string      `db:"group_Name" json:"name"`
+	Finances []t_finance `json:"finances,omitempty"`
+}
 
-	var sqlStatement = fmt.Sprintf("SELECT g.id, g.name, %s AS finances	FROM finance_groups AS g ORDER BY g.name",
-		fyc.NestQuery(querFinance),
-	)
+func fg_get_finances(db *sql.DB) ([]t_group_finance, error) {
+
+	var fgs = make([]t_group_finance, 0)
+
+	var stmt = `SELECT
+							g.id					as group_id,
+							g.name				as group_name,
+							f.id 					as finance_id,
+							f.name				as finance_name,
+							f.short_name	as finance_short_name
+	FROM finance_groups as g
+							left outer join finances as f 			on f.group_id = g.id
+	ORDER BY g.name, f.name`
 
 	//	log.Print(sqlStatement)
-	rs, err := db.Query(sqlStatement)
+	rs, err := db.Query(stmt)
 
 	if err != nil {
 		//log.Fatalf("Unable to execute merks query %v", err)
@@ -196,21 +209,23 @@ func fg_get_finances(db *sql.DB) ([]FgFinances, error) {
 
 	defer rs.Close()
 
-	for rs.Next() {
-		var item FgFinances
+	err = carta.Map(rs, &fgs)
 
-		err := rs.Scan(
-			&item.ID,
-			&item.Name,
-			&item.Finances,
-		)
+	// for rs.Next() {
+	// 	var item t_group_finance
 
-		if err != nil {
-			log.Fatalf("Unable to scan the row. %v", err)
-		}
+	// 	err := rs.Scan(
+	// 		&item.ID,
+	// 		&item.Name,
+	// 		&item.Finances,
+	// 	)
 
-		fgs = append(fgs, item)
-	}
+	// 	if err != nil {
+	// 		log.Fatalf("Unable to scan the row. %v", err)
+	// 	}
+
+	// 	fgs = append(fgs, item)
+	// }
 
 	return fgs, err
 }

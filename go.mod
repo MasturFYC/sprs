@@ -21,6 +21,7 @@ require (
 	github.com/go-playground/locales v0.12.1 // indirect
 	github.com/go-playground/universal-translator v0.16.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/jackskj/carta v0.2.0
 	github.com/json-iterator/go v1.1.7 // indirect
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/leodido/go-urn v1.1.0 // indirect
