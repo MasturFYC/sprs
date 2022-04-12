@@ -25,16 +25,16 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func GenerateJWT(email, role string) (string, error) {
+func GenerateJWT(Username, role string) (string, error) {
 	secretkey := os.Getenv("SECRET_KEY")
 	var mySigningKey = []byte(secretkey)
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 
 	claims["authorized"] = true
-	claims["email"] = email
+	claims["name"] = Username
 	claims["role"] = role
-	claims["exp"] = time.Now().Add(time.Minute * 30).Unix()
+	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 
 	tokenString, err := token.SignedString(mySigningKey)
 
@@ -42,7 +42,51 @@ func GenerateJWT(email, role string) (string, error) {
 		_ = fmt.Errorf("something went wrong: %s", err.Error())
 		return "", err
 	}
+
 	return tokenString, nil
+}
+
+func CheckExpire(c *gin.Context) {
+	if c.Request.Header.Get("Token") == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Not allowed"})
+		return
+	}
+	secretkey := os.Getenv("SECRET_KEY")
+	var mySigningKey = []byte(secretkey)
+
+	token, err := jwt.Parse(c.Request.Header.Get("Token"), func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("there was an error in parsing")
+		}
+		return mySigningKey, nil
+	})
+
+	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"message": "Token has been expired"})
+		return
+	}
+
+	// refresh token bila user aktive lagi
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+
+		username := claims["name"].(string)
+		role := claims["role"].(string)
+
+		newTokenPair, err := GenerateJWT(username, role)
+
+		// log.Printf("%s %s", username, role)
+
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"message": "Failed refresh token"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Ok", "accessToken": newTokenPair})
+		return
+
+	}
+
+	c.JSON(http.StatusUnauthorized, gin.H{"message": "Failed"})
 }
 
 func SignUp(c *gin.Context) {
@@ -144,7 +188,7 @@ func SignIn(c *gin.Context) {
 		return
 	}
 
-	validToken, err := GenerateJWT(authuser.Email, authuser.Role)
+	validToken, err := GenerateJWT(authuser.Username, authuser.Role)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

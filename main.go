@@ -70,6 +70,7 @@ func runServer() {
 		{
 			authRouter.POST("/signup", conn.SignUp)
 			authRouter.POST("/signin", conn.SignIn)
+			authRouter.POST("/check", conn.CheckExpire)
 		}
 		commonRouter := apiRouter.Group("/common")
 		{
