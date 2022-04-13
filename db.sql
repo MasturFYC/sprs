@@ -667,7 +667,7 @@ CREATE TABLE public.users (
     id integer NOT NULL,
     name character varying(50) NOT NULL,
     email character varying(128) NOT NULL,
-    password character varying(50) NOT NULL,
+    password character varying(128) NOT NULL,
     role character varying(25) NOT NULL
 );
 
@@ -868,9 +868,8 @@ COPY public.acc_type (id, name, descriptions, group_id) FROM stdin;
 --
 
 COPY public.actions (id, action_at, pic, descriptions, order_id, file_name) FROM stdin;
-10	2022-03-25	Test JPG / JPEG / PNG	Test upload and download image	10	d9f143ce.jpg
-11	2022-03-25	Test PDF	Test upload and download pdf	10	d855835b.pdf
 12	2022-04-09	stnk	fidusia	130	86f1bfc6.jpg
+13	2022-04-12	test	lampiran	152	29e6e1a1.jpg
 \.
 
 
@@ -906,6 +905,7 @@ COPY public.finance_groups (id, name) FROM stdin;
 6	OTTO
 7	ADIRA
 8	BIMA
+9	NSC
 \.
 
 
@@ -936,6 +936,9 @@ COPY public.finances (id, name, short_name, street, city, phone, cell, zip, emai
 2	Auto Discret Finance	Adira	Jl. Jend. Sudirman	Indramayu	2569874545	65979	2598987	adira.finance@gmail.com	7
 16	SUZUKI FINANCE INDONESIA	SFI 	\N	\N	\N	\N	\N	\N	1
 23	Bima Finance	BIMA	\N	\N	\N	\N	\N	\N	8
+24	Nusa Surya Ciptadana Finance	NSC	Jatibarang	Indramayu	\N	\N	\N	\N	9
+25	ADIRA DISCRET FINANCE WO	ADIRA WO	\N	\N	\N	\N	\N	\N	7
+26	ADIRA DISCRET FINANCE CWO	ADIRA CWO	\N	\N	\N	\N	\N	\N	7
 \.
 
 
@@ -952,7 +955,6 @@ COPY public.home_addresses (order_id, street, region, city, phone, zip) FROM std
 --
 
 COPY public.invoice_details (invoice_id, order_id) FROM stdin;
-11	129
 \.
 
 
@@ -961,7 +963,6 @@ COPY public.invoice_details (invoice_id, order_id) FROM stdin;
 --
 
 COPY public.invoices (id, invoice_at, payment_term, due_at, salesman, finance_id, account_id, subtotal, ppn, tax, total, memo, token) FROM stdin;
-11	2022-04-06	1	2022-04-06	Gondrong	2	1113	1400000.00	0.00	0.00	1400000.00	\N	'/id-0':2 '4630':8 'adira':6 'auto':3 'beat':10 'discret':4 'e':7 'finance':5 'gondrong':1 'pax':9
 \.
 
 
@@ -992,7 +993,6 @@ COPY public.lents (order_id, name, street, city, phone, cell, zip, serial_num) F
 57	Adira Grandmax	\N	\N	\N	\N	\N	15
 96	Sofyan/ Bang Kei	\N	\N	\N	\N	\N	16
 124	Pa gineng	\N	\N	\N	\N	\N	23
-65	Hilang	\N	\N	\N	\N	\N	34
 66	Mastukin	\N	\N	\N	\N	\N	35
 69	Wa Jileng (anak)	\N	\N	\N	\N	\N	37
 71	Andre	\N	\N	\N	\N	\N	38
@@ -1007,6 +1007,7 @@ COPY public.lents (order_id, name, street, city, phone, cell, zip, serial_num) F
 62	Tim Om Saja	\N	\N	\N	\N	\N	47
 121	Opick Gudang	\N	\N	\N	\N	\N	48
 133	Clip Cikarang	\N	\N	\N	\N	\N	50
+65	HILANG	\N	\N	\N	\N	\N	51
 \.
 
 
@@ -1052,21 +1053,26 @@ COPY public.office_addresses (order_id, street, region, city, phone, zip) FROM s
 
 COPY public.orders (id, name, order_at, printed_at, bt_finance, bt_percent, bt_matel, user_name, verified_by, finance_id, branch_id, is_stnk, stnk_price, matrix, token) FROM stdin;
 133	000000270	2022-04-26	2022-04-26	55000000.00	10.79	49066000.00	Opick	test	19	3	t	0.00	55000000.00	'-1293':17 '-2022':4 '000000270':1 '2014':24 '26':2 '4':27 'ada':15 'apr':3 'cabang':8 'clip':7 'clipan':6 'daihatsu':25 'deddy':11 'finance':5 'grand':19 'gudang':21 'indramayu':10 'max':20 'pranoto':12 'pusat':9,22 'r4':28 'roda':26 'stnk':14 'stnk-ada':13 't':16 'tahun':23 'tn':18
-77	000000103	2022-03-19	2022-03-26	1500000.00	20.00	1200000.00	Opick	\N	21	1	t	0.00	1500000.00	'-2022':4 '-5826':18 '000000103':1 '125':21 '19':2 '2':28 '2019':25 'ada':16 'auto':7 'cabang':11 'central':8 'cq':19 'e':17 'finance':5,9 'gudang':22 'honda':26 'jatibarang':12,23 'macf':10 'mar':3 'mega':6 'r2':29 'roda':27 'stnk':15 'stnk-ada':14 'syaenudin':13 'tahun':24 'vario':20
+148	000000296	2022-04-09	2022-04-09	1200000.00	20.00	960000.00	Opick	\N	25	1	t	0.00	1200000.00	'-2022':4 '-6347':19 '000000296':1 '09':2 '2':30 '2019':27 'ada':17 'adira':6,10 'apr':3 'cabang':12 'discret':7 'e':18 'finance':5,8 'gudang':24 'jatibarang':13,25 'pbm':20 'r2':31 'ride':23 'roda':29 'stnk':16 'stnk-ada':15 'syaenudin':14 'tahun':26 'wo':9,11 'x':22 'x-ride':21 'yamaha':28
+149	000000297	2022-04-09	2022-04-09	700000.00	20.00	560000.00	Opick	\N	25	1	t	0.00	700000.00	'-2022':4 '-3416':19 '000000297':1 '09':2 '2':28 '2013':25 'ada':17 'adira':6,10 'apr':3 'cabang':12 'discret':7 'e':18 'finance':5,8 'gudang':22 'jatibarang':13,23 'mio':21 'r2':29 'roda':27 'stnk':16 'stnk-ada':15 'syaenudin':14 'tahun':24 'wo':9,11 'xh':20 'yamaha':26
 42	000000042	2022-02-16	2022-02-16	15000000.00	12.00	13200000.00	Mastur	\N	18	3	t	0.00	15000000.00	'-2022':4 '-9049':21 '000000042':1 '1000':24 '16':2 '2020':28 '4':31 'ada':19 'brio':23 'cabang':12 'deddy':15 'feb':3 'finance':5,8 'gudang':25 'h':20 'honda':29 'indramayu':14 'mandir':6 'mtf':10 'pranoto':16 'pusat':13,26 'r4':32 'roda':30 's':11 'se':22 'semarang':9 'stnk':18 'stnk-ada':17 'tahun':27 'tunas':7
 83	000000109	2022-03-22	2022-03-26	1600000.00	20.00	1280000.00	Opick	\N	2	1	t	0.00	1600000.00	'-2022':4 '-3802':17 '000000109':1 '2':26 '2019':23 '22':2 'ada':15 'adira':9 'auto':6 'cabang':10 'discret':7 'finance':5,8 'gudang':20 'honda':24 'jatibarang':11,21 'mar':3 'r2':27 'roda':25 'scoopy':19 'stnk':14 'stnk-ada':13 'syaenudin':12 't':16 'tahun':22 'zr':18
+134	000000273	2022-04-09	2022-04-09	1450000.00	20.00	1160000.00	Opick	\N	1	3	f	250000.00	1700000.00	'-2022':4 '-6053':20 '000000273':1 '09':2 '125':23 '2':30 '2019':27 'ada':18 'apr':3 'auto':7 'baf':9 'bussan':6 'cabang':10 'deddy':13 'e':19 'finance':5,8 'fino':22 'gudang':24 'indramayu':12 'pbf':21 'pranoto':14 'pusat':11,25 'r2':31 'roda':29 'stnk':16 'stnk-tidak-ada':15 'tahun':26 'tidak':17 'yamaha':28
+150	000000298	2022-04-09	2022-04-09	600000.00	20.00	480000.00	Opick	\N	5	1	t	0.00	600000.00	'-2022':4 '000000298':1 '09':2 'ada':15 'apr':3 'cabang':10 'finance':5 'jatibarang':11 'kredit':7 'motor':8 'oto':6 'otto':9 'stnk':14 'stnk-ada':13 'syaenudin':12
 21	000000021	2022-02-21	2022-02-21	950000.00	20.00	760000.00	Mastur	\N	1	1	t	0.00	950000.00	'-2022':4 '-6262':17 '000000021':1 '2':27 '2015':24 '21':2 'ada':15 'auto':7 'b':16 'baf':9 'bussan':6 'cabang':10 'feb':3 'finance':5,8 'gudang':21,22 'jatibarang':11 'm3':20 'mio':19 'r2':28 'roda':26 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':23 'vky':18 'yamaha':25
 24	000000024	2022-02-25	2022-02-25	1500000.00	20.00	1200000.00	Mastur	\N	1	1	t	0.00	1500000.00	'-2022':4 '-2146':17 '000000024':1 '2':27 '2018':24 '25':2 'ada':15 'auto':7 'baf':9 'bussan':6 'cabang':10 'e':16 'feb':3 'finance':5,8 'gudang':21,22 'jatibarang':11 'mio':19 'qaf':18 'r2':28 'roda':26 's':20 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':23 'yamaha':25
-65	000000065	2021-10-05	2021-10-05	3200000.00	0.00	3200000.00	Mastur	\N	1	1	t	0.00	3200000.00	'-2021':4 '-2676':17 '000000065':1 '05':2 '2':26 '2019':23 'ada':15 'auto':7 'baf':9 'bussan':6 'cabang':10 'e':16 'finance':5,8 'gudang':20 'jatibarang':11,21 'nmax':19 'okt':3 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':22 'ux':18 'yamaha':24
+135	000000274	2022-04-09	2022-04-09	1700000.00	20.00	1360000.00	Opick	\N	2	3	f	200000.00	1900000.00	'-2022':4 '-4786':20 '000000274':1 '09':2 '2':29 '2021':26 'ada':18 'adira':9 'apr':3 'auto':6 'cabang':10 'deddy':13 'discret':7 'e':19 'finance':5,8 'gear':22 'gudang':23 'indramayu':12 'pbz':21 'pranoto':14 'pusat':11,24 'r2':30 'roda':28 'stnk':16 'stnk-tidak-ada':15 'tahun':25 'tidak':17 'yamaha':27
+151	000000319	2022-04-08	2022-04-08	10200000.00	18.00	8364000.00	Opick	\N	16	3	t	0.00	10200000.00	'-2022':4 '-8854':19 '000000319':1 '08':2 '2020':25 '4':28 'ada':17 'apr':3 'cabang':10 'carry':21 'deddy':13 'ef':20 'finance':5,7 'gudang':22 'indonesia':8 'indramayu':12 'pranoto':14 'pusat':11,23 'r4':29 'roda':27 'sfi':9 'stnk':16 'stnk-ada':15 'suzuk':6,26 't':18 'tahun':24
+65	000000065	2021-10-05	2021-10-05	3200000.00	0.00	3200000.00	Mastur	test	1	1	t	0.00	3200000.00	'-2021':4 '-2676':17 '000000065':1 '05':2 '2':26 '2019':23 'ada':15 'auto':7 'baf':9 'bussan':6 'cabang':10 'e':16 'finance':5,8 'gudang':20 'jatibarang':11,21 'nmax':19 'okt':3 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':22 'ux':18 'yamaha':24
+136	000000277	2022-04-04	2022-04-04	1100000.00	20.00	880000.00	Opick	\N	1	3	t	0.00	1100000.00	'-2022':4 '-5158':19 '000000277':1 '04':2 '2':29 '2014':26 'ada':17 'apr':3 'auto':7 'baf':9 'bussan':6 'cabang':10 'deddy':13 'e':18 'finance':5,8 'gudang':23 'indramayu':12 'mio':21 'pranoto':14 'pusat':11,24 'qj':20 'r2':30 'roda':28 's':22 'stnk':16 'stnk-ada':15 'tahun':25 'yamaha':27
+152	000000322	2021-04-05	2021-04-05	3200000.00	20.00	2560000.00	Opick	\N	1	1	t	0.00	3200000.00	'-2021':4 '000000322':1 '05':2 'ada':15 'apr':3 'auto':7 'baf':9 'bussan':6 'cabang':10 'finance':5,8 'jatibarang':11 'stnk':14 'stnk-ada':13 'syaenudin':12
 4	000000004	2022-02-18	2022-02-18	1200000.00	20.00	960000.00	Mastur	\N	2	3	t	0.00	1200000.00	'-2022':4 '-5080':19 '000000004':1 '18':2 '2':28 '2015':25 'ada':17 'adira':9 'auto':6 'br':18 'cabang':10 'deddy':13 'discret':7 'feb':3 'finance':5,8 'gudang':22 'indramayu':12 'pranoto':14 'pusat':11,23 'py':20 'r2':29 'roda':27 'stnk':16 'stnk-ada':15 'tahun':24 'vixion':21 'yamaha':26
 6	000000006	2022-03-02	2022-03-02	1200000.00	20.00	960000.00	Mastur	\N	2	3	t	0.00	1200000.00	'-2022':4 '-2633':19 '000000006':1 '02':2 '2':28 '2016':25 'ada':17 'adira':9 'auto':6 'beat':21 'cabang':10 'deddy':13 'discret':7 'e':18 'finance':5,8 'gudang':22 'honda':26 'indramayu':12 'mar':3 'pac':20 'pranoto':14 'pusat':11,23 'r2':29 'roda':27 'stnk':16 'stnk-ada':15 'tahun':24
-10	000000010	2022-03-19	2022-03-19	850000.00	20.00	680000.00	Mastur	\N	2	3	t	0.00	850000.00	'-2022':4 '-5474':19 '000000010':1 '19':2 '2':28 '2013':25 'ada':17 'adira':9 'auto':6 'beat':21 'cabang':10 'deddy':13 'discret':7 'e':18 'finance':5,8 'gudang':22 'honda':26 'indramayu':12 'mar':3 'pranoto':14 'pusat':11,23 'q':20 'r2':29 'roda':27 'stnk':16 'stnk-ada':15 'tahun':24
-99	000000139	2022-03-28	2022-03-28	16000000.00	18.75	13000000.00	Opick	\N	16	3	t	0.00	16000000.00	'-2022':4 '-8066':19 '000000139':1 '2020':25 '28':2 '4':28 'ada':17 'cabang':10 'carry':21 'deddy':13 'eg':20 'finance':5,7 'gudang':22 'indonesia':8 'indramayu':12 'mar':3 'pranoto':14 'pusat':11,23 'r4':29 'roda':27 'sfi':9 'stnk':16 'stnk-ada':15 'suzuk':6,26 't':18 'tahun':24
-123	000000209	2022-03-31	2022-03-31	11500000.00	10.43	10300000.00	Opick	\N	14	3	t	0.00	11500000.00	'-1561':19 '-2022':4 '000000209':1 '2007':25 '31':2 '4':28 'ada':17 'b':18 'cabang':10 'clip':8 'clipan':6 'deddy':13 'finance':5 'gudang':22 'indramayu':12 'k':9 'karawang':7 'kbj':20 'mar':3 'pranoto':14 'pusat':11,23 'r4':29 'roda':27 'stnk':16 'stnk-ada':15 'tahun':24 'toyota':26 'vios':21
 57	000000057	2022-01-22	2022-01-22	8000000.00	0.00	8000000.00	Mastur	\N	2	3	t	0.00	8000000.00	'-1256':19 '-2022':4 '000000057':1 '2019':26 '22':2 '4':29 'ada':17 'adira':9 'auto':6 'cabang':10 'daihatsu':27 'deddy':13 'discret':7 'e':18 'finance':5,8 'grand':21 'gudang':23 'indramayu':12 'jan':3 'max':22 'pranoto':14 'pusat':11,24 'qd':20 'r4':30 'roda':28 'stnk':16 'stnk-ada':15 'tahun':25
 18	000000018	2022-01-18	2022-01-18	1000000.00	20.00	800000.00	Mastur	\N	5	1	t	0.00	1000000.00	'-2022':4 '-6716':17 '000000018':1 '18':2 '2':27 '2015':24 'ada':15 'cabang':10 'e':16 'finance':5 'gudang':21,22 'ix':18 'jan':3 'jatibarang':11 'kredit':7 'm3':20 'mio':19 'motor':8 'oto':6 'otto':9 'r2':28 'roda':26 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':23 'yamaha':25
 101	000000146	2022-03-26	2022-03-28	1000000.00	20.00	800000.00	Opick	\N	2	1	t	0.00	1000000.00	'-2022':4 '-6987':17 '000000146':1 '2':27 '2013':24 '26':2 'ada':15 'adira':9 'auto':6 'cabang':10 'discret':7 'e':16 'finance':5,8 'fu':20 'gudang':21 'jatibarang':11,22 'mar':3 'r2':28 'roda':26 'satria':19 'sd':18 'stnk':14 'stnk-ada':13 'suzuk':25 'syaenudin':12 'tahun':23
 107	000000179	2022-03-30	2022-03-30	1000000.00	20.00	800000.00	Opick	\N	12	1	t	0.00	1000000.00	'-2022':4 '-5359':16 '000000179':1 '125':19 '2':26 '2016':23 '30':2 'ada':14 'cabang':9 'e':15 'finance':5,7 'fino':18 'gudang':20 'jatibarang':10,21 'mar':3 'pai':17 'r2':27 'roda':25 'stnk':13 'stnk-ada':12 'syaenudin':11 'tahun':22 'wom':6 'womf':8 'yamaha':24
+137	000000281	2022-04-05	2022-04-05	1000000.00	20.00	800000.00	Opick	\N	2	1	t	0.00	1000000.00	'-2022':4 '-4094':17 '000000281':1 '05':2 '2':28 '2017':25 'ada':15 'adira':9 'apr':3 'auto':6 'cabang':10 'discret':7 'finance':5,8 'gudang':22 'jatibarang':11,23 'ph':18 'r2':29 'ride':21 'roda':27 'stnk':14 'stnk-ada':13 'syaenudin':12 't':16 'tahun':24 'x':20 'x-ride':19 'yamaha':26
 114	000000186	2022-04-01	2022-04-01	1300000.00	20.00	1040000.00	Opick	\N	7	1	t	0.00	1300000.00	'-2022':4 '-4418':17 '000000186':1 '01':2 '125':20 '2':27 '2017':24 'ada':15 'apr':3 'cabang':10 'finance':5,8 'fino':19 'gudang':21 'jatibarang':11,22 'mandir':6 'muf':9 'pf':18 'r2':28 'roda':26 'stnk':14 'stnk-ada':13 'syaenudin':12 't':16 'tahun':23 'utama':7 'yamaha':25
 115	000000187	2022-04-01	2022-04-01	1200000.00	20.00	960000.00	Opick	\N	16	1	t	0.00	1200000.00	'-2022':4 '-4080':17 '000000187':1 '01':2 '2':26 '2013':23 'ada':15 'apr':3 'cabang':10 'finance':5,7 'gudang':20 'indonesia':8 'jatibarang':11,21 'nex':19 'r2':27 'roda':25 'sfi':9 'stnk':14 'stnk-ada':13 'suzuk':6,24 'syaenudin':12 't':16 'tahun':22 'we':18
 62	000000062	2022-01-19	2022-01-19	3600000.00	20.00	2880000.00	Mastur	\N	1	3	t	0.00	3600000.00	'-2022':4 '-3217':19 '000000062':1 '19':2 '2':28 '2017':25 'ada':17 'auto':7 'baf':9 'bussan':6 'cabang':10 'deddy':13 'e':18 'finance':5,8 'gudang':22 'indramayu':12 'jan':3 'nmax':21 'par':20 'pranoto':14 'pusat':11,23 'r2':29 'roda':27 'stnk':16 'stnk-ada':15 'tahun':24 'yamaha':26
@@ -1075,52 +1081,47 @@ COPY public.orders (id, name, order_at, printed_at, bt_finance, bt_percent, bt_m
 121	000000199	2022-03-30	2022-03-30	1600000.00	20.00	1280000.00	Opick	\N	7	3	t	0.00	1600000.00	'-2022':4 '-4172':19 '000000199':1 '2':30 '2022':27 '30':2 'ada':17 'b':18 'cabang':10 'deddy':13 'finance':5,8 'fpb':20 'gudang':24 'indramayu':12 'mandir':6 'mar':3 'muf':9 'pranoto':14 'pusat':11,25 'r2':31 'ride':23 'roda':29 'stnk':16 'stnk-ada':15 'tahun':26 'utama':7 'x':22 'x-ride':21 'yamaha':28
 7	000000007	2022-03-15	2022-03-15	1700000.00	20.00	1360000.00	Mastur	\N	1	3	t	0.00	1700000.00	'-2022':4 '-2033':19 '000000007':1 '125':22 '15':2 '2':29 '2019':26 'ada':17 'auto':7 'baf':9 'bussan':6 'cabang':10 'deddy':13 'e':18 'finance':5,8 'fino':21 'gudang':23 'indramayu':12 'mar':3 'pbj':20 'pranoto':14 'pusat':11,24 'r2':30 'roda':28 'stnk':16 'stnk-ada':15 'tahun':25 'yamaha':27
 15	000000015	2022-01-06	2022-01-06	900000.00	20.00	900000.00	Mastur	\N	5	1	t	0.00	900000.00	'-2022':4 '-4146':17 '000000015':1 '06':2 '2':27 '2012':24 'ada':15 'cabang':10 'finance':5 'gudang':21,22 'jan':3 'jatibarang':11 'jupiter':19 'ko':18 'kredit':7 'motor':8 'mx':20 'oto':6 'otto':9 'r2':28 'roda':26 'stnk':14 'stnk-ada':13 'syaenudin':12 't':16 'tahun':23 'yamaha':25
+138	000000283	2022-04-06	2022-04-06	900000.00	20.00	720000.00	Opick	\N	2	1	t	0.00	900000.00	'-2022':4 '-6739':17 '000000283':1 '06':2 '2':27 '2015':24 'ada':15 'adira':9 'apr':3 'auto':6 'cabang':10 'discret':7 'finance':5,8 'gudang':21 'jatibarang':11,22 'm3':20 'mio':19 'r2':28 'roda':26 'stnk':14 'stnk-ada':13 'syaenudin':12 't':16 'tahun':23 'yamaha':25 'yc':18
 50	000000050	2021-12-16	2021-12-16	34500000.00	9.10	31360000.00	Mastur	\N	18	3	t	0.00	34500000.00	'-2021':4 '-9442':21 '000000050':1 '1000':24 '16':2 '2017':28 '4':31 'ada':19 'brio':23 'cabang':12 'deddy':15 'des':3 'finance':5,8 'gudang':25 'h':20 'honda':29 'indramayu':14 'mandir':6 'mtf':10 'ng':22 'pranoto':16 'pusat':13,26 'r4':32 'roda':30 's':11 'semarang':9 'stnk':18 'stnk-ada':17 'tahun':27 'tunas':7
 53	000000053	2021-12-24	2021-12-24	21450000.00	9.09	19500000.00	Mastur	\N	14	3	t	0.00	21450000.00	'-1312':19 '-2021':4 '000000053':1 '2007':25 '24':2 '4':28 'ada':17 'cabang':10 'clip':8 'clipan':6 'd':18 'daihatsu':26 'deddy':13 'des':3 'finance':5 'gudang':22 'indramayu':12 'k':9 'karawang':7 'pranoto':14 'pusat':11,23 'r4':29 'roda':27 'stnk':16 'stnk-ada':15 'tahun':24 'wf':20 'xenia':21
 49	000000049	2021-11-22	2021-11-22	10000000.00	18.00	8200000.00	Mastur	\N	17	3	t	0.00	10000000.00	'-2021':4 '-8630':18 '000000049':1 '2012':24 '22':2 '4':27 'ada':16 'bfi':6,8 'cabang':9 'deddy':12 'finance':5,7 'gudang':21 'h':17 'honda':25 'indramayu':11 'jazz':20 'nop':3 'pp':19 'pranoto':13 'pusat':10,22 'r4':28 'roda':26 'stnk':15 'stnk-ada':14 'tahun':23
 124	000000227	2022-04-02	2022-04-02	465000.00	19.35	375000.00	Opick	\N	2	3	t	0.00	465000.00	'-2000':19 '-2022':4 '000000227':1 '02':2 '2022':25 '4':28 'ada':17 'adira':9 'apr':3 'auto':6 'cabang':10 'deddy':13 'discret':7 'e':18 'finance':5,8 'gudang':22 'indramayu':12 'ios':21 'pranoto':14 'pusat':11,23 'r4':29 'roda':27 'stnk':16 'stnk-ada':15 'tahun':24 'toyota':26 'xx':20
 66	000000066	2021-12-06	2021-12-06	1300000.00	20.00	1040000.00	Mastur	\N	12	1	t	0.00	1300000.00	'-2021':4 '-6934':16 '000000066':1 '06':2 '2':25 '2017':22 'ada':14 'beat':18 'cabang':9 'des':3 'finance':5,7 'gudang':19 'honda':23 'jatibarang':10,20 'r2':26 'roda':24 'stnk':13 'stnk-ada':12 'syaenudin':11 't':15 'tahun':21 'wom':6 'womf':8 'yq':17
 26	000000026	2022-03-07	2022-03-07	850000.00	20.00	680000.00	Mastur	\N	11	1	t	0.00	850000.00	'-2022':4 '-2891':16 '000000026':1 '07':2 '150':19 '2':26 '2014':23 'ada':14 'cabang':9 'finance':5 'gudang':20 'honda':24 'jatibarang':10,21 'kp':8 'kredit':6 'mar':3 'plus':7 'r2':27 'roda':25 'stnk':13 'stnk-ada':12 'syaenudin':11 't':15 'tahun':22 'vario':18 'wp':17
-33	000000033	2022-03-16	2022-03-16	1500000.00	20.00	1200000.00	Mastur	\N	2	1	t	0.00	1500000.00	'-2022':4 '-5856':17 '000000033':1 '16':2 '2':26 '2019':23 'ada':15 'adira':9 'auto':6 'cabang':10 'discret':7 'finance':5,8 'genio':19 'gudang':20 'honda':24 'jatibarang':11,21 'mar':3 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 't':16 'tahun':22 'zt':18
-131	000000245	2022-04-06	2022-04-06	1300000.00	20.00	1040000.00	Opick	\N	8	3	f	200000.00	1500000.00	'-2022':4 '-5491':19 '000000245':1 '06':2 '125':22 '2':29 '2022':26 'ada':17 'apr':3 'cabang':9 'deddy':12 'e':18 'fif':6,8 'finance':5 'group':7 'gudang':23 'honda':27 'indramayu':11 'pbl':20 'pranoto':13 'pusat':10,24 'r2':30 'roda':28 'stnk':15 'stnk-tidak-ada':14 'tahun':25 'tidak':16 'vario':21
 96	000000132	2022-03-21	2022-03-28	13300000.00	7.52	12300000.00	Opick	\N	19	3	t	0.00	13300000.00	'-1301':17 '-2022':4 '000000132':1 '1000':20 '2022':24 '21':2 '4':27 'ada':15 'b':16 'brio':19 'cabang':8 'clip':7 'clipan':6 'deddy':11 'finance':5 'gudang':21 'honda':25 'indramayu':10 'mar':3 'pranoto':12 'pusat':9,22 'r4':28 'roda':26 'stnk':14 'stnk-ada':13 'tahun':23 'uzr':18
 125	000000230	2022-03-29	2022-03-29	4250000.00	29.41	3000000.00	Opick	\N	2	3	t	0.00	4250000.00	'-1411':19 '-2022':4 '000000230':1 '2020':25 '29':2 '4':28 'ada':17 'adira':9 'auto':6 'avanza':21 'cabang':10 'deddy':13 'discret':7 'e':18 'finance':5,8 'gudang':22 'indramayu':12 'mar':3 'pranoto':14 'pusat':11,23 'pv':20 'r4':29 'roda':27 'stnk':16 'stnk-ada':15 'tahun':24 'toyota':26
 71	000000071	2021-09-21	2021-09-21	1300000.00	20.00	1040000.00	Mastur	\N	7	1	t	0.00	1300000.00	'-2021':4 '-4261':17 '000000071':1 '2':28 '2017':25 '21':2 'ada':15 'cabang':10 'finance':5,8 'gudang':22 'jatibarang':11,23 'king':21 'mandir':6 'muf':9 'mx':20 'mx-king':19 'r2':29 'roda':27 'sep':3 'stnk':14 'stnk-ada':13 'syaenudin':12 't':16 'tahun':24 'utama':7 'yamaha':26 'yq':18
 69	000000069	2021-12-09	2021-12-09	1400000.00	20.00	1120000.00	Mastur	\N	2	1	t	0.00	1400000.00	'-2021':4 '-3433':17 '000000069':1 '09':2 '2':26 '2019':23 'ada':15 'adira':9 'auto':6 'b':16 'beat':19 'cabang':10 'des':3 'discret':7 'finance':5,8 'gudang':20 'honda':24 'jatibarang':11,21 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':22 'usn':18
 72	000000072	2021-12-09	2021-12-09	1250000.00	20.00	1000000.00	Mastur	\N	2	1	t	0.00	1250000.00	'-2021':4 '-3430':17 '000000072':1 '09':2 '2':26 '2016':23 'ada':15 'adira':9 'auto':6 'b':16 'beat':19 'cabang':10 'des':3 'discret':7 'ejx':18 'finance':5,8 'gudang':20 'honda':24 'jatibarang':11,21 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':22
 13	000000013	2021-12-06	2021-12-06	1000000.00	20.00	800000.00	Mastur	\N	6	1	t	0.00	1000000.00	'-2021':4 '-2417':15 '000000013':1 '06':2 '2':25 '2017':22 'ada':13 'cabang':8 'col':7 'collectius':6 'des':3 'e':14 'finance':5 'gudang':19,20 'jatibarang':9 'm3':18 'mio':17 'pao':16 'r2':26 'roda':24 'stnk':12 'stnk-ada':11 'syaenudin':10 'tahun':21 'yamaha':23
-20	000000020	2022-01-21	2022-01-21	900000.00	20.00	720000.00	Mastur	\N	11	1	t	0.00	900000.00	'-2022':4 '-5253':16 '000000020':1 '125':19 '2':26 '2013':23 '21':2 'ada':14 'cabang':9 'e':15 'finance':5 'gudang':20,21 'honda':24 'jan':3 'jatibarang':10 'kp':8 'kredit':6 'plus':7 'r2':27 'roda':25 'stnk':13 'stnk-ada':12 'syaenudin':11 'tahun':22 'ty':17 'vario':18
 29	000000029	2022-03-09	2022-03-09	1450000.00	20.00	1160000.00	Mastur	\N	13	1	t	0.00	1450000.00	'-2022':4 '-4544':15 '000000029':1 '09':2 '2':24 '2015':21 'ada':13 'cabang':8 'e':14 'finance':5 'gapara':6 'gudang':18,19 'jatibarang':9 'jd':16 'mar':3 'mio':17 'mpr':7 'r2':25 'roda':23 'stnk':12 'stnk-ada':11 'syaenudin':10 'tahun':20 'yamaha':22
-31	000000031	2022-03-12	2022-03-12	1800000.00	20.00	1440000.00	Mastur	\N	2	1	t	0.00	1800000.00	'-15':20 '-2022':4 '-2391':17 '000000031':1 '12':2 '2':27 '2017':24 'ada':15 'adira':9 'auto':6 'cabang':10 'discret':7 'e':16 'finance':5,8 'gudang':21 'jatibarang':11,22 'jm':18 'mar':3 'r':19 'r2':28 'roda':26 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':23 'yamaha':25
 22	000000022	2022-02-23	2022-02-23	950000.00	20.00	760000.00	Mastur	\N	1	1	t	0.00	950000.00	'-2022':4 '-2830':17 '000000022':1 '2':27 '2015':24 '23':2 'ada':15 'auto':7 'baf':9 'bussan':6 'cabang':10 'e':16 'feb':3 'finance':5,8 'gudang':21,22 'jatibarang':11 'm3':20 'mio':19 'qr':18 'r2':28 'roda':26 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':23 'yamaha':25
-5	000000005	2022-02-24	2022-02-24	1500000.00	20.00	1200000.00	Mastur	\N	7	3	t	0.00	1500000.00	'-2022':4 '-4096':19 '000000005':1 '125':22 '2':29 '2017':26 '24':2 'ada':17 'cabang':10 'deddy':13 'e':18 'feb':3 'finance':5,8 'fino':21 'gudang':23 'indramayu':12 'mandir':6 'muf':9 'paq':20 'pranoto':14 'pusat':11,24 'r2':30 'roda':28 'stnk':16 'stnk-ada':15 'tahun':25 'utama':7 'yamaha':27
 3	000000003	2022-02-07	2022-02-07	1300000.00	20.00	1040000.00	Mastur	\N	1	3	t	0.00	1300000.00	'-2022':4 '-5125':19 '000000003':1 '07':2 '2':29 '2018':26 'ada':17 'auto':7 'baf':9 'bussan':6 'cabang':10 'deddy':13 'e':18 'feb':3 'finance':5,8 'gudang':23 'indramayu':12 'm3':22 'mio':21 'pbc':20 'pranoto':14 'pusat':11,24 'r2':30 'roda':28 'stnk':16 'stnk-ada':15 'tahun':25 'yamaha':27
 132	000000265	2022-04-09	2022-04-09	1600000.00	20.00	1280000.00	Opick	\N	5	1	t	0.00	1600000.00	'-2022':4 '-4415':17 '000000265':1 '09':2 '2':26 '2019':23 'ada':15 'apr':3 'cabang':10 'e':16 'finance':5 'gudang':20 'jatibarang':11,21 'jz':18 'kredit':7 'motor':8 'nmax':19 'oto':6 'otto':9 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':22 'yamaha':24
-74	000000074	2022-03-07	2022-03-07	1300000.00	20.00	1040000.00	Mastur	\N	2	1	t	0.00	1300000.00	'-2022':4 '-6871':17 '000000074':1 '07':2 '2':26 '2018':23 'ada':15 'adira':9 'auto':6 'cabang':10 'cm':18 'discret':7 'e':16 'finance':5,8 'gudang':20 'jatibarang':11,21 'mar':3 'mio':19 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':22 'yamaha':24
 84	000000110	2022-03-22	2022-03-26	1050000.00	20.00	840000.00	Opick	\N	2	1	t	0.00	1050000.00	'-2022':4 '-5462':17 '000000110':1 '2':26 '2014':23 '22':2 'ada':15 'adira':9 'auto':6 'beat':19 'cabang':10 'discret':7 'e':16 'finance':5,8 'gudang':20 'honda':24 'jatibarang':11,21 'mar':3 'qm':18 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':22
 11	000000011	2021-09-27	2021-09-27	900000.00	20.00	720000.00	Mastur	\N	8	1	t	0.00	900000.00	'-2021':4 '-4892':16 '000000011':1 '2':25 '2012':22 '27':2 'ada':14 'cabang':9 'e':15 'fif':6,8 'finance':5 'group':7 'gudang':19,20 'jatibarang':10 'jupiter':18 'r2':26 'roda':24 'sep':3 'stnk':13 'stnk-ada':12 'syaenudin':11 'tahun':21 'tk':17 'yamaha':23
-80	000000106	2022-03-19	2022-03-26	1200000.00	20.00	960000.00	Opick	\N	2	1	t	0.00	1200000.00	'-2022':4 '-5737':17 '000000106':1 '125':20 '19':2 '2':27 '2019':24 'ada':15 'adira':9 'auto':6 'cabang':10 'discret':7 'e':16 'finance':5,8 'fino':19 'gudang':21 'jatibarang':11,22 'mar':3 'pbo':18 'r2':28 'roda':26 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':23 'yamaha':25
+139	000000284	2022-04-07	2022-04-07	1350000.00	20.00	1080000.00	Opick	\N	1	1	f	250000.00	1600000.00	'-2022':4 '-6088':18 '000000284':1 '07':2 '2':28 '2019':25 'ada':16 'apr':3 'auto':7 'baf':9 'bussan':6 'cabang':10 'e':17 'finance':5,8 'gudang':22 'jatibarang':11,23 'm3':21 'mio':20 'pbf':19 'r2':29 'roda':27 'stnk':14 'stnk-tidak-ada':13 'syaenudin':12 'tahun':24 'tidak':15 'yamaha':26
+140	000000287	2022-04-07	2022-04-07	1500000.00	20.00	1200000.00	Opick	\N	24	1	t	0.00	1500000.00	'-2022':4 '-5344':18 '000000287':1 '07':2 '2':27 '2022':24 'ada':16 'apr':3 'beat':20 'cabang':11 'ciptadana':8 'finance':5,9 'gudang':21 'honda':25 'jatibarang':12,22 'nsc':10 'nusa':6 'r2':28 'ri':19 'roda':26 'stnk':15 'stnk-ada':14 'surya':7 'syaenudin':13 't':17 'tahun':23
 58	000000058	2022-01-31	2022-01-31	21400000.00	6.54	20000000.00	Mastur	\N	4	3	t	0.00	21400000.00	'-2022':4 '-2281':19 '000000058':1 '2012':25 '31':2 '4':28 'ada':17 'b':9,18 'bekasi':7 'cabang':10 'clip':8 'clipan':6 'deddy':13 'finance':5 'gudang':22 'indramayu':12 'ios':21 'jan':3 'pranoto':14 'pusat':11,23 'r4':29 'roda':27 'sbt':20 'stnk':16 'stnk-ada':15 'tahun':24 'toyota':26
 59	000000059	2022-01-31	2022-01-31	19750000.00	0.00	19750000.00	Mastur	\N	14	3	t	0.00	19750000.00	'-1305':19 '-2022':4 '000000059':1 '2000':25 '31':2 '4':28 'ada':17 'cabang':10 'clip':8 'clipan':6 'deddy':13 'dl':20 'ertiga':21 'finance':5 'gudang':22 'indramayu':12 'jan':3 'k':9 'karawang':7 'pranoto':14 'pusat':11,23 'r4':29 'roda':27 'stnk':16 'stnk-ada':15 'suzuk':26 't':18 'tahun':24
 16	000000016	2022-01-14	2022-01-14	1000000.00	20.00	800000.00	Mastur	\N	5	1	t	0.00	1000000.00	'-2022':4 '-3848':17 '000000016':1 '14':2 '2':26 '2016':23 'ada':15 'beat':19 'cabang':10 'e':16 'finance':5 'gudang':20,21 'honda':24 'jan':3 'jatibarang':11 'kredit':7 'motor':8 'oto':6 'otto':9 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':22 'ub':18
-19	000000019	2022-01-26	2022-01-26	1000000.00	20.00	800000.00	Mastur	\N	2	1	t	0.00	1000000.00	'-2022':4 '-5638':17 '000000019':1 '2':26 '2018':23 '26':2 'ada':15 'adira':9 'auto':6 'cabang':10 'discret':7 'e':16 'finance':5,8 'gudang':20 'honda':24 'jan':3 'jatibarang':11,21 'pav':18 'r2':27 'revo':19 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':22
-79	000000105	2022-03-19	2022-03-26	1400000.00	20.00	1120000.00	Opick	\N	2	1	t	0.00	1400000.00	'-2022':4 '-2282':17 '000000105':1 '19':2 '2':26 '2018':23 'ada':15 'adira':9 'auto':6 'beat':19 'cabang':10 'discret':7 'e':16 'finance':5,8 'gudang':20 'honda':24 'jatibarang':11,21 'mar':3 'pbc':18 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':22
+141	000000289	2022-04-07	2022-04-07	1200000.00	20.00	960000.00	Opick	\N	7	1	t	0.00	1200000.00	'-2022':4 '-3319':17 '000000289':1 '07':2 '2':26 '2017':23 'ada':15 'apr':3 'beat':19 'cabang':10 'finance':5,8 'gudang':20 'honda':24 'jatibarang':11,21 'mandir':6 'muf':9 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 't':16 'tahun':22 'utama':7 'yu':18
 55	000000055	2022-01-17	2022-01-17	38400000.00	0.00	38400000.00	Mastur	\N	14	3	t	0.00	38400000.00	'-1729':19 '-2022':4 '000000055':1 '17':2 '2018':25 '4':28 'ada':17 'bf':20 'brv':21 'cabang':10 'clip':8 'clipan':6 'deddy':13 'finance':5 'gudang':22 'honda':26 'indramayu':12 'jan':3 'k':9 'karawang':7 'pranoto':14 'pusat':11,23 'r4':29 'roda':27 'stnk':16 'stnk-ada':15 't':18 'tahun':24
+143	000000291	2022-04-08	2022-04-08	2300000.00	20.00	1840000.00	Opick	\N	7	1	t	0.00	2300000.00	'-150':20 '-2022':4 '-4325':17 '000000291':1 '08':2 '2':27 '2017':24 'ada':15 'apr':3 'b':16 'cabang':10 'cb':19 'finance':5,8 'gudang':21 'honda':25 'jatibarang':11,22 'mandir':6 'muf':9 'r2':28 'roda':26 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':23 'trg':18 'utama':7
 17	000000017	2022-01-14	2022-01-14	750000.00	20.00	600000.00	Mastur	\N	10	1	t	0.00	750000.00	'-125':21 '-2022':4 '-3828':17 '000000017':1 '14':2 '2':28 '2008':25 'ada':15 'cabang':10 'company':8 'finance':5,7 'fw':18 'gudang':22 'honda':26 'jan':3 'jatibarang':11 'pusat':23 'r2':29 'roda':27 'stnk':14 'stnk-ada':13 'supra':19 'syaenudin':12 't':16 'tahun':24 'tfc':9 'top':6 'x':20
 32	000000032	2022-03-14	2022-03-14	1200000.00	20.00	960000.00	Mastur	\N	2	1	t	0.00	1200000.00	'-2022':4 '-2191':17 '000000032':1 '14':2 '2':26 '2017':23 'ada':15 'adira':9 'auto':6 'beat':19 'cabang':10 'discret':7 'finance':5,8 'gudang':20 'honda':24 'jatibarang':11,21 'mar':3 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 't':16 'tahun':22 'ys':18
-28	000000028	2022-03-09	2022-03-09	1300000.00	20.00	1040000.00	Mastur	\N	2	1	t	0.00	1300000.00	'-2022':4 '-4487':17 '000000028':1 '09':2 '2':27 '2017':24 'ada':15 'adira':9 'auto':6 'cabang':10 'discret':7 'finance':5,8 'gudang':21 'jatibarang':11,22 'mar':3 'mio':19 'pj':18 'r2':28 'roda':26 'stnk':14 'stnk-ada':13 'syaenudin':12 't':16 'tahun':23 'yamaha':25 'z':20
-30	000000030	2022-03-12	2022-03-12	1450000.00	20.00	1160000.00	Mastur	\N	2	1	t	0.00	1450000.00	'-2022':4 '-3615':17 '000000030':1 '12':2 '2':26 '2018':23 'ada':15 'adira':9 'auto':6 'cabang':10 'discret':7 'finance':5,8 'gudang':20 'honda':24 'jatibarang':11,21 'mar':3 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 't':16 'tahun':22 'verza':19 'zd':18
 100	000000143	2022-03-28	2022-03-28	30500000.00	11.48	27000000.00	Opick	\N	3	3	t	0.00	30500000.00	'-2022':4 '-9844':19 '000000143':1 '2016':25 '28':2 '4':28 'ada':17 'box':21 'cabang':10 'deddy':13 'e':18 'finance':5,8 'gudang':22 'hb':20 'indramayu':12 'mandir':6 'mar':3 'mitsubish':26 'mtf':9 'pranoto':14 'pusat':11,23 'r4':29 'roda':27 'stnk':16 'stnk-ada':15 'tahun':24 'tunas':7
 108	000000180	2022-03-31	2022-03-31	1450000.00	20.00	1160000.00	Opick	\N	1	1	t	0.00	1450000.00	'-2022':4 '-5712':17 '000000180':1 '125':20 '2':27 '2019':24 '31':2 'ada':15 'auto':7 'baf':9 'bussan':6 'cabang':10 'e':16 'finance':5,8 'fino':19 'gudang':21 'jatibarang':11,22 'mar':3 'pbg':18 'r2':28 'roda':26 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':23 'yamaha':25
 109	000000181	2022-03-31	2022-03-31	1200000.00	20.00	960000.00	Opick	\N	2	1	t	0.00	1200000.00	'-2022':4 '-2575':17 '000000181':1 '2':26 '2017':23 '31':2 'ada':15 'adira':9 'auto':6 'beat':19 'cabang':10 'discret':7 'e':16 'finance':5,8 'gudang':20 'honda':24 'jatibarang':11,21 'mar':3 'pas':18 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':22
-119	000000191	2022-04-01	2022-04-01	1200000.00	20.00	960000.00	Opick	\N	2	1	t	0.00	1200000.00	'-2022':4 '-6945':17 '000000191':1 '01':2 '2':26 '2018':23 'ada':15 'adira':9 'apr':3 'auto':6 'beat':19 'cabang':10 'discret':7 'e':16 'finance':5,8 'gudang':20 'honda':24 'jatibarang':11,21 'pbc':18 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':22
-127	000000237	2022-04-02	2022-04-02	1000000.00	20.00	800000.00	Opick	\N	6	1	t	0.00	1000000.00	'-2022':4 '-3907':15 '000000237':1 '02':2 '125':18 '2':25 '2022':22 'a':14 'ada':13 'apr':3 'cabang':8 'col':7 'collectius':6 'finance':5 'fino':17 'gudang':19 'jatibarang':9,20 'pbf':16 'r2':26 'roda':24 'stnk':12 'stnk-ada':11 'syaenudin':10 'tahun':21 'yamaha':23
+142	000000290	2022-04-07	2022-04-07	1200000.00	20.00	960000.00	Opick	\N	17	1	t	0.00	1200000.00	'-2022':4 '-3509':16 '000000290':1 '07':2 '2':25 '2013':22 'ada':14 'apr':3 'bfi':6,8 'cabang':9 'e':15 'finance':5,7 'gudang':19 'jatibarang':10,20 'qs':17 'r2':26 'roda':24 'stnk':13 'stnk-ada':12 'syaenudin':11 'tahun':21 'vixion':18 'yamaha':23
 38	000000038	2021-12-29	2021-12-29	13000000.00	7.69	12000000.00	Mastur	\N	14	3	t	0.00	13000000.00	'-1412':19 '-2021':4 '000000038':1 '2004':25 '29':2 '4':28 'ada':17 'cabang':10 'carry':21 'clip':8 'clipan':6 'deddy':13 'des':3 'finance':5 'gudang':22 'indramayu':12 'k':9 'karawang':7 'km':20 'pranoto':14 'pusat':11,23 'r4':29 'roda':27 'stnk':16 'stnk-ada':15 'suzuk':26 't':18 'tahun':24
 126	000000232	2022-03-29	2022-03-29	400000.00	20.00	320000.00	Opick	\N	2	3	t	0.00	400000.00	'-1456':19 '-2022':4 '000000232':1 '2020':25 '29':2 '4':28 'ada':17 'adira':9 'auto':6 'avanza':21 'cabang':10 'deddy':13 'discret':7 'e':18 'finance':5,8 'gudang':22 'indramayu':12 'mar':3 'pranoto':14 'pusat':11,23 'r4':29 'rl':20 'roda':27 'stnk':16 'stnk-ada':15 'tahun':24 'toyota':26
 67	000000067	2021-12-07	2021-12-07	2000000.00	20.00	1600000.00	Mastur	\N	21	1	t	0.00	2000000.00	'-2021':4 '-4845':18 '000000067':1 '07':2 '2':27 '2020':24 'ada':16 'auto':7 'cabang':11 'central':8 'des':3 'finance':5,9 'gudang':21 'iq':19 'jatibarang':12,22 'macf':10 'mega':6 'nmax':20 'r2':28 'roda':26 'stnk':15 'stnk-ada':14 'syaenudin':13 't':17 'tahun':23 'yamaha':25
 73	000000073	2021-12-30	2021-12-30	1250000.00	20.00	1000000.00	Mastur	\N	2	1	t	0.00	1250000.00	'-2021':4 '-3351':17 '000000073':1 '2':27 '2015':24 '30':2 'ada':15 'adira':9 'auto':6 'b':16 'beat':19 'cabang':10 'des':3 'discret':7 'finance':5,8 'gudang':21 'honda':25 'jatibarang':11,22 'kuh':18 'pop':20 'r2':28 'roda':26 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':23
 12	000000012	2021-11-04	2021-11-04	1000000.00	20.00	800000.00	Mastur	\N	6	1	t	0.00	1000000.00	'-2021':4 '-3479':15 '000000012':1 '04':2 '2':25 '2016':22 'ada':13 'b':14 'cabang':8 'col':7 'collectius':6 'finance':5 'gudang':19,20 'jatibarang':9 'm3':18 'mio':17 'nop':3 'r2':26 'roda':24 'stnk':12 'stnk-ada':11 'syaenudin':10 'tahun':21 'uju':16 'yamaha':23
 14	000000014	2021-12-07	2021-12-07	1500000.00	20.00	1200000.00	Mastur	\N	9	1	t	0.00	1500000.00	'-2021':4 '-3521':18 '000000014':1 '07':2 '2':28 '2012':25 'ada':16 'cabang':11 'des':3 'finance':5,9 'fu':21 'gudang':22,23 'jatibarang':12 'kl':19 'mitra':6 'mpmf':10 'mustika':8 'pinasthika':7 'r2':29 'roda':27 'satria':20 'stnk':15 'stnk-ada':14 'suzuk':26 'syaenudin':13 't':17 'tahun':24
+145	000000293	2022-04-08	2022-04-08	1600000.00	20.00	1280000.00	Opick	\N	1	1	t	0.00	1600000.00	'-2022':4 '-6296':17 '000000293':1 '08':2 '125':20 '2':27 '2018':24 'ada':15 'apr':3 'auto':7 'baf':9 'bussan':6 'cabang':10 'cs':18 'finance':5,8 'fino':19 'gudang':21 'jatibarang':11,22 'r2':28 'roda':26 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':23 'yamaha':25 'z':16
+144	000000292	2022-04-08	2022-04-08	1400000.00	20.00	1120000.00	Opick	\N	8	1	t	0.00	1400000.00	'-2022':4 '-2185':18 '000000292':1 '08':2 '2':27 '2017':24 'ada':16 'apr':3 'auto':7 'beat':20 'cabang':11 'cc':19 'central':8 'finance':5,9 'gudang':21 'honda':25 'jatibarang':12,22 'macf':10 'mega':6 'r2':28 'roda':26 'stnk':15 'stnk-ada':14 'syaenudin':13 't':17 'tahun':23
 61	000000061	2021-12-29	2021-12-29	1500000.00	20.00	1200000.00	Mastur	\N	7	3	t	0.00	1500000.00	'-2021':4 '-3310':19 '000000061':1 '2':28 '2015':25 '29':2 'ada':17 'cabang':10 'deddy':13 'des':3 'e':18 'finance':5,8 'gudang':22 'indramayu':12 'mandir':6 'muf':9 'pranoto':14 'pusat':11,23 'qr':20 'r2':29 'roda':27 'stnk':16 'stnk-ada':15 'tahun':24 'utama':7 'vixion':21 'yamaha':26
 37	000000037	2021-12-02	2021-12-02	18700000.00	9.09	17000000.00	Mastur	\N	14	3	t	0.00	18700000.00	'-2021':4 '-8936':19 '000000037':1 '02':2 '2006':25 '4':28 'ada':17 'b':18 'cabang':10 'clip':8 'clipan':6 'deddy':13 'des':3 'finance':5 'gudang':22 'honda':26 'indramayu':12 'jazz':21 'k':9 'karawang':7 'no':20 'pranoto':14 'pusat':11,23 'r4':29 'roda':27 'stnk':16 'stnk-ada':15 'tahun':24
 1	000000001	2021-12-15	2021-12-15	1300000.00	20.00	1040000.00	Mastur	\N	5	3	t	0.00	1300000.00	'-2021':4 '-5605':19 '000000001':1 '15':2 '2':29 '2017':26 'ada':17 'cabang':10 'deddy':13 'des':3 'e':18 'finance':5 'gudang':23 'indramayu':12 'kredit':7 'mio':21 'motor':8 'oto':6 'otto':9 'pas':20 'pranoto':14 'pusat':11,24 'r2':30 'roda':28 'stnk':16 'stnk-ada':15 'tahun':25 'yamaha':27 'z':22
@@ -1128,26 +1129,23 @@ COPY public.orders (id, name, order_at, printed_at, bt_finance, bt_percent, bt_m
 2	000000002	2022-01-10	2022-01-10	1300000.00	20.00	1040000.00	Mastur	\N	6	3	t	0.00	1300000.00	'-2022':4 '-3977':17 '000000002':1 '10':2 '2':26 '2016':23 'ada':15 'cabang':8 'col':7 'collectius':6 'deddy':11 'e':16 'finance':5 'gudang':20 'indramayu':10 'jan':3 'mio':19 'pac':18 'pranoto':12 'pusat':9,21 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'tahun':22 'yamaha':24
 51	000000051	2021-12-21	2021-12-21	25000000.00	8.00	23000000.00	Mastur	\N	19	3	t	0.00	25000000.00	'-1250':17 '-2021':4 '000000051':1 '2013':23 '21':2 '4':26 'ada':15 'cabang':8 'clip':7 'clipan':6 'deddy':11 'des':3 'du':18 'finance':5 'gudang':20 'indramayu':10 'ios':19 'pranoto':12 'pusat':9,21 'r4':27 'roda':25 'stnk':14 'stnk-ada':13 't':16 'tahun':22 'toyota':24
 56	000000056	2022-01-21	2022-01-21	22000000.00	9.09	20000000.00	Mastur	\N	18	3	t	0.00	22000000.00	'-2022':4 '-9086':21 '000000056':1 '2018':27 '21':2 '4':30 'ada':19 'agya':23 'cabang':12 'deddy':15 'finance':5,8 'gudang':24 'h':20 'indramayu':14 'jan':3 'mandir':6 'mtf':10 'pranoto':16 'pusat':13,25 'r4':31 'roda':29 's':11 'semarang':9 'stnk':18 'stnk-ada':17 'tahun':26 'te':22 'toyota':28 'tunas':7
-103	000000175	2022-03-28	2022-03-28	1000000.00	20.00	800000.00	Opick	\N	23	1	t	0.00	1000000.00	'-2022':4 '-3541':16 '000000175':1 '125':19 '2':26 '2014':23 '28':2 'ada':14 'bima':6,8 'cabang':9 'e':15 'finance':5,7 'gudang':20 'honda':24 'jatibarang':10,21 'mar':3 'qn':17 'r2':27 'roda':25 'stnk':13 'stnk-ada':12 'syaenudin':11 'tahun':22 'vario':18
 110	000000182	2022-03-31	2022-03-31	1600000.00	20.00	1280000.00	Opick	\N	2	1	t	0.00	1600000.00	'-2022':4 '-2298':17 '000000182':1 '2':26 '2016':23 '31':2 'ada':15 'adira':9 'auto':6 'cabang':10 'discret':7 'e':16 'finance':5,8 'gudang':20 'jatibarang':11,21 'je':18 'mar':3 'nmax':19 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':22 'yamaha':24
 105	000000177	2022-03-29	2022-03-29	1300000.00	20.00	1040000.00	Opick	\N	11	1	t	0.00	1300000.00	'-2022':4 '-4027':16 '000000177':1 '2':27 '2018':24 '29':2 'ada':14 'cabang':9 'd':15 'finance':5 'gudang':21 'jatibarang':10,22 'king':20 'kp':8 'kredit':6 'mar':3 'mx':19 'mx-king':18 'plus':7 'r2':28 'roda':26 'stnk':13 'stnk-ada':12 'syaenudin':11 'tahun':23 'ucb':17 'yamaha':25
 113	000000185	2022-03-31	2022-03-31	1100000.00	20.00	880000.00	Opick	\N	2	1	t	0.00	1100000.00	'-2022':4 '-4479':17 '000000185':1 '125':20 '2':27 '2018':24 '31':2 'ada':15 'adira':9 'auto':6 'cabang':10 'discret':7 'e':16 'finance':5,8 'fino':19 'gudang':21 'jatibarang':11,22 'mar':3 'paw':18 'r2':28 'roda':26 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':23 'yamaha':25
 60	000000060	2021-09-30	2021-09-30	920000.00	0.00	920000.00	Mastur	\N	2	3	t	0.00	920000.00	'-2021':4 '-6181':19 '000000060':1 '2':28 '2018':25 '30':2 'ada':17 'adira':9 'auto':6 'beat':21 'cabang':10 'deddy':13 'discret':7 'f':18 'fch':20 'finance':5,8 'gudang':22 'honda':26 'indramayu':12 'pranoto':14 'pusat':11,23 'r2':29 'roda':27 'sep':3 'stnk':16 'stnk-ada':15 'tahun':24
+146	000000294	2022-04-08	2022-04-08	1500000.00	20.00	1200000.00	Opick	\N	21	1	t	0.00	1500000.00	'-2022':4 '-55874':18 '000000294':1 '08':2 '2':27 '2019':24 'ada':16 'apr':3 'auto':7 'beat':20 'cabang':11 'central':8 'cu':19 'e':17 'finance':5,9 'gudang':21 'honda':25 'jatibarang':12,22 'macf':10 'mega':6 'r2':28 'roda':26 'stnk':15 'stnk-ada':14 'syaenudin':13 'tahun':23
 111	000000183	2022-03-31	2022-03-31	1300000.00	20.00	1040000.00	Opick	\N	11	1	t	0.00	1300000.00	'-2022':4 '-4733':16 '000000183':1 '2':26 '2015':23 '31':2 'ada':14 'cabang':9 'e':15 'finance':5 'gudang':20 'jatibarang':10,21 'jb':17 'kp':8 'kredit':6 'm3':19 'mar':3 'mio':18 'plus':7 'r2':27 'roda':25 'stnk':13 'stnk-ada':12 'syaenudin':11 'tahun':22 'yamaha':24
 118	000000190	2022-04-01	2022-04-01	1300000.00	20.00	1040000.00	Opick	\N	7	1	t	0.00	1300000.00	'-2022':4 '-3637':17 '000000190':1 '01':2 '2':26 '2019':23 'ada':15 'apr':3 'beat':19 'cabang':10 'e':16 'finance':5,8 'gudang':20 'honda':24 'jatibarang':11,21 'mandir':6 'muf':9 'qah':18 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':22 'utama':7
 75	000000075	2022-02-07	2022-02-07	1600000.00	20.00	1280000.00	Mastur	\N	13	1	t	0.00	1600000.00	'-2022':4 '-4080':15 '000000075':1 '07':2 '2':25 '2018':22 'ada':13 'cabang':8 'e':14 'feb':3 'finance':5 'gapara':6 'gudang':19 'jatibarang':9,20 'm3':18 'mio':17 'mpr':7 'r2':26 'roda':24 'stnk':12 'stnk-ada':11 'syaenudin':10 'tahun':21 'uo':16 'yamaha':23
-128	000000238	2022-02-02	2022-02-02	1300000.00	20.00	1040000.00	Opick	\N	11	1	t	0.00	1300000.00	'-2022':4 '-2392':16 '000000238':1 '02':2 '2':25 '2017':22 'ada':14 'beat':18 'cabang':9 'cm':17 'feb':3 'finance':5 'gudang':19 'honda':23 'jatibarang':10,20 'kp':8 'kredit':6 'plus':7 'r2':26 'roda':24 'stnk':13 'stnk-ada':12 'syaenudin':11 'tahun':21 'z':15
 85	000000111	2022-03-24	2022-03-26	1400000.00	20.00	1120000.00	Opick	\N	2	1	t	0.00	1400000.00	'-2022':4 '-2867':17 '000000111':1 '2':27 '2019':24 '24':2 'ada':15 'adira':9 'auf':18 'auto':6 'cabang':10 'discret':7 'finance':5,8 'g':16 'gudang':21 'jatibarang':11,22 'm3':20 'mar':3 'mio':19 'r2':28 'roda':26 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':23 'yamaha':25
-27	000000027	2022-03-09	2022-03-09	700000.00	20.00	560000.00	Mastur	\N	2	1	t	0.00	700000.00	'-2022':4 '-6819':17 '000000027':1 '09':2 '2':26 '2014':23 'ada':15 'adira':9 'auto':6 'b':16 'cabang':10 'discret':7 'finance':5,8 'gudang':20 'jatibarang':11,21 'mar':3 'pzi':18 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':22 'xeon':19 'yamaha':24
 94	000000119	2022-03-23	2022-03-26	1600000.00	20.00	1280000.00	Opick	\N	1	3	t	0.00	1600000.00	'-2022':4 '-2753':19 '000000119':1 '125':22 '2':29 '2018':26 '23':2 'ada':17 'auto':7 'baf':9 'bussan':6 'cabang':10 'deddy':13 'e':18 'finance':5,8 'fino':21 'gudang':23 'indramayu':12 'mar':3 'pba':20 'pranoto':14 'pusat':11,24 'r2':30 'roda':28 'stnk':16 'stnk-ada':15 'tahun':25 'yamaha':27
 130	000000244	2022-04-04	2022-04-04	1200000.00	20.00	960000.00	Opick	\N	8	3	f	200000.00	1400000.00	'-2022':4 '-6314':19 '000000244':1 '04':2 '2':29 '2019':26 'ada':17 'apr':3 'beat':21 'cabang':9 'deddy':12 'e':18 'fif':6,8 'finance':5 'group':7 'gudang':23 'honda':27 'indramayu':11 'pop':22 'pranoto':13 'pusat':10,24 'qr':20 'r2':30 'roda':28 'stnk':15 'stnk-tidak-ada':14 'tahun':25 'tidak':16
-34	000000034	2022-03-17	2022-03-17	900000.00	20.00	720000.00	Mastur	\N	2	1	t	0.00	900000.00	'-2022':4 '-4593':17 '000000034':1 '17':2 '2':26 '2012':23 'ada':15 'adira':9 'auto':6 'cabang':10 'discret':7 'e':16 'finance':5,8 'gudang':20 'jatibarang':11,21 'jupiter':19 'mar':3 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':22 'tq':18 'yamaha':24
 52	000000052	2021-12-23	2021-12-23	15000000.00	7.00	13950000.00	Mastur	\N	14	3	t	0.00	15000000.00	'-1184':19 '-2021':4 '000000052':1 '1000':22 '2018':26 '23':2 '4':29 'ada':17 'brio':21 'cabang':10 'clip':8 'clipan':6 'deddy':13 'des':3 'finance':5 'ga':20 'gudang':23 'honda':27 'indramayu':12 'k':9 'karawang':7 'pranoto':14 'pusat':11,24 'r4':30 'roda':28 'stnk':16 'stnk-ada':15 't':18 'tahun':25
 54	000000054	2021-12-28	2021-12-28	5400000.00	0.00	5400000.00	Mastur	\N	2	3	t	0.00	5400000.00	'-1242':19 '-2021':4 '000000054':1 '2012':25 '28':2 '4':28 'ada':17 'adira':9 'auto':6 'cabang':10 'd':18 'deddy':13 'des':3 'discret':7 'finance':5,8 'gudang':22 'indramayu':12 'ou':20 'pranoto':14 'pusat':11,23 'r4':29 'roda':27 'stnk':16 'stnk-ada':15 'tahun':24 'toyota':26 'vios':21
 36	000000036	2022-03-18	2022-03-18	1500000.00	20.00	1200000.00	Mastur	\N	1	1	t	0.00	1500000.00	'-2022':4 '-5713':17 '000000036':1 '18':2 '2':27 '2018':24 'ada':15 'auto':7 'baf':9 'bussan':6 'cabang':10 'e':16 'finance':5,8 'gudang':21 'jatibarang':11,22 'm3':20 'mar':3 'mio':19 'pav':18 'r2':28 'roda':26 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':23 'yamaha':25
 104	000000176	2022-03-28	2022-03-28	1300000.00	20.00	1040000.00	Opick	\N	2	1	t	0.00	1300000.00	'-2022':4 '-4530':17 '000000176':1 '2':26 '2021':23 '28':2 'ada':15 'adira':9 'auto':6 'beat':19 'cabang':10 'discret':7 'e':16 'finance':5,8 'gudang':20 'honda':24 'jatibarang':11,21 'jv':18 'mar':3 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':22
 112	000000184	2022-03-31	2022-03-31	900000.00	20.00	720000.00	Opick	\N	2	1	t	0.00	900000.00	'-2022':4 '-2859':17 '000000184':1 '2':27 '2013':24 '31':2 'ada':15 'adira':9 'auto':6 'cabang':10 'discret':7 'e':16 'finance':5,8 'gt':20 'gudang':21 'jatibarang':11,22 'mar':3 'mio':19 'r2':28 'roda':26 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':23 'xh':18 'yamaha':25
-129	000000239	2022-04-04	2022-04-04	1400000.00	20.00	1120000.00	Opick	\N	2	1	t	0.00	1400000.00	'-2022':4 '-4630':17 '000000239':1 '04':2 '2':26 '2018':23 'ada':15 'adira':9 'apr':3 'auto':6 'beat':19 'cabang':10 'discret':7 'e':16 'finance':5,8 'gudang':20 'honda':24 'jatibarang':11,21 'pax':18 'r2':27 'roda':25 'stnk':14 'stnk-ada':13 'syaenudin':12 'tahun':22
+147	000000295	2022-04-09	2022-04-09	1500000.00	20.00	1200000.00	Opick	\N	12	1	t	0.00	1500000.00	'-2022':4 '-3551':16 '000000295':1 '09':2 '150':19 '2':26 '2016':23 'ada':14 'apr':3 'cabang':9 'ck':17 'finance':5,7 'gudang':20 'honda':24 'jatibarang':10,21 'r2':27 'roda':25 'stnk':13 'stnk-ada':12 'syaenudin':11 'tahun':22 'vario':18 'wom':6 'womf':8 'z':15
 \.
 
 
@@ -1180,6 +1178,7 @@ COPY public.tasks (order_id, descriptions, period_from, period_to, recipient_nam
 --
 
 COPY public.trx (id, ref_id, division, descriptions, trx_date, memo, trx_token) FROM stdin;
+349	65	trx-lent	UNIT HILANG	2022-04-05	\N	'hilang':2,3 'unit':1
 299	50	trx-lent	Kurangan Pencairan	2022-04-04	\N	'cair':2 'kurang':1 'norman':3
 304	56	trx-lent	Kurangan Pencairan	2022-04-04	\N	'cair':2 'kurang':1 'norman':3
 310	42	trx-lent	Kurangan Pencairan	2022-04-04	\N	'brio':4 'cair':2 'kurang':1 'norman':3
@@ -1215,20 +1214,20 @@ COPY public.trx (id, ref_id, division, descriptions, trx_date, memo, trx_token) 
 344	15	trx-loan	pinjeman pribadi 	2022-01-22	\N	'ipeng':4 'pak':3 'pinjem':1 'pribad':2
 345	16	trx-loan	pinjeman pribadi 	2022-01-22	\N	'agus':4 'baf':5 'pa':3 'pinjem':1 'pribad':2
 347	18	trx-loan	DANA PINJAMAN	2022-01-22	\N	'an':4 'cardi':5 'dana':1 'pelus':3 'pinjam':2
-349	65	trx-lent	unit hilang	2022-04-05	\N	'hilang':2,3 'unit':1
 350	66	trx-lent	Pinjam Pakai	2022-04-05	\N	'mastukin':3 'paka':2 'pinjam':1
 351	67	trx-lent	Pinjam Pakai	2022-04-05	\N	'jiring':4 'paka':2 'pinjam':1 'wa':3
 352	69	trx-lent	Pinjam Pakai	2022-04-05	\N	'anak':5 'jileng':4 'paka':2 'pinjam':1 'wa':3
 348	71	trx-lent	Pinjam Pakai	2022-04-05	\N	'andre':3 'paka':2 'pinjam':1
 353	72	trx-lent	KF Adira JTB	2022-04-05	\N	'adira':2 'cabang':6 'jawab':5 'jtb':3,7 'kf':1 'tanggung':4
 354	73	trx-lent	KF Adira	2022-04-05	\N	'2':7 'adira':2 'cabang':5 'jawab':4 'jtb':6 'kf':1 'tanggung':3
-436	133	trx-lent	qweqweqweqwe	2022-04-09	\N	'dasd':2 'qweqweqweqwe':1 'werqwerqwer':3
+436	133	trx-lent	Grand Max	2022-04-09	\N	'dasd':2 'qweqweqweqwe':1 'werqwerqwer':3
 355	75	trx-lent	Pinjem pakai	2022-04-05	\N	'ali':4 'eksternal':3 'paka':2 'pinjem':1
 357	18	trx-lent	Pinjem Pakai	2022-04-05	\N	'bule':4 'eksternal':3 'paka':2 'pinjem':1
 358	84	trx-lent	Pinjem Pakai	2022-04-05	\N	'eksternal':3 'jatibarang':4 'paka':2 'pinjem':1
 361	84	trx-cicilan	Cicilan 1	2021-12-01	Cicilan Eksternal Jatibarang	'1':2 'cicil':1
 362	18	trx-cicilan	Cicilan 1	2021-12-01	Cicilan Eksternal Bule	'1':2 'cicil':1
 437	133	trx-cicilan	Cicilan 1	2022-04-09	Cicilan Clip Cikarang	'1':2 'cicil':1
+439	65	trx-order	Piutang jasa Bussan Auto Finance (BAF) Order SPK: /000000065	2022-04-12	Kendaraan R2 Yamaha NMax , Nopol E 2676 UX	'/000000065':1 '/ref-65':14 '2676':6 'auto':9 'baf':11 'bussan':8 'e':5 'finance':10 'jatibarang':12 'nmax':4 'order':17 'r2':2 'syaenudin':13 'trx':16 'trx-order':15 'ux':7 'yamaha':3
 408	60	trx-lent	Unit Hilang	2022-04-05	\N	'hilang':2,3 'unit':1
 409	61	trx-lent	Pinjam pakai	2022-04-05	\N	'admin':4 'opick':3 'paka':2 'pinjam':1
 410	62	trx-lent	Kurangan Tebus Unit	2022-04-05	\N	'kurang':1 'om':5 'saja':6 'tebus':2 'tim':4 'unit':3
@@ -1318,6 +1317,8 @@ COPY public.trx_detail (id, code_id, trx_id, debt, cred) FROM stdin;
 1	5513	302	19500000.00	0.00
 1	5513	436	49066000.00	0.00
 2	1113	436	0.00	49066000.00
+1	5511	439	3200000.00	0.00
+2	1113	439	0.00	3200000.00
 1	1113	437	47500000.00	0.00
 2	4113	437	0.00	47500000.00
 2	1113	408	0.00	920000.00
@@ -1427,10 +1428,8 @@ COPY public.units (order_id, nopol, year, frame_number, machine_number, color, t
 2	E 3977 PAC	2016	\N	\N	\N	8	1
 3	E 5125 PBC	2018	\N	\N	\N	9	1
 4	BR 5080 PY	2015	\N	\N	\N	10	1
-5	E 4096 PAQ	2017	\N	\N	\N	1	1
 6	E 2633 PAC	2016	\N	\N	\N	6	1
 7	E 2033 PBJ	2019	\N	\N	\N	1	1
-10	E 5474 Q	2013	\N	\N	\N	6	1
 11	E 4892 TK	2012	\N	\N	\N	12	3
 12	B 3479 UJU	2016	\N	\N	\N	9	3
 13	E 2417 PAO	2017	\N	\N	\N	9	3
@@ -1439,20 +1438,12 @@ COPY public.units (order_id, nopol, year, frame_number, machine_number, color, t
 16	E 3848 UB	2016	\N	\N	\N	6	3
 17	T 3828 FW	2008	\N	\N	\N	15	1
 18	E 6716 IX	2015	\N	\N	\N	9	3
-19	E 5638 PAV	2018	\N	\N	\N	16	2
-20	E 5253 TY	2013	\N	\N	\N	2	3
 21	B 6262 VKY	2015	\N	\N	\N	9	3
 22	E 2830 QR	2015	\N	\N	\N	9	3
 24	E 2146 QAF	2018	\N	\N	\N	18	3
 26	T 2891 WP	2014	\N	\N	\N	19	2
-27	B 6819 PZI	2014	\N	\N	\N	20	2
-28	T 4487 PJ	2017	\N	\N	\N	7	2
 29	E 4544 JD	2015	\N	\N	\N	8	3
-30	T 3615 ZD	2018	\N	\N	\N	21	2
-31	E 2391 JM	2017	\N	\N	\N	11	2
 32	T 2191 YS	2017	\N	\N	\N	6	2
-33	T 5856 ZT	2019	\N	\N	\N	5	2
-34	E 4593 TQ	2012	\N	\N	\N	12	2
 36	E 5713 PAV	2018	\N	\N	\N	9	2
 37	B 8936 NO	2006	\N	\N	\N	22	1
 38	T 1412 KM	2004	\N	\N	\N	23	1
@@ -1481,20 +1472,14 @@ COPY public.units (order_id, nopol, year, frame_number, machine_number, color, t
 71	T 4261 YQ	2017	\N	\N	\N	38	2
 72	B 3430 EJX	2016	\N	\N	\N	6	2
 73	B 3351 KUH	2015	\N	\N	\N	37	2
-74	E 6871 CM	2018	\N	\N	\N	8	2
 75	E 4080 UO	2018	\N	\N	\N	9	2
-77	E 5826 CQ	2019	\N	\N	\N	2	2
-79	E 2282 PBC	2018	\N	\N	\N	6	2
-80	E 5737 PBO	2019	\N	\N	\N	1	2
 83	T 3802 ZR	2019	\N	\N	\N	41	2
 84	E 5462 QM	2014	\N	\N	\N	6	2
 85	G 2867 AUF	2019	\N	\N	\N	9	2
 94	E 2753 PBA	2018	\N	\N	\N	1	1
 96	B 1301 UZR	2022	\N	\N	\N	3	1
-99	T 8066 EG	2020	\N	\N	\N	23	1
 100	E 9844 HB	2016	\N	\N	\N	44	1
 101	E 6987 SD	2013	\N	\N	\N	13	2
-103	E 3541 QN	2014	\N	\N	\N	2	2
 104	E 4530 JV	2021	\N	\N	\N	6	2
 105	D 4027 UCB	2018	\N	\N	\N	38	2
 107	E 5359 PAI	2016	\N	\N	\N	1	2
@@ -1507,19 +1492,30 @@ COPY public.units (order_id, nopol, year, frame_number, machine_number, color, t
 114	T 4418 PF	2017	\N	\N	\N	1	2
 115	T 4080 WE	2013	\N	\N	\N	46	2
 118	E 3637 QAH	2019	\N	\N	\N	6	2
-119	E 6945 PBC	2018	\N	\N	\N	6	2
 121	B 4172 FPB	2022	\N	\N	\N	47	1
-123	B 1561 KBJ	2007	\N	\N	\N	31	1
 124	E 2000 XX	2022	\N	\N	\N	29	1
 125	E 1411 PV	2020	\N	\N	\N	4	1
 126	E 1456 RL	2020	\N	\N	\N	4	1
-127	A 3907 PBF	2022	\N	\N	\N	1	2
-128	Z 2392 CM	2017	\N	\N	\N	6	2
-129	E 4630 PAX	2018	\N	\N	\N	6	2
 130	E 6314 QR	2019	\N	\N	\N	37	1
-131	E 5491 PBL	2022	\N	\N	\N	2	1
 132	E 4415 JZ	2019	\N	\N	\N	35	2
 133	T 1293 TN	2014	\N	\N	\N	34	1
+134	E 6053 PBF	2019	\N	\N	\N	1	1
+135	E 4786 PBZ	2021	\N	\N	\N	17	1
+136	E 5158 QJ	2014	\N	\N	\N	18	1
+137	T 4094 PH	2017	\N	\N	\N	47	2
+138	T 6739 YC	2015	\N	\N	\N	9	2
+139	E 6088 PBF	2019	\N	\N	\N	9	2
+140	T 5344 RI	2022	\N	\N	\N	6	2
+141	T 3319 YU	2017	\N	\N	\N	6	2
+142	E 3509 QS	2013	\N	\N	\N	10	2
+143	B 4325 TRG	2017	\N	\N	\N	40	2
+144	T 2185 CC	2017	\N	\N	\N	6	2
+145	Z 6296 CS	2018	\N	\N	\N	1	2
+146	E 55874 CU	2019	\N	\N	\N	6	2
+147	Z 3551 CK	2016	\N	\N	\N	19	2
+148	E 6347 PBM	2019	\N	\N	\N	47	2
+149	E 3416 XH	2013	\N	\N	\N	8	2
+151	T 8854 EF	2020	\N	\N	\N	23	1
 \.
 
 
@@ -1528,6 +1524,8 @@ COPY public.units (order_id, nopol, year, frame_number, machine_number, color, t
 --
 
 COPY public.users (id, name, email, password, role) FROM stdin;
+1	Mastur	mastur.st12@gmail.com	$2a$14$WxbSEIBsAOt0SRTFUUR0Re4THW.F7Z4n32U4gDbyj79yjZHHBvKR6	admin
+2	Syahrizal Maulana	maulanamohammad18@gmail.com	$2a$14$fCZgyEkcl2qSj.e0J9j8w.CcuszkrHzVOgj/yT4aeBeO8b0w2w8Ui	user
 \.
 
 
@@ -1559,7 +1557,7 @@ COPY public.wheels (id, name, short_name) FROM stdin;
 -- Name: action_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.action_id_seq', 12, true);
+SELECT pg_catalog.setval('public.action_id_seq', 13, true);
 
 
 --
@@ -1573,14 +1571,14 @@ SELECT pg_catalog.setval('public.branch_id_seq', 5, true);
 -- Name: finance_groups_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.finance_groups_id_seq', 8, true);
+SELECT pg_catalog.setval('public.finance_groups_id_seq', 9, true);
 
 
 --
 -- Name: finance_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.finance_id_seq', 23, true);
+SELECT pg_catalog.setval('public.finance_id_seq', 26, true);
 
 
 --
@@ -1594,7 +1592,7 @@ SELECT pg_catalog.setval('public.invoices_id_seq', 11, true);
 -- Name: lents_id_sequence; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.lents_id_sequence', 50, true);
+SELECT pg_catalog.setval('public.lents_id_sequence', 51, true);
 
 
 --
@@ -1615,14 +1613,14 @@ SELECT pg_catalog.setval('public.merk_id_seq', 17, true);
 -- Name: order_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.order_id_seq', 133, true);
+SELECT pg_catalog.setval('public.order_id_seq', 152, true);
 
 
 --
 -- Name: order_name_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.order_name_seq', 272, true);
+SELECT pg_catalog.setval('public.order_name_seq', 334, true);
 
 
 --
@@ -1636,7 +1634,7 @@ SELECT pg_catalog.setval('public.trx_detail_seq', 1, false);
 -- Name: trx_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.trx_seq', 437, true);
+SELECT pg_catalog.setval('public.trx_seq', 439, true);
 
 
 --
@@ -1650,7 +1648,7 @@ SELECT pg_catalog.setval('public.type_id_seq', 47, true);
 -- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.users_id_seq', 1, false);
+SELECT pg_catalog.setval('public.users_id_seq', 2, true);
 
 
 --
