@@ -160,8 +160,7 @@ func getAllBranchs(db *sql.DB) ([]models.Branch, error) {
 
 	var sqlStatement = `SELECT 
 		id, name, head_branch, street, city, phone, cell, zip, email
-	FROM branchs
-	ORDER BY name`
+	FROM branchs`
 
 	rs, err := db.Query(sqlStatement)
 
