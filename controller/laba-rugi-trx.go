@@ -226,8 +226,7 @@ func laba_rugi_getByDate(db *sql.DB, fd string, td string) ([]LabaRugi, error) {
 	WHERE c.type_id != 11
 		AND x.division = 'trx-cicilan'
 		AND g.id = 4
-		AND (x.trx_date >= TO_DATE($1, 'YYYY-MM-DD')
-		AND x.trx_date <= TO_DATE($2, 'YYYY-MM-DD'))
+		AND (x.trx_date >= TO_DATE($1, 'YYYY-MM-DD') AND x.trx_date <= TO_DATE($2, 'YYYY-MM-DD'))
 	GROUP BY o.branch_id, x.division
 
 	UNION ALL
