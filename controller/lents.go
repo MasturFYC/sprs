@@ -306,13 +306,15 @@ func lent_create_unit_query() *strings.Builder {
 	b := strings.Builder{}
 
 	b.WriteString("SELECT")
-	b.WriteString(` o.id, o.name, o.order_at as "orderAt", o.bt_finance AS "btFinance"`)
+	b.WriteString(` o.id, b.name as branch, f.name as finance, o.name, o.order_at as "orderAt", o.bt_finance AS "btFinance"`)
 	b.WriteString(`, o.bt_percent AS "btPercent", o.bt_matel AS "btMatel"`)
 	b.WriteString(", u.nopol, u.year")
 	b.WriteString(`, e.name AS "type"`)
 	b.WriteString(", w.short_name AS wheel")
 	b.WriteString(", m.name AS merk")
 	b.WriteString(" FROM orders as o")
+	b.WriteString(" INNER JOIN branchs AS b on b.id = o.branch_id")
+	b.WriteString(" INNER JOIN finances AS f on f.id = o.finance_id")
 	b.WriteString(" INNER JOIN units AS u on u.order_id = o.id")
 	b.WriteString(" INNER JOIN types AS e on e.id = u.type_id")
 	b.WriteString(" INNER JOIN wheels AS w on w.id = e.wheel_id")
